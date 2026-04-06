@@ -1,203 +1,51 @@
+// ===============================
 // src/components/PriceForm.jsx
-import { useEffect, useMemo, useRef, useState } from "react";
-import { MODEL_GROUPS, CONTROLLERS, POWER_SUPPLY_PRICE } from "../data/models.js";
-import { toBDT, calcAll } from "../lib/calc.js";
+// ===============================
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCatalog } from "../context/CatalogContext.jsx";
+import { getCabinetFootprintFt } from "../data/defaultQuotationCatalog.js";
+import {
+  moduleFootprintFt,
+  pickReceivingCard,
+  getRcCapacity,
+  getPsuCapacity,
+  pickPSUModel,
+  gridAndPixels,
+  pickControllerByPixels,
+  pickNovastarControllerByPixels,
+  controllerPriceById,
+  novastarControllerPriceById,
+  roundInt,
+} from "../lib/priceFormCatalogHelpers.js";
+import { calcAll } from "../lib/calc.js";
 
-/* ===== Price tiers (display + warranty only) ===== */
-const PRICE_TIERS = [
-  { id: "gold",     label: "Gold",     note: "Standard",     warrantyYears: 1 },
-  { id: "platinum", label: "Platinum", note: "≈6% premium",  warrantyYears: 2 },
-  { id: "diamond",  label: "Diamond",  note: "≈12% premium", warrantyYears: 3 },
-];
-
-/* ===== Module physical size (in feet) =====
-   320x160 mm => 1.0499 ft x 0.5249 ft
-   192x192 mm => 0.6299 ft x 0.6299 ft
-*/
-const FT_320 = 1.0499;
-const FT_160 = 0.5249;
-const FT_192 = 0.6299;
-
-function moduleFootprintFt(modelIdOrName) {
-  const id = (modelIdOrName || "").toLowerCase();
-  const isP3 = id.includes("p3") && !id.includes("3.9");
-  const isP6 = id.includes("p6") && !id.includes("6.6"); // ignore 6.67 edge
-  if (isP3 || isP6) return { w: FT_192, h: FT_192 };
-  return { w: FT_320, h: FT_160 };
+/* =========================
+   ✅ ZERO-CLEAR INPUT HELPERS
+   ========================= */
+function zeroClearOnFocus(value, setter, disabled = false) {
+  if (disabled) return;
+  if (String(value) === "0") setter("");
+}
+function zeroRestoreOnBlur(value, setter, disabled = false) {
+  if (disabled) return;
+  if (value === "" || value === null || typeof value === "undefined") setter(0);
 }
 
-const roundInt = (x) => Math.max(1, Math.round(Number(x) || 0));
-
-/* ===== Pitch parser ===== */
-function parsePitch(modelName = "") {
-  const m = (modelName.match(/P(\d+(?:\.\d+)?)/i) || [])[1];
-  return m || "";
-}
-function parsePitchNum(modelName = "") {
-  const m = modelName.match(/P(\d+(?:\.\d+)?)/i);
-  return m ? parseFloat(m[1]) : NaN;
-}
-
-/* ===== তোমার দেওয়া module pixel mapping =====
-Indoor: 
-P1.25 = 256x128
-P1.53 = 210x105
-P1.86 = 320x160
-P2   = 320x160
-P2.5 = 320x160
-P3   = 192x192
-
-Outdoor:
-P2.5  = 320x160
-P3    = 192x192
-P4    = 320x160
-P5    = 320x160
-P6    = 192x192
-P6.67 = 320x160
-P8    = 320x160
-P10   = 320x160
-*/
-const MODULE_RES = {
-  "1.25": { pxW: 256, pxH: 128 },
-  "1.53": { pxW: 210, pxH: 105 },
-  "1.86": { pxW: 320, pxH: 160 },
-  "2":    { pxW: 320, pxH: 160 },
-  "2.5":  { pxW: 320, pxH: 160 },
-  "3":    { pxW: 192, pxH: 192 },
-  "4":    { pxW: 320, pxH: 160 },
-  "5":    { pxW: 320, pxH: 160 },
-  "6":    { pxW: 192, pxH: 192 },
-  "6.67": { pxW: 320, pxH: 160 },
-  "6.7":  { pxW: 320, pxH: 160 }, // safety
-  "8":    { pxW: 320, pxH: 160 },
-  "10":   { pxW: 320, pxH: 160 },
-};
-
-function getModuleRes(modelName = "") {
-  const key = parsePitch(modelName); // e.g. "2.5", "6.67"
-  return MODULE_RES[key] || null;
-}
-
-/* ===== Receiving Card auto-pick by rule =====
-   - Indoor P1.25 → R732 (2900)
-   - Others       → R712 (2200)
-*/
-function pickReceivingCard(dispType, modelName) {
-  const isIndoor = dispType === "indoor";
-  const isP125 = (modelName || "").toLowerCase().includes("p1.25");
-  if (isIndoor && isP125) return { id: "R732", label: "Receiving Card R732", unitPrice: 2900 };
-  return { id: "R712", label: "Receiving Card R712", unitPrice: 2200 };
-}
-
-/* ===== Capacity maps (modules per card/psu) ===== */
-const RC_CAPACITY = {
-  indoor: {
-    "1.25": 4, "1.53": 4, "1.667": 6, "1.86": 8, "2": 10, "2.5": 11,
-    "3": 12, "3.076": 16, "4": 20, "5": 24,
-  },
-  outdoor: {
-    "2.5": 10, "3": 20, "3.076": 16, "4": 20, "5": 24,
-    "6": 36, "6.7": 30, "8": 40, "10": 40,
-  },
-};
-
-const PSU_CAPACITY = {
-  indoor: {
-    "1.25": 4, "1.53": 5, "1.667": 5, "1.86": 5,
-    "2": 6,   "2.5": 6, "3": 6, "4": 6, "5": 6,
-  },
-  outdoor: {
-    "2.5": 4, "3": 5, "3.076": 5, "4": 6, "5": 6,
-    "6": 6, "6.67": 6, "6.7": 6, "8": 6, "10": 6,
-  },
-};
-
-// ---- helpers: capacity lookups by parsed pitch ----
-function getRcCapacity(dispType, modelName = "") {
-  const p = parsePitch(modelName);
-  return RC_CAPACITY[dispType]?.[p] ?? 12;
-}
-
-function getPsuCapacity(dispType, modelName = "") {
-  const p = parsePitch(modelName);
-  return PSU_CAPACITY[dispType]?.[p] ?? 6;
-}
-
-/* ===== Controller caps (total pixels) =====
-   Outdoor - A3L-655,360, A5L-1,300,000, A6L-2,600,000
-   Indoor  - VP210H-1,300,000, VP410H-2,600,000, VP630-3,900,000, VP830-5,200,000
-*/
-const CTRL_CAP = {
-  indoor: [
-    { id: "VP210H", cap: 1300000 },
-    { id: "VP410H", cap: 2600000 },
-    { id: "VP630",  cap: 3900000 },
-    { id: "VP830",  cap: 5200000 },
-  ],
-  outdoor: [
-    { id: "A3L", cap:  655360 },
-    { id: "A5L", cap: 1300000 },
-    { id: "A6L", cap: 2600000 },
-  ],
-};
-
-/* ===== PSU model pick (label only) ===== */
-function pickPSUModel(dispType, modelName) {
-  if (dispType === "indoor") return { model: "5V 40A" };
-  const p = parsePitchNum(modelName);
-  if (!isNaN(p) && p <= 4) return { model: "5V 60A" };
-  return { model: "5V 40A" };
-}
-
-/* ===== grid + pixels (real calculation with MODULE_RES) ===== */
-function gridAndPixels(modelName, widthFt, heightFt) {
-  const res = getModuleRes(modelName);
-  if (!res) {
-    return {
-      across: 0, down: 0,
-      modPxW: 0, modPxH: 0,
-      totalPxW: 0, totalPxH: 0,
-      totalPixels: 0,
-    };
-  }
-
-  // ft → module grid
-  const fp = moduleFootprintFt(modelName);
-  const across = roundInt((parseFloat(widthFt)  || 0) / fp.w);
-  const down   = roundInt((parseFloat(heightFt) || 0) / fp.h);
-
-  const { pxW: modPxW, pxH: modPxH } = res;
-
-  const totalPxW = across * modPxW;
-  const totalPxH = down   * modPxH;
-  const totalPixels = totalPxW * totalPxH;
-
-  return { across, down, modPxW, modPxH, totalPxW, totalPxH, totalPixels };
-}
-
-/* Pick controller by pixels & type */
-function pickControllerByPixels(dispType, totalPixels) {
-  const list = CTRL_CAP[dispType] || [];
-  if (!totalPixels || !list.length) return null;
-
-  const fit = list.find(c => totalPixels <= c.cap);
-  if (!fit) return null;
-
-  return { id: fit.id, cap: fit.cap, qty: 1 };
-}
-
-/* ===== helpers to fetch prices from CONTROLLERS ===== */
-function controllerPriceById(id) {
-  const c = CONTROLLERS.find(x => x.id === id);
-  return c ? (c.price || 0) : 0;
-}
-
-/* ===== Totals builder (uses calcAll) ===== */
-function buildTotalsForCalc({ snapshot, autoModulesQty, moduleUnitPrice, rcUnitPrice }) {
-  const { items, install, display } = snapshot;
+function buildTotalsForCalc({
+  snapshot,
+  autoModulesQty,
+  moduleUnitPrice,
+  rcUnitPrice,
+  psUnitPrice, // ✅ NEW
+  cabinetQty,
+  cabinetUnitPrice,
+}) {
+  const { items, install, display, accessories } = snapshot;
 
   return calcAll({
     modulesQty: autoModulesQty,
+
+    // ✅ With Cabinet হলে rc/ps cabinetQty অনুযায়ী যাবে (snapshot এ already set)
     rcQty: items.rcQty ?? 0,
     psQty: items.psQty ?? 0,
 
@@ -206,262 +54,613 @@ function buildTotalsForCalc({ snapshot, autoModulesQty, moduleUnitPrice, rcUnitP
 
     unitModule: moduleUnitPrice,
     unitRC: rcUnitPrice,
-    unitPS: POWER_SUPPLY_PRICE,
 
-    accessoriesTk: items.accessoriesTk ?? 0,
+    // ✅ PSU unit price (manual override capable)
+    unitPS: psUnitPrice,
+
+    // ✅ Cabinet (only when enabled) — NOW uses manual override price
+    cabinetQty: items?.cabinetEnabled ? (cabinetQty || 0) : 0,
+    unitCabinet: items?.cabinetEnabled ? (cabinetUnitPrice || 0) : 0,
+
+    accessoriesMode: accessories.accessoriesMode,
+    accessoriesValue: accessories.accessoriesValue,
+
+    installMode: install.installMode,
     installIsPercent: install.installIsPercent,
     installValue: install.installValue,
+
     sft: display?.sft,
+    dispType: snapshot.items?.dispType || "indoor",
+
+    vatEnabled: snapshot.vatEnabled,
+
+    discountEnabled: snapshot.discountEnabled,
+    discountTk: snapshot.discountTk ?? 0,
   });
 }
 
 export default function PriceForm({ onChange, onCalculated }) {
+  const { catalog, loading, error, reload } = useCatalog();
+  const { w: CAB_W_FT, h: CAB_H_FT } = useMemo(() => getCabinetFootprintFt(catalog.physical), [catalog.physical]);
+
   const [dispType, setDispType] = useState("indoor");
-  const modelsForType = MODEL_GROUPS[dispType];
 
-  /* model + controller */
-  const [modelId, setModelId] = useState(modelsForType[0].id);
-  const model = useMemo(
-    () => modelsForType.find(m => m.id === modelId) ?? modelsForType[0],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [modelId, dispType]
-  );
+  // ✅ Cabinet mode (default: without cabinet)
+  const [cabinetEnabled, setCabinetEnabled] = useState(false);
 
-  const [controllerId, setControllerId] = useState(CONTROLLERS[0]?.id);
+  // ✅ VAT (default OFF)
+  const [vatEnabled, setVatEnabled] = useState(false);
 
-  // Customer & display
-  const [customer, setCustomer] = useState({ name: "", company: "", address: "", mobile: "" });
-  const [display, setDisplay] = useState({ widthFt: "", heightFt: "", sft: "" });
+  // ✅ Discount (default OFF)
+  const [discountEnabled, setDiscountEnabled] = useState(false);
+  const [discountTk, setDiscountTk] = useState(0);
 
-  // Quantities
-  const [rcQty, setRcQty] = useState(10);
-  const [psQty, setPsQty] = useState(17);
+  // ✅ Technology (default SMD)
+  const [technology, setTechnology] = useState("smd"); // smd | gob | cob
+
+  // ✅ Payment Term (default 100%)
+  const [paymentTermId, setPaymentTermId] = useState("PT_100");
+
+  // ✅ Outdoor হলে force SMD
+  useEffect(() => {
+    if (dispType === "outdoor" && technology !== "smd") {
+      setTechnology("smd");
+    }
+  }, [dispType, technology]);
+
+  // ✅ Technology list: Outdoor => only SMD
+  const techOptions = useMemo(() => {
+    if (dispType === "outdoor") return catalog.technologiesAll.filter((t) => t.id === "smd");
+    return catalog.technologiesAll;
+  }, [dispType, catalog.technologiesAll]);
+
+  // ✅ models list depends on technology + display type
+  const modelsForType = useMemo(() => {
+    const techBlock = catalog.modelGroups[technology] || catalog.modelGroups.smd;
+    return techBlock?.[dispType] || [];
+  }, [technology, dispType, catalog.modelGroups]);
+
+  const [modelId, setModelId] = useState(modelsForType[0]?.id || "");
+
+  const model = useMemo(() => {
+    if (!modelsForType.length) return { id: "", name: "P1.25", prices: { gold: 0, platinum: 0, diamond: 0 } };
+    return modelsForType.find((m) => m.id === modelId) ?? modelsForType[0];
+  }, [modelId, modelsForType]);
+
+  const [ctrlSystemBrand, setCtrlSystemBrand] = useState("Novastar"); // Huidu | Novastar
+
+  const [controllerId, setControllerId] = useState(catalog.controllers[0]?.id || "");
   const [controllerQty, setControllerQty] = useState(1);
 
-  // Installation
-  const [installIsPercent, setInstallIsPercent] = useState(false);
-  const [installValue, setInstallValue] = useState(24000);
+  const [customer, setCustomer] = useState({ name: "", company: "", address: "", mobile: "", position: "" });
 
-  // Accessories
-  const [accessoriesTk, setAccessoriesTk] = useState(0);
+  // ✅ IMPORTANT: sft will be auto ONLY
+  const [display, setDisplay] = useState({ widthFt: "", heightFt: "", sft: "" });
 
-  // Tier
+  const [rcQty, setRcQty] = useState(10);
+  const [psQty, setPsQty] = useState(17);
+
+  const [accessoriesMode, setAccessoriesMode] = useState("auto");
+  const [accessoriesValue, setAccessoriesValue] = useState(0);
+
+  const [installMode, setInstallMode] = useState("auto");
+
+  // ✅ IMPORTANT: Installation percent option removed; always Tk
+  const installIsPercent = false;
+  const [installValue, setInstallValue] = useState(0);
+
+  const [moduleBrand, setModuleBrand] = useState("Lampro by Unilumin");
+
   const [tierId, setTierId] = useState("gold");
   const hasCalculatedRef = useRef(false);
+  const [customWarranty, setCustomWarranty] = useState("");
 
-  // switch type -> first model
+  // ✅ Module Unit Price override
+  const [modulePriceOverrideStr, setModulePriceOverrideStr] = useState("");
+  const [modulePriceOverrideEnabled, setModulePriceOverrideEnabled] = useState(false);
+
+  // ✅ Receiving Card Unit Price override
+  const [rcPriceOverrideStr, setRcPriceOverrideStr] = useState("");
+  const [rcPriceOverrideEnabled, setRcPriceOverrideEnabled] = useState(false);
+
+  // ✅ Power Supply Unit Price override (✅ NEW)
+  const [psPriceOverrideStr, setPsPriceOverrideStr] = useState("");
+  const [psPriceOverrideEnabled, setPsPriceOverrideEnabled] = useState(false);
+
+  // ✅ Controller Price override
+  const [controllerPriceOverrideStr, setControllerPriceOverrideStr] = useState("");
+  const [controllerPriceOverrideEnabled, setControllerPriceOverrideEnabled] = useState(false);
+
+  // ✅ Cabinet Unit Price override (NEW)
+  const [cabinetPriceOverrideStr, setCabinetPriceOverrideStr] = useState("");
+  const [cabinetPriceOverrideEnabled, setCabinetPriceOverrideEnabled] = useState(false);
+
+  // display type / technology change -> reset model
   useEffect(() => {
-    const first = MODEL_GROUPS[dispType][0];
-    setModelId(first.id);
-  }, [dispType]);
+    const first = (catalog.modelGroups[technology] || catalog.modelGroups.smd)?.[dispType]?.[0];
+    setModelId(first?.id || "");
+  }, [dispType, technology, catalog.modelGroups]);
 
-  // Auto-calc area (sft)
+  // ✅ area auto (LOCKED)
   useEffect(() => {
     const w = parseFloat(display.widthFt);
     const h = parseFloat(display.heightFt);
+
     if (!isNaN(w) && !isNaN(h) && w > 0 && h > 0) {
       const area = (w * h).toFixed(2);
-      setDisplay(d => ({ ...d, sft: area }));
+      setDisplay((d) => (d.sft === area ? d : { ...d, sft: area }));
+    } else {
+      setDisplay((d) => (d.sft === "" ? d : { ...d, sft: "" }));
     }
   }, [display.widthFt, display.heightFt]);
 
-  // Auto modules from ft → pcs
+  // ✅ Cabinet qty from Width/Height
+  const cabinetQty = useMemo(() => {
+    if (!cabinetEnabled) return 0;
+    const w = parseFloat(display.widthFt);
+    const h = parseFloat(display.heightFt);
+    if (isNaN(w) || isNaN(h) || w <= 0 || h <= 0) return 0;
+
+    const across = roundInt(w / CAB_W_FT);
+    const down = roundInt(h / CAB_H_FT);
+    return across * down;
+  }, [cabinetEnabled, display.widthFt, display.heightFt, CAB_W_FT, CAB_H_FT]);
+
   const autoModulesQty = useMemo(() => {
     const w = parseFloat(display.widthFt);
     const h = parseFloat(display.heightFt);
     if (isNaN(w) || isNaN(h) || w <= 0 || h <= 0) return 0;
 
-    const fp = moduleFootprintFt(model.id || model.name);
-    const across = roundInt(w / fp.w);
-    const down   = roundInt(h / fp.h);
-    return across * down;
-  }, [display.widthFt, display.heightFt, model]);
+    // ✅ With cabinet: modules = cabinetQty * 6
+    if (cabinetEnabled) return (cabinetQty || 0) * catalog.modulesPerCabinet;
 
-  // Tier-based module unit price
-  const moduleUnitPrice = useMemo(() => {
+    // ✅ Without cabinet: existing logic
+    const fp = moduleFootprintFt(model.id || model.name, catalog.physical);
+    const across = roundInt(w / fp.w);
+    const down = roundInt(h / fp.h);
+    return across * down;
+  }, [display.widthFt, display.heightFt, model, cabinetEnabled, cabinetQty, catalog.modulesPerCabinet, catalog.physical]);
+
+  // ✅ AUTO module price by tier
+  const moduleUnitPriceAuto = useMemo(() => {
     const p = model?.prices || {};
     return p[tierId] ?? 0;
   }, [model, tierId]);
 
-  // Receiving card pick
-  const rcPicked = useMemo(
-    () => pickReceivingCard(dispType, model?.name || ""),
-    [dispType, model]
-  );
+  // ✅ reset module override on model/tier/tech/type change
+  useEffect(() => {
+    setModulePriceOverrideEnabled(false);
+    setModulePriceOverrideStr(moduleUnitPriceAuto ? String(Math.round(moduleUnitPriceAuto)) : "");
+  }, [modelId, tierId, technology, dispType, moduleUnitPriceAuto]);
 
-  // Auto RC/PS
-  const autoRcQty = useMemo(() => {
-    const cap = getRcCapacity(dispType, model.name);
-    return cap > 0 ? Math.ceil((autoModulesQty || 0) / cap) : 0;
-  }, [dispType, model, autoModulesQty]);
+  // ✅ final module price
+  const moduleUnitPrice = useMemo(() => {
+    if (!modulePriceOverrideEnabled) return moduleUnitPriceAuto;
+    const v = parseFloat(modulePriceOverrideStr);
+    if (isNaN(v) || v <= 0) return moduleUnitPriceAuto;
+    return v;
+  }, [modulePriceOverrideEnabled, modulePriceOverrideStr, moduleUnitPriceAuto]);
 
-  const autoPsQty = useMemo(() => {
-    const cap = getPsuCapacity(dispType, model.name);
-    return cap > 0 ? Math.ceil((autoModulesQty || 0) / cap) : 0;
-  }, [dispType, model, autoModulesQty]);
+  // ✅ Cabinet Unit Price (auto + manual) — NEW
+  const cabinetUnitPriceAuto = useMemo(() => catalog.cabinetCasePrice, [catalog.cabinetCasePrice]);
+  useEffect(() => {
+    // When cabinet toggles ON, reset to default auto
+    if (cabinetEnabled) {
+      setCabinetPriceOverrideEnabled(false);
+      setCabinetPriceOverrideStr(String(Math.round(cabinetUnitPriceAuto || 0)));
+    }
+  }, [cabinetEnabled, cabinetUnitPriceAuto]);
 
-  useEffect(() => { setRcQty(autoRcQty); },
-    [autoRcQty, dispType, modelId, display.widthFt, display.heightFt]);
-  useEffect(() => { setPsQty(autoPsQty); },
-    [autoPsQty, dispType, modelId, display.widthFt, display.heightFt]);
+  const cabinetUnitPrice = useMemo(() => {
+    if (!cabinetEnabled) return 0;
+    if (!cabinetPriceOverrideEnabled) return cabinetUnitPriceAuto;
+    const v = parseFloat(cabinetPriceOverrideStr);
+    if (isNaN(v) || v <= 0) return cabinetUnitPriceAuto;
+    return v;
+  }, [cabinetEnabled, cabinetPriceOverrideEnabled, cabinetPriceOverrideStr, cabinetUnitPriceAuto]);
 
-  // ===== Real pixels & auto controller pick =====
   const { totalPixels } = useMemo(
-    () => gridAndPixels(model.name, display.widthFt, display.heightFt),
-    [model, display.widthFt, display.heightFt]
-  );
-
-  const autoController = useMemo(
-    () => pickControllerByPixels(dispType, totalPixels),
-    [dispType, totalPixels]
+    () => gridAndPixels(model.name, display.widthFt, display.heightFt, catalog.moduleRes, catalog.physical),
+    [model.name, display.widthFt, display.heightFt, catalog.moduleRes, catalog.physical]
   );
 
   useEffect(() => {
-    if (!autoController) {
-      // pixel cap cross করলে কিছু auto select হবে না
+    const autoLocal =
+      ctrlSystemBrand === "Novastar"
+        ? pickNovastarControllerByPixels(dispType, totalPixels, catalog.novastarControllers)
+        : pickControllerByPixels(dispType, totalPixels, catalog.ctrlCap);
+
+    if (!autoLocal) {
+      setControllerId("");
       setControllerQty(0);
       return;
     }
-    setControllerId(autoController.id);
+    setControllerId(autoLocal.id);
     setControllerQty(1);
-  }, [autoController]);
+  }, [ctrlSystemBrand, dispType, totalPixels, catalog.novastarControllers, catalog.ctrlCap]);
 
-  // PSU model label
-  const psuPicked = useMemo(
-    () => pickPSUModel(dispType, model?.name || ""),
-    [dispType, model]
+  const rcPicked = useMemo(
+    () => pickReceivingCard(dispType, model?.name || "", ctrlSystemBrand, technology, catalog.receivingCards),
+    [dispType, model?.name, ctrlSystemBrand, technology, catalog.receivingCards]
   );
 
-  const snapshot = useMemo(() => ({
-    model: { ...model, name: `${model.name} ${dispType === "indoor" ? "(Indoor)" : "(Outdoor)"}` },
-    customer,
-    display,
-    items: {
-      modulesQty: autoModulesQty,
+  // ✅ RC auto unit price + reset override when picked changes
+  const rcUnitPriceAuto = useMemo(() => rcPicked?.unitPrice ?? 0, [rcPicked]);
+
+  useEffect(() => {
+    setRcPriceOverrideEnabled(false);
+    setRcPriceOverrideStr(rcUnitPriceAuto ? String(Math.round(rcUnitPriceAuto)) : "");
+  }, [rcPicked?.id, dispType, modelId, ctrlSystemBrand, rcUnitPriceAuto]);
+
+  const rcUnitPrice = useMemo(() => {
+    if (!rcPriceOverrideEnabled) return rcUnitPriceAuto;
+    const v = parseFloat(rcPriceOverrideStr);
+    if (isNaN(v) || v <= 0) return rcUnitPriceAuto;
+    return v;
+  }, [rcPriceOverrideEnabled, rcPriceOverrideStr, rcUnitPriceAuto]);
+
+  const autoRcQty = useMemo(() => {
+    // ✅ With cabinet: RC = cabinet qty
+    if (cabinetEnabled) return cabinetQty || 0;
+
+    const cap = getRcCapacity(dispType, model.name, ctrlSystemBrand, catalog.rcCapacityHuidu, catalog.rcCapacityNovastar);
+    return cap > 0 ? Math.ceil((autoModulesQty || 0) / cap) : 0;
+  }, [dispType, model.name, autoModulesQty, ctrlSystemBrand, cabinetEnabled, cabinetQty, catalog.rcCapacityHuidu, catalog.rcCapacityNovastar]);
+
+  const autoPsQty = useMemo(() => {
+    // ✅ With cabinet: PSU = cabinet qty
+    if (cabinetEnabled) return cabinetQty || 0;
+
+    const cap = getPsuCapacity(dispType, model.name, catalog.psuCapacity);
+    return cap > 0 ? Math.ceil((autoModulesQty || 0) / cap) : 0;
+  }, [dispType, model.name, autoModulesQty, cabinetEnabled, cabinetQty, catalog.psuCapacity]);
+
+  useEffect(() => setRcQty(autoRcQty), [autoRcQty, dispType, modelId, display.widthFt, display.heightFt, cabinetEnabled]);
+  useEffect(() => setPsQty(autoPsQty), [autoPsQty, dispType, modelId, display.widthFt, display.heightFt, cabinetEnabled]);
+
+  const psuPicked = useMemo(() => pickPSUModel(catalog.psuModelLabel), [catalog.psuModelLabel]);
+
+  // ✅ PSU unit price (auto + manual) — NEW
+  const psUnitPriceAuto = useMemo(() => Number(catalog.powerSupplyPrice || 0), [catalog.powerSupplyPrice]);
+  useEffect(() => {
+    // model/type/tech/cabinet change হলেও default reset
+    setPsPriceOverrideEnabled(false);
+    setPsPriceOverrideStr(psUnitPriceAuto ? String(Math.round(psUnitPriceAuto)) : "");
+  }, [dispType, modelId, technology, cabinetEnabled, psUnitPriceAuto]);
+
+  const psUnitPrice = useMemo(() => {
+    if (!psPriceOverrideEnabled) return psUnitPriceAuto;
+    const v = parseFloat(psPriceOverrideStr);
+    if (isNaN(v) || v <= 0) return psUnitPriceAuto;
+    return v;
+  }, [psPriceOverrideEnabled, psPriceOverrideStr, psUnitPriceAuto]);
+
+  // ✅ Controller auto price
+  const controllerPriceAuto = useMemo(() => {
+    if (!controllerId) return 0;
+    if (ctrlSystemBrand === "Novastar") return novastarControllerPriceById(dispType, controllerId, catalog.novastarControllers);
+    return controllerPriceById(controllerId, catalog.controllers);
+  }, [ctrlSystemBrand, dispType, controllerId, catalog.novastarControllers, catalog.controllers]);
+
+  // ✅ reset controller override when selection changes
+  useEffect(() => {
+    setControllerPriceOverrideEnabled(false);
+    setControllerPriceOverrideStr(controllerPriceAuto ? String(Math.round(controllerPriceAuto)) : "");
+  }, [ctrlSystemBrand, dispType, controllerId, controllerPriceAuto]);
+
+  // ✅ final controller price
+  const controllerPrice = useMemo(() => {
+    if (!controllerPriceOverrideEnabled) return controllerPriceAuto;
+    const v = parseFloat(controllerPriceOverrideStr);
+    if (isNaN(v) || v <= 0) return controllerPriceAuto;
+    return v;
+  }, [controllerPriceOverrideEnabled, controllerPriceOverrideStr, controllerPriceAuto]);
+
+  const controllerLabel = useMemo(() => {
+    if (!controllerId) return "";
+    if (ctrlSystemBrand === "Novastar") {
+      return (catalog.novastarControllers[dispType] || []).find((c) => c.id === controllerId)?.label || controllerId;
+    }
+    return catalog.controllers.find((c) => c.id === controllerId)?.label || controllerId;
+  }, [ctrlSystemBrand, dispType, controllerId, catalog.novastarControllers, catalog.controllers]);
+
+  const paymentTermLabel = useMemo(() => {
+    const terms = catalog.paymentTerms;
+    return terms.find((p) => p.id === paymentTermId)?.label || terms[0]?.label || "";
+  }, [paymentTermId, catalog.paymentTerms]);
+
+  const defaultWarrantyYears = useMemo(() => {
+    if (tierId === "diamond") return 3;
+    if (tierId === "platinum") return 2;
+    return 1;
+  }, [tierId]);
+
+  // ✅ Snapshot
+  const snapshot = useMemo(
+    () => ({
+      model: {
+        ...model,
+        name: `${model.name} ${dispType === "indoor" ? "Indoor" : "Outdoor"}`,
+      },
+      customer,
+      display,
+
+      vatEnabled,
+
+      discountEnabled,
+      discountTk: discountEnabled ? parseFloat(discountTk || 0) : 0,
+
+      paymentTermId,
+      paymentTermLabel,
+
+      items: {
+        modulesQty: autoModulesQty,
+        rcQty,
+        psQty,
+
+        // ✅ Cabinet
+        cabinetEnabled,
+        cabinetQty,
+        cabinetUnitPrice,
+
+        controllerId,
+        controllerQty,
+        controllerPrice,
+        controllerLabel,
+
+        receivingPicked: rcPicked,
+        receivingUnitPrice: rcUnitPrice,
+
+        psuPicked,
+        psUnitPrice, // ✅ NEW: PSU final unit price
+        dispType,
+
+        technology,
+        moduleUnitPrice,
+
+        brands: {
+          module: moduleBrand,
+          controller: ctrlSystemBrand,
+          receiving: ctrlSystemBrand,
+          psu: "G-Energy",
+        },
+
+        capacity: {
+          rcModulesPerCard: getRcCapacity(
+            dispType,
+            model?.name || "",
+            ctrlSystemBrand,
+            catalog.rcCapacityHuidu,
+            catalog.rcCapacityNovastar
+          ),
+          psModulesPerUnit: getPsuCapacity(dispType, model?.name || "", catalog.psuCapacity),
+        },
+      },
+
+      accessories: {
+        accessoriesMode,
+        accessoriesValue: parseFloat(accessoriesValue || 0),
+      },
+      install: {
+        installMode,
+        installIsPercent,
+        installValue: parseFloat(installValue || 0),
+      },
+
+      tier: catalog.priceTiers.find((t) => t.id === tierId) || catalog.priceTiers[0],
+      customWarranty: customWarranty?.trim() || "",
+      defaultWarrantyYears,
+    }),
+    [
+      model,
+      dispType,
+      technology,
+      customer,
+      display,
+      autoModulesQty,
       rcQty,
       psQty,
+      cabinetEnabled,
+      cabinetQty,
+      cabinetUnitPrice,
       controllerId,
       controllerQty,
-      controllerPrice: controllerPriceById(controllerId),
-      accessoriesTk,
-      receivingPicked: rcPicked,
+      controllerPrice,
+      controllerLabel,
+      rcPicked,
+      rcUnitPrice,
       psuPicked,
-      capacity: {
-        rcModulesPerCard: getRcCapacity(dispType, model?.name || ""),
-        psModulesPerUnit: getPsuCapacity(dispType, model?.name || ""),
-      },
-    },
-    install: { installIsPercent, installValue },
-    tier: PRICE_TIERS.find(t => t.id === tierId) || PRICE_TIERS[0],
-  }), [
-    model, dispType, customer, display,
-    autoModulesQty, rcQty, psQty,
-    controllerId, controllerQty,
-    accessoriesTk, rcPicked, psuPicked,
-    installIsPercent, installValue, tierId
-  ]);
+      psUnitPrice,
+      moduleBrand,
+      ctrlSystemBrand,
+      accessoriesMode,
+      accessoriesValue,
+      installMode,
+      installValue,
+      tierId,
+      customWarranty,
+      defaultWarrantyYears,
+      moduleUnitPrice,
+      vatEnabled,
+      discountEnabled,
+      discountTk,
+      installIsPercent,
+      paymentTermId,
+      paymentTermLabel,
+      catalog.priceTiers,
+      catalog.rcCapacityHuidu,
+      catalog.rcCapacityNovastar,
+      catalog.psuCapacity,
+    ]
+  );
 
   useEffect(() => onChange?.(snapshot), [snapshot, onChange]);
 
-  const computeAndSend = () => {
-    const result = buildTotalsForCalc({
-      snapshot,
-      autoModulesQty,
-      moduleUnitPrice,
-      rcUnitPrice: rcPicked.unitPrice
-    });
-    onCalculated?.(result, snapshot);
-  };
+  const computeAndSend = useCallback(
+    (userSubmit = false) => {
+      const result = buildTotalsForCalc({
+        snapshot,
+        autoModulesQty,
+        moduleUnitPrice,
+        rcUnitPrice,
+        psUnitPrice, // ✅ NEW
+        cabinetQty,
+        cabinetUnitPrice,
+      });
+      onCalculated?.(result, snapshot, { userSubmit });
+    },
+    [snapshot, autoModulesQty, moduleUnitPrice, rcUnitPrice, psUnitPrice, cabinetQty, cabinetUnitPrice, onCalculated]
+  );
 
   const handleCalculate = (e) => {
     e?.preventDefault?.();
     hasCalculatedRef.current = true;
-    computeAndSend();
+    computeAndSend(true);
   };
 
   useEffect(() => {
-    if (hasCalculatedRef.current) computeAndSend();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    tierId, rcPicked, moduleUnitPrice, autoModulesQty,
-    rcQty, psQty, controllerQty, controllerId
-  ]);
+    if (hasCalculatedRef.current) computeAndSend(false);
+  }, [computeAndSend]);
 
   return (
     <form onSubmit={handleCalculate} className="form-grid">
+      {loading ? (
+        <div className="brand-sub" style={{ marginBottom: 8 }}>
+          Loading latest product catalog…
+        </div>
+      ) : null}
+      {error ? (
+        <div className="brand-sub" style={{ marginBottom: 8, color: "#b45309" }}>
+          {error} (using built-in defaults).{" "}
+          <button type="button" className="btn btn-light" style={{ marginLeft: 8 }} onClick={() => reload()}>
+            Retry
+          </button>
+        </div>
+      ) : null}
+
       {/* === Display Type === */}
       <section>
         <h3>Display Type</h3>
-        <div className="inline">
+
+        <div className="inline" style={{ flexWrap: "wrap", gap: 18 }}>
           <label className="inline">
-            <input
-              className="radio"
-              type="radio"
-              checked={dispType === "indoor"}
-              onChange={() => setDispType("indoor")}
-            />
+            <input className="radio" type="radio" checked={dispType === "indoor"} onChange={() => setDispType("indoor")} />
             <span>Indoor</span>
           </label>
+
           <label className="inline">
-            <input
-              className="radio"
-              type="radio"
-              checked={dispType === "outdoor"}
-              onChange={() => setDispType("outdoor")}
-            />
+            <input className="radio" type="radio" checked={dispType === "outdoor"} onChange={() => setDispType("outdoor")} />
             <span>Outdoor</span>
           </label>
+
+          {/* ✅ Cabinet options */}
+          <label className="inline" style={{ marginLeft: 50 }}>
+            <input className="radio" type="radio" checked={!cabinetEnabled} onChange={() => setCabinetEnabled(false)} />
+            <span>Without Cabinet</span>
+          </label>
+
+          <label className="inline">
+            <input className="radio" type="radio" checked={cabinetEnabled} onChange={() => setCabinetEnabled(true)} />
+            <span>With Cabinet</span>
+          </label>
         </div>
+
+        {/* ✅ Technology dropdown show/hide */}
+        {techOptions.length > 1 ? (
+          <div className="form-row" style={{ marginTop: 12 }}>
+            <label>
+              Technology
+              <select className="select" value={technology} onChange={(e) => setTechnology(e.target.value)}>
+                {techOptions.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {cabinetEnabled ? (
+              <label>
+                Cabinet Size
+                <input className="input" value="640mm × 480mm" readOnly />
+              </label>
+            ) : null}
+          </div>
+        ) : (
+          <div className="form-row" style={{ marginTop: 12 }}>
+            <label>
+              Technology
+              <input className="input" value="SMD" readOnly />
+            </label>
+
+            {cabinetEnabled ? (
+              <label>
+                Cabinet Size
+                <input className="input" value="640mm × 480mm" readOnly />
+              </label>
+            ) : null}
+          </div>
+        )}
       </section>
 
       {/* Product model */}
       <section>
         <h3>Product Model</h3>
+
         <div className="form-row">
           <label>
             Select Model (Pixel Pitch)
-            <select
-              className="select"
-              value={modelId}
-              onChange={e => setModelId(e.target.value)}
-            >
-              {modelsForType.map(m => (
-                <option key={m.id} value={m.id}>{m.name}</option>
+            <select className="select" value={modelId} onChange={(e) => setModelId(e.target.value)}>
+              {modelsForType.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
               ))}
             </select>
           </label>
 
           <label>
+            Module Brand
+            <select className="select" value={moduleBrand} onChange={(e) => setModuleBrand(e.target.value)}>
+              {(catalog.moduleBrands || []).map((b) => (
+                <option key={b.value} value={b.value}>
+                  {b.label || b.value}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="form-row">
+          <label>
             Width (ft)
             <input
               className="input"
               value={display.widthFt}
-              onChange={e => setDisplay(d => ({ ...d, widthFt: e.target.value }))}
+              onChange={(e) => setDisplay((d) => ({ ...d, widthFt: e.target.value }))}
               placeholder="e.g. 16"
             />
           </label>
+
           <label>
             Height (ft)
             <input
               className="input"
               value={display.heightFt}
-              onChange={e => setDisplay(d => ({ ...d, heightFt: e.target.value }))}
+              onChange={(e) => setDisplay((d) => ({ ...d, heightFt: e.target.value }))}
               placeholder="e.g. 9"
             />
           </label>
+
+          {/* ✅ LOCKED: Area auto only */}
           <label>
             Area (sft)
-            <input
-              className="input"
-              value={display.sft}
-              onChange={e => setDisplay(d => ({ ...d, sft: e.target.value }))}
-            />
+            <input className="input" value={display.sft || ""} readOnly title="Auto calculated from Width × Height" />
           </label>
         </div>
 
-        {/* Tier selector */}
         <div className="tier-row" style={{ marginTop: 12 }}>
-          {PRICE_TIERS.map(t => (
+          {catalog.priceTiers.map((t) => (
             <button
               type="button"
               key={t.id}
@@ -475,62 +674,89 @@ export default function PriceForm({ onChange, onCalculated }) {
           ))}
         </div>
 
-        {/* Auto-computed preview */}
+        <div className="form-row" style={{ marginTop: 10 }}>
+          <label>
+            Custom Warranty (optional)
+            <input
+              className="input"
+              placeholder={`Default: ${defaultWarrantyYears} Year(s)`}
+              value={customWarranty}
+              onChange={(e) => setCustomWarranty(e.target.value)}
+            />
+          </label>
+        </div>
+
         <div className="form-row" style={{ marginTop: 10 }}>
           <label>
             Modules (auto)
             <input className="input" value={autoModulesQty || 0} readOnly />
+            {cabinetEnabled ? (
+              <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
+                Cabinet: {cabinetQty || 0} pcs • 6 modules/cabinet
+              </div>
+            ) : null}
           </label>
+
           <label>
             Module Unit Price (Tk)
-            <input className="input" value={moduleUnitPrice ? toBDT(moduleUnitPrice) : "—"} readOnly />
-          </label>
-          <label>
-            Receiving Card (auto)
-            <input className="input" value={`${rcPicked.label} — ৳${rcPicked.unitPrice}`} readOnly />
+            <input
+              className="input"
+              type="number"
+              value={
+                modulePriceOverrideEnabled
+                  ? modulePriceOverrideStr
+                  : moduleUnitPriceAuto
+                  ? String(Math.round(moduleUnitPriceAuto))
+                  : ""
+              }
+              onFocus={() => {
+                setModulePriceOverrideEnabled(true);
+                setModulePriceOverrideStr((prev) => (prev !== "" ? prev : String(Math.round(moduleUnitPriceAuto || 0))));
+              }}
+              onChange={(e) => {
+                setModulePriceOverrideEnabled(true);
+                setModulePriceOverrideStr(e.target.value);
+              }}
+              onBlur={() => {
+                const v = parseFloat(modulePriceOverrideStr);
+                if (!modulePriceOverrideStr || isNaN(v) || v <= 0) {
+                  setModulePriceOverrideEnabled(false);
+                  setModulePriceOverrideStr(moduleUnitPriceAuto ? String(Math.round(moduleUnitPriceAuto)) : "");
+                }
+              }}
+              placeholder={moduleUnitPriceAuto ? String(Math.round(moduleUnitPriceAuto)) : "—"}
+            />
           </label>
         </div>
-      </section>
 
-      {/* Quantities */}
-      <section>
-        <h3>Quantities</h3>
-        <div className="form-row">
+        <div className="form-row" style={{ marginTop: 10 }}>
           <label>
-            Receiving Cards (pcs)
-            <span style={{fontSize:12, color:"#64748b"}}>
-              auto: {autoRcQty} (cap: {(() => {
-                const p = parsePitch(model?.name || ""); return RC_CAPACITY[dispType]?.[p] ?? 12;
-              })()} modules/RC)
-            </span>
-            <input
-              className="input"
-              type="number"
-              value={rcQty}
-              onChange={e => setRcQty(parseFloat(e.target.value || 0))}
-            />
+            Receiving Card (auto)
+            <input className="input" value={rcPicked.label} readOnly />
           </label>
+
           <label>
-            Power Supplies (pcs)
-            <span style={{fontSize:12, color:"#64748b"}}>
-              auto: {autoPsQty} (cap: {(() => {
-                const p = parsePitch(model?.name || ""); return PSU_CAPACITY[dispType]?.[p] ?? 6;
-              })()} modules/PSU) • {psuPicked.model}
-            </span>
+            Receiving Card Unit Price (Tk)
             <input
               className="input"
               type="number"
-              value={psQty}
-              onChange={e => setPsQty(parseFloat(e.target.value || 0))}
-            />
-          </label>
-          <label>
-            Controller Qty
-            <input
-              className="input"
-              type="number"
-              value={controllerQty}
-              readOnly
+              value={rcPriceOverrideEnabled ? rcPriceOverrideStr : rcUnitPriceAuto ? String(Math.round(rcUnitPriceAuto)) : ""}
+              onFocus={() => {
+                setRcPriceOverrideEnabled(true);
+                setRcPriceOverrideStr((prev) => (prev !== "" ? prev : String(Math.round(rcUnitPriceAuto || 0))));
+              }}
+              onChange={(e) => {
+                setRcPriceOverrideEnabled(true);
+                setRcPriceOverrideStr(e.target.value);
+              }}
+              onBlur={() => {
+                const v = parseFloat(rcPriceOverrideStr);
+                if (!rcPriceOverrideStr || isNaN(v) || v <= 0) {
+                  setRcPriceOverrideEnabled(false);
+                  setRcPriceOverrideStr(rcUnitPriceAuto ? String(Math.round(rcUnitPriceAuto)) : "");
+                }
+              }}
+              placeholder={rcUnitPriceAuto ? String(Math.round(rcUnitPriceAuto)) : "—"}
             />
           </label>
         </div>
@@ -538,90 +764,401 @@ export default function PriceForm({ onChange, onCalculated }) {
 
       {/* Controller */}
       <section>
-        <h3>Controller</h3>
+        <h3>Controller and Receiving Card Brand</h3>
+
         <div className="form-row">
           <label>
-            Controller Model
-            <select
-              className="select"
-              value={controllerId}
-              onChange={e => setControllerId(e.target.value)}
-            >
-              {CONTROLLERS.filter(c => c.kind !== "receiving").map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.label} — ৳{c.price.toLocaleString("en-BD")}
+            Controller & RC Brand
+            <select className="select" value={ctrlSystemBrand} onChange={(e) => setCtrlSystemBrand(e.target.value)}>
+              {(catalog.controllerSystemBrands || []).map((b) => (
+                <option key={b.value} value={b.value}>
+                  {b.label || b.value}
                 </option>
               ))}
             </select>
-            {autoController ? (
-              <div className="hint" style={{fontSize:12, color:"#64748b"}}>
-                Suggested: {autoController.id} (cap {autoController.cap.toLocaleString()} px) • Qty 1
-              </div>
-            ) : (
-              totalPixels > 0 && (
-                <div className="hint" style={{fontSize:12, color:"#ef4444"}}>
-                  No controller auto-selected (pixels exceed maximum cap)
-                </div>
-              )
-            )}
           </label>
+
           <label>
-            Accessories / Cabinet (Tk)
+            Controller Model
+            <select className="select" value={controllerId} onChange={(e) => setControllerId(e.target.value)}>
+              <option value="">-- No controller (pixel over) --</option>
+
+              {ctrlSystemBrand === "Novastar"
+                ? (catalog.novastarControllers[dispType] || []).map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label} — ৳{Math.round(c.price).toLocaleString("en-BD")}
+                    </option>
+                  ))
+                : catalog.controllers.filter((c) => c.kind !== "receiving").map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label} — ৳{Math.round(c.price).toLocaleString("en-BD")}
+                    </option>
+                  ))}
+            </select>
+          </label>
+
+          <label>
+            Controller Price (Tk)
             <input
               className="input"
               type="number"
-              value={accessoriesTk}
-              onChange={e => setAccessoriesTk(parseFloat(e.target.value || 0))}
+              value={
+                controllerPriceOverrideEnabled
+                  ? controllerPriceOverrideStr
+                  : controllerPriceAuto
+                  ? String(Math.round(controllerPriceAuto))
+                  : ""
+              }
+              onFocus={() => {
+                setControllerPriceOverrideEnabled(true);
+                setControllerPriceOverrideStr((prev) => (prev !== "" ? prev : String(Math.round(controllerPriceAuto || 0))));
+              }}
+              onChange={(e) => {
+                setControllerPriceOverrideEnabled(true);
+                setControllerPriceOverrideStr(e.target.value);
+              }}
+              onBlur={() => {
+                const v = parseFloat(controllerPriceOverrideStr);
+                if (!controllerPriceOverrideStr || isNaN(v) || v <= 0) {
+                  setControllerPriceOverrideEnabled(false);
+                  setControllerPriceOverrideStr(controllerPriceAuto ? String(Math.round(controllerPriceAuto)) : "");
+                }
+              }}
+              placeholder={controllerPriceAuto ? String(Math.round(controllerPriceAuto)) : "—"}
+              disabled={!controllerId}
             />
           </label>
+        </div>
+      </section>
+      
+
+      {/* Quantities */}
+      <section>
+        <h3>Quantities</h3>
+
+        {cabinetEnabled ? (
+          <div className="form-row">
+            <label>
+              Cabinet (auto)
+              <span style={{ fontSize: 12, color: "#64748b" }}>auto: {cabinetQty || 0} (640mm × 480mm)</span>
+              <input className="input" type="number" value={cabinetQty || 0} readOnly />
+            </label>
+
+            {/* ✅ Cabinet Case Unit Price manual override */}
+            <label>
+              Cabinet Case Unit Price (Tk)
+              <span style={{ fontSize: 12, color: "#64748b" }}>
+                default: ৳{Math.round(cabinetUnitPriceAuto).toLocaleString("en-BD")}
+              </span>
+              <input
+                className="input"
+                type="number"
+                value={
+                  cabinetPriceOverrideEnabled
+                    ? cabinetPriceOverrideStr
+                    : cabinetUnitPriceAuto
+                    ? String(Math.round(cabinetUnitPriceAuto))
+                    : ""
+                }
+                onFocus={() => {
+                  setCabinetPriceOverrideEnabled(true);
+                  setCabinetPriceOverrideStr((prev) => (prev !== "" ? prev : String(Math.round(cabinetUnitPriceAuto || 0))));
+                }}
+                onChange={(e) => {
+                  setCabinetPriceOverrideEnabled(true);
+                  setCabinetPriceOverrideStr(e.target.value);
+                }}
+                onBlur={() => {
+                  const v = parseFloat(cabinetPriceOverrideStr);
+                  if (!cabinetPriceOverrideStr || isNaN(v) || v <= 0) {
+                    setCabinetPriceOverrideEnabled(false);
+                    setCabinetPriceOverrideStr(String(Math.round(cabinetUnitPriceAuto || 0)));
+                  }
+                }}
+                placeholder={cabinetUnitPriceAuto ? String(Math.round(cabinetUnitPriceAuto)) : "—"}
+              />
+            </label>
+          </div>
+        ) : null}
+
+        <div className="form-row" style={{ marginTop: 10 }}>
+          <label>
+            Receiving Cards (pcs)
+            <span style={{ fontSize: 12, color: "#64748b" }}>
+              {cabinetEnabled
+                ? `auto: ${autoRcQty} (1 per cabinet)`
+                : `auto: ${autoRcQty} (cap: ${getRcCapacity(
+                    dispType,
+                    model?.name || "",
+                    ctrlSystemBrand,
+                    catalog.rcCapacityHuidu,
+                    catalog.rcCapacityNovastar
+                  )} modules/RC)`}
+            </span>
+            <input
+              className="input"
+              type="number"
+              value={rcQty}
+              onChange={(e) => setRcQty(parseFloat(e.target.value || 0))}
+              disabled={cabinetEnabled}
+              readOnly={cabinetEnabled}
+              title={cabinetEnabled ? "With cabinet, RC qty is fixed = cabinet qty" : ""}
+            />
+          </label>
+
+          <label>
+            Power Supplies (pcs)
+            <span style={{ fontSize: 12, color: "#64748b" }}>
+              {cabinetEnabled
+                ? `auto: ${autoPsQty} (1 per cabinet) • ${psuPicked.model}`
+                : `auto: ${autoPsQty} (cap: ${getPsuCapacity(dispType, model?.name || "", catalog.psuCapacity)} modules/PSU) • ${
+                    psuPicked.model
+                  }`}
+            </span>
+            <input
+              className="input"
+              type="number"
+              value={psQty}
+              onChange={(e) => setPsQty(parseFloat(e.target.value || 0))}
+              disabled={cabinetEnabled}
+              readOnly={cabinetEnabled}
+              title={cabinetEnabled ? "With cabinet, PSU qty is fixed = cabinet qty" : ""}
+            />
+          </label>
+
+          {/* ✅ NEW: Power Supply Unit Price manual override */}
+          <label>
+            Power Supply Unit Price (Tk)
+            <span style={{ fontSize: 12, color: "#64748b" }}>
+              default: ৳{Math.round(psUnitPriceAuto).toLocaleString("en-BD")}
+            </span>
+            <input
+              className="input"
+              type="number"
+              value={psPriceOverrideEnabled ? psPriceOverrideStr : psUnitPriceAuto ? String(Math.round(psUnitPriceAuto)) : ""}
+              onFocus={() => {
+                setPsPriceOverrideEnabled(true);
+                setPsPriceOverrideStr((prev) => (prev !== "" ? prev : String(Math.round(psUnitPriceAuto || 0))));
+              }}
+              onChange={(e) => {
+                setPsPriceOverrideEnabled(true);
+                setPsPriceOverrideStr(e.target.value);
+              }}
+              onBlur={() => {
+                const v = parseFloat(psPriceOverrideStr);
+                if (!psPriceOverrideStr || isNaN(v) || v <= 0) {
+                  setPsPriceOverrideEnabled(false);
+                  setPsPriceOverrideStr(psUnitPriceAuto ? String(Math.round(psUnitPriceAuto)) : "");
+                }
+              }}
+              placeholder={psUnitPriceAuto ? String(Math.round(psUnitPriceAuto)) : "—"}
+            />
+          </label>
+        </div>
+      </section>
+
+      {/* Structure & Accessories */}
+      <section>
+        <h3>Structure & Accessories</h3>
+
+        <div className="inline" style={{ marginBottom: 10 }}>
+          <label className="inline">
+            <input className="radio" type="radio" checked={accessoriesMode === "auto"} onChange={() => setAccessoriesMode("auto")} />
+            <span>Auto</span>
+          </label>
+
+          <label className="inline">
+            <input
+              className="radio"
+              type="radio"
+              checked={accessoriesMode === "manual"}
+              onChange={() => setAccessoriesMode("manual")}
+            />
+            <span>Manual</span>
+          </label>
+        </div>
+
+        <div className="install-row">
+          <div className="install-box">
+            <div className="install-title">Auto Accessories</div>
+            <div className="install-hint">Auto mode এ area অনুযায়ী Structure & Accessories auto-calculate হবে (Outdoor হলে multiplier apply হবে)।</div>
+          </div>
+
+          <div className={`install-box manual ${accessoriesMode === "auto" ? "is-disabled" : ""}`}>
+            <div className="install-title">Manual Override</div>
+
+            <input
+              className="input"
+              style={{ width: 180, marginTop: 10 }}
+              type="number"
+              value={accessoriesValue}
+              onFocus={() => zeroClearOnFocus(accessoriesValue, setAccessoriesValue, accessoriesMode === "auto")}
+              onChange={(e) => setAccessoriesValue(e.target.value)}
+              onBlur={() => zeroRestoreOnBlur(accessoriesValue, setAccessoriesValue, accessoriesMode === "auto")}
+              disabled={accessoriesMode === "auto"}
+              placeholder="e.g. 50000 (Tk)"
+            />
+
+            <div className="install-hint" style={{ marginTop: 6 }}>
+              শুধু Manual mode এ কাজ করবে।
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Installation */}
       <section>
         <h3>Installation Cost</h3>
-        <div className="inline">
+
+        <div className="inline" style={{ marginBottom: 10 }}>
           <label className="inline">
-            <input
-              className="radio"
-              type="radio"
-              checked={!installIsPercent}
-              onChange={() => setInstallIsPercent(false)}
-            />
-            <span>Flat (Tk)</span>
+            <input className="radio" type="radio" checked={installMode === "auto"} onChange={() => setInstallMode("auto")} />
+            <span>Auto</span>
           </label>
+
           <label className="inline">
-            <input
-              className="radio"
-              type="radio"
-              checked={installIsPercent}
-              onChange={() => setInstallIsPercent(true)}
-            />
-            <span>Percent of subtotal (%)</span>
+            <input className="radio" type="radio" checked={installMode === "manual"} onChange={() => setInstallMode("manual")} />
+            <span>Manual</span>
           </label>
         </div>
-        <input
-          className="input"
-          style={{ width: 140 }}
-          type="number"
-          value={installValue}
-          onChange={e => setInstallValue(parseFloat(e.target.value || 0))}
-        />
+
+        <div className="install-row">
+          <div className="install-box">
+            <div className="install-title">Auto Installation</div>
+            <div className="install-hint">Auto mode এ area অনুযায়ী installation cost auto-calculate হবে।</div>
+          </div>
+
+          <div className={`install-box manual ${installMode === "auto" ? "is-disabled" : ""}`}>
+            <div className="install-title">Manual Override</div>
+
+            <input
+              className="input"
+              style={{ width: 180, marginTop: 10 }}
+              type="number"
+              value={installValue}
+              onFocus={() => zeroClearOnFocus(installValue, setInstallValue, installMode === "auto")}
+              onChange={(e) => setInstallValue(e.target.value)}
+              onBlur={() => zeroRestoreOnBlur(installValue, setInstallValue, installMode === "auto")}
+              disabled={installMode === "auto"}
+              placeholder="e.g. 80000 (Tk)"
+            />
+
+            <div className="install-hint" style={{ marginTop: 6 }}></div>
+          </div>
+        </div>
+      </section>
+
+      {/* ✅ VAT option */}
+      <section>
+        <h3>VAT</h3>
+
+        <div className="inline" style={{ gap: 18 }}>
+          <label className="inline">
+            <input className="radio" type="radio" checked={!vatEnabled} onChange={() => setVatEnabled(false)} />
+            <span>Without VAT</span>
+          </label>
+
+          <label className="inline">
+            <input className="radio" type="radio" checked={vatEnabled} onChange={() => setVatEnabled(true)} />
+            <span>With VAT (10%)</span>
+          </label>
+        </div>
+
+        <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
+          VAT enabled হলে সব আইটেমের Unit Price +5% (Tax) হবে, তারপর Total-এর উপর 10% VAT যোগ হবে।
+        </div>
+      </section>
+
+      {/* ✅ Discount toggle */}
+      <section>
+        <h3>Discount</h3>
+
+        <div className="inline" style={{ gap: 18 }}>
+          <label className="inline">
+            <input
+              className="radio"
+              type="radio"
+              checked={!discountEnabled}
+              onChange={() => {
+                setDiscountEnabled(false);
+                setDiscountTk(0);
+              }}
+            />
+            <span>Without Discount</span>
+          </label>
+
+          <label className="inline">
+            <input className="radio" type="radio" checked={discountEnabled} onChange={() => setDiscountEnabled(true)} />
+            <span>With Discount</span>
+          </label>
+        </div>
+
+        {discountEnabled ? (
+          <>
+            <div className="form-row" style={{ marginTop: 10 }}>
+              <label>
+                Special Discount (Tk)
+                <input
+                  className="input"
+                  type="number"
+                  value={discountTk}
+                  onFocus={() => zeroClearOnFocus(discountTk, setDiscountTk, false)}
+                  onChange={(e) => setDiscountTk(e.target.value)}
+                  onBlur={() => zeroRestoreOnBlur(discountTk, setDiscountTk, false)}
+                  placeholder="e.g. 5000"
+                />
+              </label>
+            </div>
+
+            <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
+              VAT সহ Grand Total থেকে এই Discount বাদ দিয়ে Payable হিসাব হবে।
+            </div>
+          </>
+        ) : null}
+      </section>
+
+      {/* ✅ Payment Terms selection */}
+      <section>
+        <h3>Payment Terms (For T&amp;C)</h3>
+
+        <div className="inline" style={{ gap: 18, flexWrap: "wrap" }}>
+          {catalog.paymentTerms.map((p) => (
+            <label key={p.id} className="inline" style={{ minWidth: 260 }}>
+              <input className="radio" type="radio" checked={paymentTermId === p.id} onChange={() => setPaymentTermId(p.id)} />
+              <span>{p.label}</span>
+            </label>
+          ))}
+        </div>
+
+        <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
+          Terms &amp; Conditions এর “Payment Terms” সেকশন এই সিলেকশন অনুযায়ী auto update হবে।
+        </div>
       </section>
 
       {/* Customer */}
       <section>
-        <h3>Customer Information</h3>
+        <h3>Client's Information</h3>
         <div className="form-row">
-          <TextField label="Customer Name" value={customer.name}    onChange={v => setCustomer(c => ({ ...c, name: v }))} />
-          <TextField label="Company Name"  value={customer.company} onChange={v => setCustomer(c => ({ ...c, company: v }))} />
-          <TextField label="Mobile Number" value={customer.mobile}  onChange={v => setCustomer(c => ({ ...c, mobile: v }))} />
-          <TextField label="Address"       value={customer.address} onChange={v => setCustomer(c => ({ ...c, address: v }))} />
+          <TextField label="Name" value={customer.name} onChange={(v) => setCustomer((c) => ({ ...c, name: v }))} />
+          <TextField
+            label="Designation"
+            value={customer.position}
+            onChange={(v) => setCustomer((c) => ({ ...c, position: v }))}
+          />
+          <TextField
+            label="Organization Name"
+            value={customer.company}
+            onChange={(v) => setCustomer((c) => ({ ...c, company: v }))}
+          />
+          <TextField label="Mobile Number" value={customer.mobile} onChange={(v) => setCustomer((c) => ({ ...c, mobile: v }))} />
+          <TextField label="Address" value={customer.address} onChange={(v) => setCustomer((c) => ({ ...c, address: v }))} />
         </div>
       </section>
 
       <div className="inline" style={{ marginTop: 6 }}>
-        <button type="submit" className="btn btn-primary">Calculate</button>
+        <button type="submit" className="btn btn-primary">
+          Calculate
+        </button>
       </div>
     </form>
   );
@@ -631,7 +1168,8 @@ function TextField({ label, value, onChange }) {
   return (
     <label>
       {label}
-      <input className="input" value={value} onChange={e => onChange(e.target.value)} />
+      <input className="input" value={value} onChange={(e) => onChange(e.target.value)} />
     </label>
   );
 }
+

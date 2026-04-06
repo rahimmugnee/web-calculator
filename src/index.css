@@ -1,101 +1,136 @@
 /* ======================================================================
-   MUGNEE UI — COMMENTED STRUCTURE (NO CODE CHANGES)
+   MUGNEE UI — CLEAN (NO DUPLICATES) + TABLE BORDER 1PX CONSISTENT
    ----------------------------------------------------------------------
-   📚 TABLE OF CONTENTS
+   TABLE OF CONTENTS
    01) Brand Theme Tokens
-   02) Topbar (Header + Nav)
-   03) Page Layout (Base + Shell + Grid + Cards)
-   04) Topbar Nav Links (Pill Links)
-   05) Section Headings
-   06) Forms (Grid, Inputs, Radios, Inline)
-   07) Buttons (Primary)
-   08) Summary Bar (Small KPI Tiles)
-   09) Invoice — Base (A4 wrapper, Inner, Legibility, Responsive, Print)
-   10) Invoice — Overrides (Borderless, Dark Pad, Scale & Margin Fix)
-   11) Invoice — Brand Row / Meta / Table / Footers (General)
-   12) Invoice — Dark Skin
-   13) Invoice — Overlay Panel (Readable on Pad)
-   14) Invoice — Ref/Date + Customer Info + Item Text + Signatures
-   15) Invoice — Table (Full Grid Lines)
-   16) Invoice — Price Title & Tier Badges
-   17) Invoice — Fixes (Visibility + Spacing + Preview Mode)
-   18) Invoice — Bigger / Bigger-XL / PDF Scale Modes
-   19) Invoice — A4 Wrapper & Pad Layering (Safe Zones, Scrims)
-   20) Invoice — Final Invoice Overrides (Exact A4 + Hairline Fix)
-   21) Invoice — Final Compact + Pad Fix
-   22) Utilities (Print Quality, Image Rendering)
+   02) Base Layout (HTML/BODY/App Shell/Grid/Cards)
+   03) Topbar (Header + Nav)
+   04) Section Headings
+   05) Forms (Grid, Inputs, Radios, Inline)
+   06) Buttons
+   07) Summary Bar
+   08) Invoice — Base (A4 wrapper, Inner, Responsive, Print)
+   09) Invoice — Pad/Dark/Preview Layering
+   10) Invoice — Blocks (Info, Panel, Table, Title, Badges, Signatures)
+   11) Invoice — Size Modes (bigger/xl/pdf/compact)
+   12) Invoice — Preview/Fit helpers
+   13) Utilities (Print Quality, Image Rendering)
+   14) Footer + Extra UI (Calculator footer, DS section, Installation)
    ====================================================================== */
 
-
 /* ========================= 01) BRAND THEME TOKENS =================== */
-/* Global CSS variables used across UI */
 :root{
-  --bg:#f7f9fb;
-  --surface:#fff;
-  --ink:#0f172a;
-  --muted:#667085;
-  --brand:#059669;          /* emerald-600 */
-  --brand-700:#047857;
-  --border:#e6e9ef;
-  --ring:rgba(5,150,105,.35);
-  --shadow:0 14px 34px rgba(2,6,23,.07), 0 2px 8px rgba(2,6,23,.05);
+  --ui-font: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  --invoice-font: var(--ui-font);
 }
 
 
-/* ============================ 02) TOPBAR ============================ */
-/* Sticky header bar with gradient brand background */
-.topbar{position:sticky;top:0;z-index:50;
-  background:linear-gradient(90deg,#0aa5a5,#059669);color:#fff;
-  box-shadow:0 10px 30px rgba(2,6,23,.2)}
-.topbar .inner{max-width:1200px;margin:auto;display:flex;align-items:center;gap:14px;padding:12px 18px}
-.topbar-logo{height:26px;width:auto}
-.topbar-title{font-weight:800;letter-spacing:.25px}
-.badge{margin-left:auto;background:rgba(255,255,255,.16);padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.25);font-size:12.5px}
 
 
-/* ========================== 03) PAGE LAYOUT ========================= */
-/* Base HTML sizing + App shell + Grid container + Card */
-html, body { height: 100%; margin: 0; padding: 0; } /* ⬅️ gutter remove */
+
+:root{
+  --bg:#f7f9fb;
+  --surface:#ffffff;
+  --ink:#000000;
+  --muted:#000000;
+
+  --brand:#0b1220;
+  --brand-700:#0b1220;
+
+  --border:#000000;
+  --ring:rgba(10, 41, 31, 0.35);
+  --shadow:0 14px 34px rgba(2,6,23,.07), 0 2px 8px rgba(2,6,23,.05);
+
+  /* Invoice table tokens */
+  --tbl-border:#000000;
+  --tbl-header:#000000;
+  --tbl-zebra:#ffffff;
+  --tbl-subtle:#ffffff;
+  --tbl-accent:#ffffff;
+}
+
+/* ========================== 02) BASE LAYOUT ========================= */
+html, body { height: 100%; margin: 0; padding: 0; }
 #root { height: 100%; }
 
 body{
-  margin: 0; /* safety */
-  background: var(--bg);
-  color: var(--ink);
-  font: 15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
 }
 
-.app-shell{min-height:100%;padding:22px}
-.container-xxl{max-width:1200px;margin:auto;display:grid;gap:22px;grid-template-columns:1fr}
-@media (min-width:1024px){.container-xxl{grid-template-columns:1fr 1fr}}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:22px}
+.app-shell{ min-height:100%; padding:22px; }
 
-/* Topbar (duplicate full-bleed safety; keep as-is) */
+.container-xxl{
+  max-width:1400px;
+  margin:auto;
+  display:grid;
+  gap:22px;
+  grid-template-columns:1fr;
+}
+@media (min-width:1024px){
+  .container-xxl{ grid-template-columns:1fr 1fr; }
+}
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  padding:22px;
+}
+
+/* Prevent invoice pushing page right (right card only) */
+.container-xxl > .card:last-child{
+  overflow-x:auto !important;
+}
+.container-xxl > .card:last-child #invoice-root{
+  display:inline-block !important;
+}
+
+/* ============================ 03) TOPBAR ============================ */
 .topbar{
-  position:sticky; top:0; z-index:50;
-  left:0; right:0; width:100%;          /* ⬅️ full-bleed */
-  background:linear-gradient(90deg,#0aa5a5,#059669);
+  position:sticky;
+  top:0;
+  z-index:50;
+  left:0; right:0; width:100%;
+  background:var(--brand);
   color:#fff;
   box-shadow:0 10px 30px rgba(2,6,23,.2);
 }
-
-
-/* ======================= 04) TOPBAR NAV LINKS ======================= */
-/* Right-aligned pill-style links in topbar */
-.topbar-nav{
-  margin-left: auto;                 /* title-এর ডান দিকে ঠেলে দেবে */
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.topbar .inner{
+  max-width:1200px;
+  margin:auto;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:12px 18px;
+}
+.topbar-logo{ height:26px; width:auto; }
+.topbar-title{ font-weight:800; letter-spacing:.25px; }
+.badge{
+  margin-left:auto;
+  background:rgba(255,255,255,.16);
+  padding:6px 12px;
+  border-radius:999px;
+  border:1px solid rgba(0,0,0,.25);
+  font-size:12.5px;
 }
 
-/* Pill links (hover tone changes) */
+/* Topbar Nav Links */
+.topbar-nav{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
 .top-link{
   display:inline-flex;
   align-items:center;
   padding:6px 12px;
   border-radius:999px;
-  border:1px solid rgba(0, 0, 0, 0.35);
+  border:1px solid rgba(0,0,0,.35);
   color:#fff;
   text-decoration:none;
   font-weight:700;
@@ -105,513 +140,38 @@ body{
 }
 .top-link:hover{
   background:rgba(255,255,255,.22);
-  border-color:rgba(0, 0, 0, 0.55);
+  border-color:rgba(0,0,0,.55);
 }
 
+/* ======================== 04) SECTION HEADERS ======================= */
+.card h3{ font-weight:700; margin:12px 0 10px; }
+.section-head{ display:flex; align-items:center; gap:10px; margin:6px 0 14px; }
+.section-head .line{ height:1px; background:var(--border); flex:1; }
 
-/* ======================== 05) SECTION HEADERS ======================= */
-/* Card titles + divider line component */
-.card h3{font-weight:700;margin:12px 0 10px}
-.section-head{display:flex;align-items:center;gap:10px;margin:6px 0 14px}
-.section-head .line{height:1px;background:var(--border);flex:1}
+/* =============================== 05) FORMS ========================== */
+.form-grid{ display:grid; gap:18px; }
 
-
-/* =============================== 06) FORMS ========================== */
-/* Grid forms, inputs, selects, radios, inline groups */
-.form-grid{display:grid;gap:18px}
-.form-row{display:grid;gap:12px}
-@media (min-width:640px){.form-row{grid-template-columns:repeat(3,1fr)}}
-label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px}
-.input,.select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;transition:.15s}
-.input:focus,.select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px var(--ring)}
-.inline{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-.radio{appearance:none;width:16px;height:16px;border:2px solid var(--border);border-radius:50%;position:relative}
-.radio:checked{border-color:var(--brand)}
-.radio:checked::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--brand)}
-
-
-/* ============================== 07) BUTTONS ========================= */
-/* Primary button + hover (solid brand) */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:12px;border:1px solid transparent;font-weight:700;cursor:pointer;user-select:none}
-.btn-primary{background:var(--brand);color:#fff}
-.btn-primary:hover{background:var(--brand-700)}
-
-
-/* ============================ 08) SUMMARY BAR ======================= */
-/* 3-column KPI tiles at >=540px; stacked otherwise */
-.summary{display:grid;gap:12px;margin-top:10px}
-@media (min-width:540px){.summary{grid-template-columns:repeat(3,1fr)}}
-.sum-card{background:#f1f8f5;border:1px solid #d7efe4;border-radius:12px;padding:12px 14px}
-.sum-label{font-size:12.5px;color:#0f5132}
-.sum-value{font-size:18px;font-weight:800;color:#065f46}
-
-
-/* ===================== 09) INVOICE — BASE LAYOUT ==================== */
-/* A4 wrapper, inner padding, legibility, responsive & print sizing */
-.invoice-wrap{
-  position:relative;
-  margin-inline:auto;
-  background:#fff;
-  border:1px solid var(--border);
-  width:794px;        /* A4 @ ~96dpi */
-  height:1123px;      /* A4 @ ~96dpi */
-  border-radius:14px;
-  overflow:hidden;
-  box-shadow:var(--shadow);
+.form-row{
+  display:grid;
+  gap:12px;
+  grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+}
+@media (min-width:640px){
+  .form-row.form-3{ grid-template-columns:repeat(3,1fr); }
 }
 
-.invoice-inner{ position:relative; z-index:1; padding:28px; }
-
-/* on-screen legibility */
-body{ line-height:1.6; }
-.table td, .table thead th{ line-height:1.45; }
-
-/* ছোট স্ক্রিনে responsive */
-@media (max-width:900px){
-  .invoice-wrap{ width:100%; height:auto; border-radius:12px; }
-  .invoice-inner{ padding:18px; }
-}
-
-/* Print-এও A4 মাপ বজায় রাখো */
-@media print{
-  .invoice-wrap{ width:794px; height:1123px; }
-}
-
-
-/* ============== 10) INVOICE — OVERRIDES (BORDERLESS/TIGHT) ========= */
-/* Exact A4, no outer border/shadow; pad image provides bg */
-.invoice-wrap{
-  position: relative !important;
-  margin-inline: auto !important;
-  background: transparent !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  width: 794px !important;    /* A4 @ ~96dpi */
-  height: 1123px !important;  /* A4 @ ~96dpi */
-  overflow: hidden !important;
-}
-
-/* Safe padding for dark pad variant */
-.invoice-dark .invoice-inner{
-  padding: 130px 26px 88px 26px !important; /* top right bottom left */
-  color: #fff;
-}
-
-/* Mobile override for tight pad */
-@media (max-width:900px){
-  .invoice-wrap{ width:100% !important; height:auto !important; }
-  .invoice-dark .invoice-inner{ padding: 90px 18px 70px 18px !important; }
-}
-
-/* Print override (borderless) */
-@media print{
-  .invoice-wrap{
-    width: 794px !important;
-    height: 1123px !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-  }
-}
-
-/* ==== INVOICE SCALE & MARGIN FIX (preview enlargement) ==== */
-/* NOTE: padding typo kept intentionally per original ("40px px") */
-.invoice-inner {
-  padding: 20px 15px 40px 18px !important; /* top/right/bottom/left */
-  transform: scale(1.08);
-  transform-origin: top center;
-}
-
-
-/* Wider preview wrapper (still A4 in print) */
-.invoice-wrap {
-  border: none !important;                 /* no visible border */
-  width: 820px !important;                 /* slightly wider A4 */
-  min-height: 1123px;
-  margin: 0 auto;
-  box-shadow: none !important;             /* remove shadow wrap */
-}
-
-/* Background image sizing */
-.invoice-pad-bg {
-  object-fit: cover;
-  width: 100%;
-  height: 100%;
-  opacity: 0.25;
-}
-
-/* Print fine-tune (disable preview zoom) */
-@media print {
-  .invoice-inner {
-    transform: none !important;
-    padding: 72px 36px 72px 36px !important; /* balanced margins for A4 */
-  }
-  .invoice-wrap {
-    width: 794px !important;
-    height: 1123px !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-}
-
-
-/* ============ 11) INVOICE — BRAND/META/TABLE/FOOT (GEN) ============ */
-.brand-row{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}
-.brand-left{display:flex;align-items:center;gap:14px}
-.brand-logo{height:46px;width:auto}
-.brand-title{font-size:22px;font-weight:900;letter-spacing:.2px}
-.brand-sub{font-size:12.5px;color:var(--muted);margin-top:-2px}
-
-.meta-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}
-@media (min-width:620px){.meta-grid{grid-template-columns:1fr 1fr}}
-.meta-item{font-size:13px}
-.meta-item b{font-weight:700}
-
-/* Base table inside invoice (rounded, zebra, totals) */
-.table{width:100%;border-collapse:separate;border-spacing:0;margin-top:12px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.table thead th{background:#f8fafc;color:#0f172a;font-weight:700;font-size:13px;padding:10px 12px;border-bottom:1px solid var(--border);text-align:left}
-.table td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px}
-.table tr:nth-child(even) td{background:#fcfdfd}
-.td-right{text-align:right}
-.row-subtle{background:#f6f7fb}
-.row-accent{background:#ecfdf5}
-.total-big{font-size:16px;font-weight:800}
-.invoice-foot{margin-top:16px;color:var(--muted);font-size:12px}
-
-/* Responsive adjustments for invoice */
-@media (max-width:900px){
-  .invoice-wrap{width:100%;min-height:auto;border-radius:12px}
-  .invoice-inner{padding:18px}
-  .brand-logo{height:38px}
-  .table thead th,.table td{padding:8px 10px;font-size:13px}
-}
-
-/* Print flattening (no shadows/borders outside page) */
-@media print{
-  body{background:#fff}
-  .app-shell{padding:0}
-  .container-xxl{display:block}
-  .card{box-shadow:none;border:none;padding:0}
-  .invoice-wrap{border:none;box-shadow:none;width:auto;min-height:auto}
-}
-
-
-/* ======================== 12) INVOICE — DARK SKIN =================== */
-/* For artworked pads; keeps contrast readable */
-.invoice-dark .invoice-inner{
-  /* Pad এর ডেকোরেশন এড়াতে safe padding */
-  padding: 96px 42px 90px 42px;
-  color: #fff;
-}
-.invoice-dark .brand-sub{ color: rgba(255,255,255,.78) }
-.invoice-dark .table{
-  border-color: rgba(0, 0, 0, 0.18);
-}
-.invoice-dark .table thead th{
-  background: rgba(255,255,255,.08);
-  color: #fff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.18);
-}
-.invoice-dark .table td{
-  color:#fff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-}
-.invoice-dark .table tr:nth-child(even) td{
-  background: rgba(255,255,255,.03);
-}
-.invoice-dark .row-subtle td{
-  background: rgba(255,255,255,.06);
-}
-.invoice-dark .row-accent td{
-  background: rgba(16,185,129,.18); /* emerald tint */
-}
-.invoice-dark .invoice-foot{ color: rgba(255,255,255,.75) }
-
-/* Small screens padding for dark mode */
-@media (max-width:900px){
-  .invoice-dark .invoice-inner{ padding: 70px 24px 70px 24px; }
-}
-
-
-/* ================== 13) INVOICE — OVERLAY PANEL ==================== */
-/* White readable card panel that sits over colorful pad */
-.invoice-panel{
-  margin-top: 10px;
-  background: rgba(255,255,255,.94);
-  backdrop-filter: blur(2px);
-  border: 1px solid rgba(15,23,42,.08);
-  border-radius: 14px;
-  padding: 16px;
-  color: #0f172a;
-}
-
-/* Force dark ink inside panel table */
-.invoice-panel .table thead th{
-  background:#f8fafc;
-  color:#0f172a;
-  border-bottom:1px solid #e5e7eb;
-}
-.invoice-panel .table td{
-  color:#0f172a;
-  border-bottom:1px solid #eef2f7;
-}
-.invoice-panel .row-subtle td{ background:#f8fafc; }
-.invoice-panel .row-accent td{ background:#ecfdf5; }
-.invoice-panel .invoice-foot{ color:#475569; }
-
-/* Neutralize dark-mode white text inside panel */
-.invoice-dark .invoice-panel,
-.invoice-dark .invoice-panel *{
-  color: inherit;
-}
-
-
-/* ===== 14) INVOICE — REF/DATE + CUSTOMER INFO + ITEMS + SIGS ====== */
-/* Ref + Date */
-.ref-row{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px}
-.ref-left{font-size:13.5px}
-.ref-left .ref-note{font-size:11.5px;color:#000000;margin-top:2px}
-.ref-right{font-size:13.5px}
-
-/* Customer info box */
-.info-box{margin:8px 0 12px;border:1px solid #000000;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.92)}
-.info-title{background:#000000;color:#fff;padding:8px 12px;font-weight:700;letter-spacing:.2px}
-.info-grid{display:grid;gap:8px;padding:12px;grid-template-columns:1fr 1fr;font-size:13.5px}
-.info-grid span{color:#000000;font-weight:600;margin-right:6px}
-@media (max-width:620px){.info-grid{grid-template-columns:1fr}}
-
-/* Item text inside table */
-.table .item-name{font-weight:600}
-.table .item-brand{font-size:18px;color:#000000;margin-top:2px}
-
-/* In words & signatures */
-.in-words {
-  margin-top: 20px;
-  font-size: 13.5px;
-  color: #000000; /* ✅ text color black */
-}
-
-.signatures {
-  display: flex;
-  justify-content: flex-start;
-  margin-top: 18px;
-}
-
-.sign-left { position: relative; }
-
-.seal-img { height: 72px; opacity: .9; margin-right: 12px; }
-.sign-img { height: 54px; display: block; margin-top: 6px; }
-
-.sign-caption { font-size: 12px; color: #000000; margin-top: 4px; }
-
-/* Customer Information title invert (white bg, black text) */
-.info-box .info-title {
-  background: #ffffff !important;   /* White background */
-  color: #000000 !important;        /* Black text */
-  border-bottom: 1px solid #000000; /* Optional thin separator line */
-}
-
-/* Force black text inside info box content */
-.info-box .info-grid,
-.info-box .info-grid div,
-.info-box .info-grid span {
-  color: #0f172a !important;   /* slate-900-ish */
-}
-
-/* Keep grey header bar white text (as noted) */
-.info-box .info-title { color: #ffffff !important; }
-
-
-/* =================== 15) INVOICE — TABLE (FULL GRID) =============== */
-/* Full border grid + comfy row height */
-.table{
-  width:100%;
-  border-collapse: collapse;      /* full grid */
-  margin-top:12px;
-  font-size:13.5px;
-}
-.table thead th{
-  background:#f8fafc;
-  color:#0f172a;
-  font-weight:700;
-  padding:12px 12px;
-  border:1px solid #dfe3ea;       /* header box lines */
-  text-align:left;
-}
-.table td{
-  padding:12px 12px;              /* a bit taller so text doesn't look cramped */
-  border:1px solid #e6eaf1;       /* full grid lines */
-  vertical-align:top;
-}
-.td-right{text-align:right}
-.row-subtle td{ background:#f6f8fb }
-.row-accent  td{ background:#ecfdf5 }
-.total-big{ font-size:16px; font-weight:800 }
-
-.in-words{ margin-top:20px; font-size:13.5px; color:#000 !important; }
-.sign-caption{ font-size:12px; color:#000 !important; margin-top:4px; }
-
-/* Panel without border/shadow variant */
-.invoice-panel{
-  margin-top:10px;
-  background:rgba(255,255,255,.96);
-  border:0;                /* ⬅ no border */
-  box-shadow:none;         /* in case any */
-  border-radius:14px;
-  padding:16px;
-  color:#111827;
-}
-
-/* Signatures row (left aligned) */
-.signatures{
+label{
   display:flex;
-  align-items:flex-end;     /* align bottoms */
-  gap:16px;
-  margin-top:18px;
-}
-.seal-img{ height:80px; opacity:.95; }
-.sign-img{ height:56px; display:block; margin-bottom:6px; }
-
-/* Signature caption divider line */
-.sig-block{ display:flex; flex-direction:column; }
-.sig-block .sign-img + .sign-caption{
-  padding-top:6px;
-  border-top:1px solid #1118271a;  /* subtle line under sign */
+  flex-direction:column;
+  gap:4px;
+  font-weight:600;
+  color:#1e293b;
+  font-size:14px;
+  margin-bottom:6px;
+  white-space:normal;
 }
 
-
-/* ============================ 16) UTILITIES ========================= */
-/* PDF capture crispness + image rendering of seals/signs */
-.print-quality{
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: geometricPrecision;
-  image-rendering: -webkit-optimize-contrast;
-}
-.print-quality *{
-  filter: none !important;
-  backdrop-filter: none !important;
-  box-shadow: none !important;
-  transform: none !important;           /* scaled elements blur করে */
-}
-.seal-img, .sign-img{
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-}
-
-
-/* ========== 17) FORM: ALIGNMENT / WRAPPERS / RESPONSIVE ============ */
-/* (These repeat intentionally; kept exactly as provided) */
-.form-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
-}
-.input, .select {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-  font-size: 14px;
-  color: #111827;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  transition: 0.2s ease;
-}
-.input:focus, .select:focus {
-  outline: none;
-  border-color: #059669;
-  box-shadow: 0 0 0 3px rgba(5,150,105,0.25);
-}
-label {
-  font-weight: 600;
-  color: #1e293b;
-  font-size: 14px;
-}
-/* extra spacing under sections */
-section { margin-bottom: 20px; }
-/* allow long labels to wrap */
-label span, label { white-space: normal; }
-/* mobile single column */
-@media (max-width: 640px) {
-  .form-row { grid-template-columns: 1fr; }
-}
-
-/* Improved form layout (duplicate by design) */
-.form-row {
-  display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-}
-label {
-  display: flex;
-  flex-direction: column;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-  gap: 4px;
-}
-.input,
-.select {
-  width: 100%;
-  padding: 10px 14px;
-  font-size: 14px;
-  border: 1.2px solid #000000;
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: inset 0 0 0 rgba(0, 0, 0, 0);
-  transition: all 0.2s ease;
-}
-.input:focus,
-.select:focus {
-  outline: none;
-  border-color: #059669;
-  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
-}
-
-/* Section headings inside sections */
-section h3 {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 6px;
-  color: #111827;
-}
-section {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 12px 14px;
-  background: #fafafa;
-  margin-bottom: 14px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-/* Card restyle (duplicate; keep both) */
-.card {
-  border-radius: 14px;
-  padding: 22px 20px;
-  background: #ffffff;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-}
-
-/* Grid responsive (container-xxl collapse) */
-@media (max-width: 1024px) {
-  .container-xxl { grid-template-columns: 1fr; }
-}
-@media (max-width: 480px) {
-  .form-row { grid-template-columns: 1fr; }
-  label { font-size: 13px; }
-  .input, .select { font-size: 13px; padding: 8px 10px; }
-}
-
-/* Grid helpers */
-.form-row{ display:grid; gap:12px; }
-.form-row.cols-2{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-.form-row.cols-3{ grid-template-columns: repeat(3, minmax(0,1fr)); }
-/* overflow fix */
-.form-row > *{ min-width:0; }
-/* Inputs sizing (alt theme border vars) */
-.input, .select{
+.input,.select{
   width:100%;
   box-sizing:border-box;
   height:40px;
@@ -619,825 +179,934 @@ section {
   border:1px solid var(--border);
   border-radius:10px;
   background:#fff;
+  color:#111827;
   transition:.15s;
   appearance:none;
 }
-.input:focus, .select:focus{
+
+/* Disable number field spinners (prevents scroll increment/decrement) */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{
+  -webkit-appearance:none;
+  margin:0;
+}
+input[type=number]{
+  -moz-appearance:textfield;
+}
+.input:focus,.select:focus{
   outline:none;
   border-color:var(--brand);
   box-shadow:0 0 0 4px var(--ring);
 }
-/* Label spacing (alt style) */
-label{ display:block; margin-bottom:6px; font-size:.85rem; color:var(--muted); }
-/* Small screens collapse helpers */
+
+.inline{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+
+.radio{
+  appearance:none;
+  width:16px;
+  height:16px;
+  border:1px solid var(--border);
+  border-radius:50%;
+  position:relative;
+}
+.radio:checked{ border-color:var(--brand); }
+.radio:checked::after{
+  content:"";
+  position:absolute;
+  inset:3px;
+  border-radius:50%;
+  background:var(--brand);
+}
+
+section{
+  border:1px solid #000000;
+  border-radius:12px;
+  padding:12px 14px;
+  background:#fafafa;
+  margin-bottom:14px;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+section h3{
+  font-size:16px;
+  font-weight:700;
+  margin-bottom:6px;
+  color:#111827;
+}
+
 @media (max-width:640px){
-  .form-row.cols-2, .form-row.cols-3{ grid-template-columns:1fr; }
+  .form-row{ grid-template-columns:1fr; }
 }
 
-
-/* ===== 18) INVOICE — TABLE LINE COLOR REFRESH (OVERRIDE VARS) ===== */
-/* NOTE: These re-declare :root table tokens (kept as-is) */
-:root{
-  --tbl-border: #000000;     /* গ্রিড লাইন (সাবtle নীলচে-ধূসর) */
-  --tbl-header: #000000;     /* হেডারের বটম-লাইন */
-  --tbl-zebra : #000000;     /* জেব্রা রো ব্যাকগ্রাউন্ড */
-  --tbl-subtle: #eef2f8;     /* সাবটোটাল রো ব্যাকগ্রাউন্ড */
-  --tbl-accent: #e9fbf2;     /* গ্র্যান্ড টোটাল রো ব্যাকগ্রাউন্ড (হালকা সবুজ tint) */
+/* ============================== 06) BUTTONS ========================= */
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:10px 16px;
+  border-radius:12px;
+  border:1px solid transparent;
+  font-weight:700;
+  cursor:pointer;
+  user-select:none;
 }
-/* grid lines + header using the override vars */
-.table{
-  border-collapse: collapse;
-  border: 1px solid var(--tbl-border);
-}
-.table thead th{
-  background: #f5f7fb;
-  border: 1px solid var(--tbl-header);
-  color: #0f172a;
-}
-.table td{ border: 1px solid var(--tbl-border); }
-/* zebra rows from var */
-.table tbody tr:nth-child(even) td{ background: var(--tbl-zebra); }
-/* subtotal / grand total tints */
-.row-subtle td{ background: var(--tbl-subtle) !important; }
-.row-accent  td{ background: var(--tbl-accent)  !important; }
-/* edge emphasis for totals */
-.row-subtle td.td-right b,
-.row-accent  td.td-right{
-  border-left: 0;
-  border-right: 0;
-}
-/* grand total top border thicker */
-.row-accent td:last-child{
-  border-top: 1px solid #8bd4b3;
-  font-weight: 800;
-}
-/* keep tones inside panel too */
-.invoice-panel .table{ border-color: var(--tbl-border); }
-.invoice-panel .table thead th{ border-color: var(--tbl-header); }
-.invoice-panel .table td{ border-color: var(--tbl-border); }
+.btn-primary{ background:var(--brand); color:#fff; }
+.btn-primary:hover{ background:var(--brand-700); }
 
+/* ============================ 07) SUMMARY BAR ======================= */
+.summary{ display:grid; gap:12px; margin-top:10px; }
+@media (min-width:540px){ .summary{ grid-template-columns:repeat(3,1fr); } }
 
-/* ===== 19) INVOICE — PRICE TITLE & TIER BADGES ===================== */
-.price-title{
-  display:flex;align-items:center;justify-content:space-between;
-  margin:6px 0 10px;
-  padding:10px 12px;
-  background:#4ee906;border:1px solid #000000;border-radius:10px;
+.sum-card{
+  background:#f1f8f5;
+  border:1px solid #d7efe4;
+  border-radius:12px;
+  padding:12px 14px;
 }
-.price-title-left{color:#0f172a}
-.price-title-left span{color:#000000}
+.sum-label{ font-size:12.5px; color:#0f5132; }
+.sum-value{ font-size:18px; font-weight:800; color:#065f46; }
 
-/* Tier badges */
-.tier-badge{
-  font-weight:800;font-size:12.5px;padding:6px 10px;border-radius:999px;
-  border:1px solid rgba(0, 0, 0, 0.12); background:#fff;
+/* ===================== 08) INVOICE — BASE LAYOUT ==================== */
+.invoice-wrap{
+  position:relative;
+  margin-inline:auto;
+  width:794px;
+  min-height:1123px;
+  height:auto;
+  background:transparent;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  overflow:hidden;
 }
-.tier-badge.gold{ color:#b08d57; border-color:#e6d8bd; background:#fffaf1; }
-.tier-badge.platinum{ color:#475569; border-color:#cfd8e3; background:#f8fbff; }
-.tier-badge.diamond{ color:#0f766e; border-color:#b7f0e2; background:#ecfffb; }
 
-/* Mini selectable tier chips in forms */
-.tier-row{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
-.tier-chip{
-  display:flex; flex-direction:column; gap:2px; align-items:flex-start;
-  padding:10px 12px; border:1px solid #e5e7eb; border-radius:10px; background:#fff;
-  cursor:pointer; transition:.15s; min-width:110px;
-}
-.tier-chip .tier-title{ font-weight:800; }
-.tier-chip .tier-note{ font-size:12px; color:#64748b; }
-.tier-chip:hover{ box-shadow:0 2px 10px rgba(2,6,23,.06); border-color:#dbe1ea; }
-.tier-chip.active{ border-color:#059669; box-shadow:0 0 0 3px rgba(5,150,105,.15); }
-
-
-/* ===== 20) INVOICE — FIXES & PREVIEW VISIBILITY ==================== */
-/* Ensure panel readable in dark + inherit colors */
-.invoice-dark .invoice-panel{
-  color:#0f172a !important;          /* dark ink */
-  background:rgba(255,255,255,.96) !important;
-}
-.invoice-dark .invoice-panel *{ color:inherit !important; }
-
-/* (duplicate neutralizer kept) */
-.invoice-dark .invoice-panel,
-.invoice-dark .invoice-panel *{ color: inherit; }
-
-/* Padding/zoom fix (duplicate kept) */
 .invoice-inner{
-  padding: 20px 18px 40px 18px !important;   /* top/right/bottom/left */
-  transform: scale(1.08);
-  transform-origin: top center;
+  position:relative;
+  z-index:2;
+  padding:150px 34px 128px 34px;
+  transform:none;               /* no zoom => crisp borders */
+  transform-origin:top center;
 }
 
-/* Wider preview wrapper (duplicate kept) */
-.invoice-wrap{
-  border: none !important;
-  width: 820px !important;                    /* preview a bit wider */
-  min-height: 1123px;
-  margin: 0 auto;
-  box-shadow: none !important;
-}
-
-/* Print margins (duplicate kept) */
-@media print{
-  .invoice-inner{
-    transform: none !important;
-    padding: 72px 36px 72px 36px !important;
-  }
-  .invoice-wrap{
-    width: 794px !important;
-    height: 1123px !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-}
-
-/* Preview mode panel/text forcing (readable) */
-.preview-mode .invoice-panel{
-  background: rgba(255,255,255,.98) !important;
-  color: #0f172a !important;
-  border: 1px solid rgba(15,23,42,.08);
-  border-radius: 14px;
-}
-.preview-mode .invoice-panel *{
-  color: inherit !important; /* panel-এর রঙই ইনহেরিট হবে */
-}
-
-/* Customer Info — title white/black in preview */
-.preview-mode .info-box{
-  background: #ffffff !important;
-  color: #0f172a !important;
-  border: 1px solid #0f172a !important;
-  border-radius: 12px !important;
-}
-.preview-mode .info-box .info-title{
-  background: #ffffff !important;
-  color: #000000 !important;
-  border-bottom: 1px solid #000000 !important;
-}
-
-/* Force preview visible (no scale) */
-.preview-mode .invoice-inner {
-  transform: none !important;
-  padding: 96px 42px 90px 42px !important;   /* নিরাপদ প্যাডিং */
-}
-
-/* Panel visibility & colors in preview */
-.preview-mode .invoice-panel {
-  opacity: 1 !important;
-  visibility: visible !important;
-  background: rgba(255,255,255,.96) !important;
-  color: #000000 !important;
-}
-
-/* Pad bg layering */
-.invoice-pad-bg {
-  position: absolute !important;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: .22;               /* ইচ্ছেমতো */
-  z-index: 0 !important;
-}
-.invoice-inner { position: relative !important; z-index: 1 !important; }
-
-/* Preview wrapper height auto (avoid cut) */
-.preview-mode.invoice-wrap {
-  height: auto !important;
-  min-height: 1123px;         /* চাইলে রাখো */
-  border: 0 !important;
-  box-shadow: none !important;
-}
-
-/* Neutralize dark panel overrides (again) */
-.invoice-dark .invoice-panel,
-.invoice-dark .invoice-panel * { color: inherit;  }
-
-/* Optional: different title tint example */
-.preview-mode .info-box .info-title {
-  background: #d46c6c !important;
-  color: #000 !important;
-  border-bottom: 1px solid #000 !important;
-}
-
-
-/* ===== 21) INVOICE — BIGGER / XL / PDF SCALE MODES ================ */
-/* Slightly larger invoice area (screen preview) */
-.invoice--bigger .price-title { font-size: 15px; padding: 12px 14px; }
-.invoice--bigger .tier-badge{ font-size: 13px; padding: 7px 12px; }
-.invoice--bigger .ref-left,
-.invoice--bigger .ref-right,
-.invoice--bigger .invoice-foot{ font-size: 14px; }
-.invoice--bigger .info-grid{ font-size: 14.5px; }
-.invoice--bigger .table thead th{ font-size: 14.5px; padding: 12px 14px; }
-.invoice--bigger .table td{ font-size: 14.5px; padding: 12px 14px; }
-.invoice--bigger .total-big{ font-size: 18px; }
-.invoice--bigger .invoice-panel{ font-size: 15px; }
-.invoice--bigger .invoice-inner{ padding: 96px 46px 92px 46px !important; }
-
-/* Bigger-XL for capture */
-.invoice--bigger-xl .price-title{font-size:16px;padding:14px 16px}
-.invoice--bigger-xl .tier-badge{font-size:13.5px;padding:8px 12px}
-.invoice--bigger-xl .ref-left,
-.invoice--bigger-xl .ref-right,
-.invoice--bigger-xl .invoice-foot{font-size:14.5px}
-.invoice--bigger-xl .info-grid{font-size:15px}
-.invoice--bigger-xl .invoice-panel{font-size:16px}
-.invoice--bigger-xl .table thead th{ font-size:15.5px; padding:14px 16px; }
-.invoice--bigger-xl .table td{ font-size:15.5px; padding:14px 16px; }
-.invoice--bigger-xl .total-big{font-size:19px}
-.invoice--bigger-xl .invoice-inner{ padding: 90px 40px 88px 40px !important; }
-
-/* PDF export controlled zoom */
-.invoice--pdf-scale .invoice-inner{
-  transform: scale(1.12);              /* ~12% bigger for readability */
-  transform-origin: top center;
-  padding: 84px 40px 80px 40px !important; /* balanced safe padding */
-}
-.invoice--pdf-scale .invoice-panel{ font-size: 15.5px; }
-.invoice--pdf-scale .info-grid{ font-size: 15px; }
-.invoice--pdf-scale .invoice-foot{ font-size: 14px; }
-.invoice--pdf-scale .table thead th{
-  font-size: 15.5px;
-  padding: 14px 16px;
-}
-.invoice--pdf-scale .table td{
-  font-size: 15.5px;
-  padding: 14px 16px;
-}
-.invoice--pdf-scale .total-big{ font-size: 19px; }
-/* remove preview enlarge */
-.preview-mode .invoice-inner{ transform: none !important; }
-
-
-/* ===== 22) INVOICE — A4 WRAPPER & PAD LAYERING (SAFE ZONES) ======= */
-/* A4 wrapper size (as before) */
-.invoice-wrap{
-  position: relative !important;
-  margin-inline: auto !important;
-  background: transparent !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  width: 794px !important;
-  height: 1123px !important;
-  overflow: hidden !important;
-}
-
-/* Background pad below; content above */
-#invoice-root{ position: relative; }
-#invoice-root .invoice-pad-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.22; z-index:0; }
-#invoice-root .invoice-inner{ position:relative; z-index:2; }
-
-/* Safe zone (header/footer clear) */
-.invoice-inner.pad-safe{
-  /* top right bottom left */
-  padding:150px 34px 128px 34px !important;
-}
-/* print keeps same safe paddings */
-@media print{
-  .invoice-inner.pad-safe{ padding:150px 34px 128px 34px !important; }
-}
-
-/* Soft scrims (top/bottom) for readability (can be toggled) */
-#invoice-root::before{
-  content:"";
-  position:absolute;
-  left:0; right:0; top:0;
-  height:160px;
-  background:linear-gradient(to bottom, rgba(255,255,255,.96), rgba(255,255,255,0));
-  z-index:1; pointer-events:none;
-}
-#invoice-root::after{
-  content:"";
-  position:absolute;
-  left:0; right:0; bottom:0;
-  height:110px;
-  background:linear-gradient(to top, rgba(255,255,255,.95), rgba(255,255,255,0));
-  z-index:1; pointer-events:none;
-}
-
-/* Panel readable on colorful pad */
-.invoice-panel{
-  background: rgba(255,255,255,.96) !important;
-  border: 1px solid rgba(15,23,42,.08);
-  border-radius: 14px;
-  padding: 16px;
-  color: #0f172a;
-}
-
-/* Slight lift for signatures row */
-.signatures.lift{
-  margin-top: 12px;
-  transform: translateY(-8px);
-}
-.seal-img{ height:78px; }
-.sign-img{ height:58px; }
-
-/* Mobile safe paddings */
 @media (max-width:900px){
-  .invoice-wrap{ width:100% !important; height:auto !important; }
-  .invoice-inner.pad-safe{ padding:120px 20px 110px 20px !important; }
+  .invoice-wrap{ width:100%; min-height:auto; height:auto; }
+  .invoice-inner{ padding:120px 20px 110px 20px; }
 }
 
-/* Keep paddings in pdf-scale */
-.invoice--pdf-scale .invoice-inner.pad-safe{
-  padding-top:150px !important;
-  padding-bottom:128px !important;
+@media print{
+  .invoice-wrap{ width:794px; min-height:1123px; }
+  .invoice-inner{ padding:150px 34px 128px 34px !important; transform:none !important; }
 }
 
+/* ================= 09) INVOICE — PAD / DARK / LAYERING ============== */
+#invoice-root{ position:relative; width:794px; min-height:1123px; height:auto; margin:0 auto; }
 
-/* ==================== 20) FINAL INVOICE OVERRIDES =================== */
-/* Exact A4 + layering + hairline fixes */
-#invoice-root{
-  position: relative !important;
-  width: 794px !important;          /* A4 width */
-  min-height: 1123px !important;    /* baseline height */
-  height: auto !important;          /* content যত লম্বা হবে তত বাড়বে */
-  margin: 0 auto !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  overflow: visible !important;     /* কাটার সমস্যা এড়াতে */
-}
-#invoice-root .invoice-pad-bg{
-  position: absolute !important;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: .18;                     /* header “ঘোলা” ইফেক্ট কমাও */
-  z-index: 0 !important;
-}
-#invoice-root .invoice-inner{
-  position: relative !important;
-  z-index: 2 !important;
+.invoice-pad-bg{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  opacity:.22;
+  z-index:0;
 }
 
-/* Safe padding (header/side/footer) */
-#invoice-root .invoice-inner.pad-safe{
-  padding: 150px 34px 128px 34px !important;   /* top right bottom left */
-}
+.pad--contain{ object-fit:contain !important; background:#fff; opacity:1 !important; }
+.pad--cover{ object-fit:cover !important; }
 
-/* No preview zoom → avoid hairline gaps */
-.preview-mode .invoice-inner{ transform:none !important; }
+.invoice-dark .invoice-inner{ color:#fff; }
+.invoice-dark .brand-sub{ color:rgba(255,255,255,.78); }
 
-/* Remove scrims if previously enabled */
-#invoice-root::before,
-#invoice-root::after{ display:none !important; }
+/* ================= 10) INVOICE — BLOCKS (INFO/PANEL/TABLE) ========= */
 
-/* PDF capture exact A4 + safe paddings */
-.invoice--pdf-scale #invoice-root{
-  width: 794px !important;
-  height: 1123px !important;
-  overflow: hidden !important;
-}
-.invoice--pdf-scale .invoice-inner.pad-safe{
-  padding-top:150px !important;
-  padding-right:34px !important;
-  padding-bottom:128px !important;
-  padding-left:34px !important;
-}
-
-/* Ref/Date tidy variant */
-.ref-row.tidy{
+/* Ref + Date */
+.ref-row{
   display:flex;
   justify-content:space-between;
   align-items:flex-end;
   margin-bottom:10px;
+}
+.ref-row.tidy{
   padding-bottom:6px;
-  border-bottom:1px solid rgba(15,23,42,.12);
+  border-bottom:1px solid #000;
 }
-.ref-left,.ref-right{ font-size:13.5px; color:#0f172a; }
+.ref-left,.ref-right{ font-size:13.5px; color:#000000; }
+.ref-left .ref-note{ font-size:11.5px; color:#000000; margin-top:2px; }
 
-/* Light panel readable over pad */
+
+/* Customer info — underline style */
+.info-box{
+  margin:8px 0 12px;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  padding:0;
+}
+.info-box .info-title{
+  background:transparent;
+  color:#000;
+  padding:6px 0 8px 0;
+  border:0;
+  /* border-bottom:1.5px solid #000; */
+  font-weight:700;
+}
+.info-box .info-grid{
+  display:grid;
+  gap:8px;
+  padding:10px 0 0 0;
+  grid-template-columns:1fr 1fr;
+  font-size:14px;
+  font-weight: 500;
+  color:#0f172a;
+}
+.info-box .info-grid span{
+  font-weight:600;
+  margin-right:6px;
+  color:#0f172a;
+}
+
+/* ✅ Address full row */
+.info-full{
+  grid-column: 1 / -1;
+}
+
+/* ✅ Address natural wrap (one line until full, then wrap) */
+.info-line{
+  display:flex;
+  align-items:flex-start;
+  gap:6px;
+  min-width:0;
+}
+.info-label{
+  flex:0 0 auto;
+  white-space:nowrap;
+  font-weight:600;
+  color:#0f172a;
+}
+.info-value{
+  flex:1 1 auto;
+  min-width:0;
+  white-space:normal;
+  word-break:normal;
+  overflow-wrap:break-word;
+}
+
+
+
+@media (max-width:620px){
+  .info-box .info-grid{ grid-template-columns:1fr; }
+}
+
+/* Invoice content panel */
 .invoice-panel{
-  background: rgba(255,255,255,.96) !important;
-  border: 1px solid rgba(15,23,42,.08) !important;
-  border-radius: 14px !important;
-  color: #0f172a !important;
+  margin-top:10px;
+  background:rgba(255,255,255,.96);
+  border:0;
+  box-shadow:none;
+  border-radius:14px;
+  padding:16px;
+  color:#0f172a;
 }
 
-/* Hairline fix for tables on print/PDF */
+/* Price title bar + tier badge */
+.price-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:6px 0 10px;
+  padding:10px 12px;
+  background:#3fff8c;
+  border:1px solid #000000;
+  border-radius:10px;
+}
+.price-title-left{
+  flex:1 1 auto;
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  color:#000000;
+  font-size:14px;
+  line-height:1.15;
+}
+.sft-cal{
+  /* margin-left: 5px; */
+  font-weight: bold;
+}
+.sft-cal-{
+  font-weight: bold;
+}
+
+.tier-badge{
+  flex:0 0 auto;
+  white-space:nowrap;
+  font-weight:800;
+  font-size:14px;
+  padding:4px 10px;
+  line-height:1.2;
+  border-radius:999px;
+  border:1px solid #000;
+  background:#fff;
+}
+.tier-badge.gold{ color:#000; background:#fff; }
+.tier-badge.platinum{ color:#000; background:#f8fbff; }
+.tier-badge.diamond{ color:#000; background:#f8fbff; }
+
+/* ===========================
+   ✅ TABLE — PERFECTLY EVEN GRID
+   Draw each grid line ONCE (prevents "middle thicker" look)
+   =========================== */
+
 .table{
   width:100%;
-  border-collapse: collapse !important;
-  border-spacing: 0 !important;
-  border: 1px solid #000000 !important;
-  border-radius: 0 !important;
-  overflow: visible !important;
-  background-clip: border-box !important;
+  margin-top:12px;
+  border-spacing:0;                /* IMPORTANT */
+  border-collapse:separate;        /* IMPORTANT (single-draw grid) */
+  border:1px solid var(--tbl-border);
+  font-size:13.5px;
+  background:#fff;
 }
+
+/* Base cell styles */
+.table th,
+.table td{
+  padding:12px 12px;
+  vertical-align:top;
+  color:#0f172a;
+  background-clip:padding-box;
+}
+
+/* Header */
 .table thead th{
-  background:#ffffff !important;
-  color:#0f172a !important;
+  background:#f5f7fb;
+  color:#000;
   font-weight:700;
-  padding:12px 12px !important;
-  border:1px solid #dfe3ea !important;
+  font-size:13px;
   text-align:left;
 }
+
+/* SINGLE-DRAW GRID:
+   - Every cell draws only RIGHT + BOTTOM line
+   - Table draws outer TOP + LEFT via its own border
+   - We add TOP for first row and LEFT for first column to close grid nicely
+*/
+.table th,
 .table td{
-  padding:12px 12px !important;
-  border:1px solid #000000 !important;
-  vertical-align:top;
-  background-clip: padding-box !important;
+  border-right:1px solid var(--tbl-border);
+  border-bottom:1px solid var(--tbl-border);
 }
-.table tbody tr:nth-child(even) td{ background:#f9fbfd !important; }
-.row-subtle td{ background:#f5f7fb !important; }
-.row-accent  td{ background:#ecfdf5 !important; }
 
-/* Flow-based footer */
-.invoice-footer{
-  margin-top:14px;
-  padding-top:10px;
-  border-top:1px solid rgba(0, 0, 0, 0.12);
-  color:#334155;
-  font-size:12.5px;
+/* Last column: no extra right border (table border already gives outer edge) */
+.table tr > *:last-child{
+  border-right:0;
+}
+
+/* Last row: no extra bottom border (table border already gives outer edge) */
+.table tbody tr:last-child > *{
+  border-bottom:0;
+}
+
+/* Zebra */
+.table tbody tr:nth-child(even) td{
+  background:var(--tbl-zebra);
+}
+
+/* Row tints */
+.row-subtle td{ background:var(--tbl-subtle) !important; }
+.row-accent  td{ background:var(--tbl-accent) !important; }
+
+/* Totals */
+.total-big{ font-size:16px; font-weight:800; }
+
+/* Alignment helpers */
+.td-right{ text-align:right; }
+.td-center{ text-align:center !important; }
+
+
+/* Brand text small & clean */
+.item-name{ font-weight:600; }
+.item-brand{
+  font-size:11px;
+  line-height:1.2;
+  font-weight:500;
+  color:#000000;
+  margin-top:2px;
+}
+
+/* In words */
+.in-words{
+  margin-top:20px;
+  font-size:13.5px;
+  color:#000000;
+}
+
+/* Quote note */
+.quote-note{
+  background:#eef0f3;
+  color:#000000;
+  padding:10px 14px;
+  border-radius:12px;
+  font-style:italic;
+  font-size:14px;
   line-height:1.5;
+  max-width:680px;
+  display:inline-block;
+  margin-top:12px;
+}
+.quote-note .label{
+  font-style:italic;
+  font-weight:600;
 }
 
-/* Print sizing */
-@media print{
-  #invoice-root{
-    width: 794px !important;
-    height: 1123px !important;
-  }
-  #invoice-root .invoice-inner.pad-safe{
-    padding: 150px 34px 128px 34px !important;
-  }
+/* Signatures */
+.signatures{
+  display:flex;
+  align-items:flex-end;
+  gap:16px;
+  margin-top:10px;
+}
+.seal-img{
+  height:80px;
+  width:65px;
+  opacity:.95;
+  margin-left:-205px;
+  margin-bottom:90px;
+}
+.sign-img{
+  height:55px;
+  width:90px;
+  display:block;
+  margin-left:-20px;
+  margin-bottom:5px;
+  margin-top:15px;
+}
+.sig-block{ display:flex; flex-direction:column; }
+.sig-title{ margin-top:50px; margin-bottom:-10px; }
+
+.profile-name{
+  display:flex;
+  flex-direction:column;
+  font-family:Arial, Helvetica, sans-serif;
+  line-height:1.2;
+}
+.profile-name .name{
+  color:#000000;
+  font-weight:700;
+  font-size:18px;
+  margin-bottom:-20px;
+}
+.profile-name .role{
+  color:#000000;
+  font-style:italic;
+  font-size:14px;
+  margin-top:20px;
 }
 
-
-/* ============== 21) FINAL COMPACT + PAD FIX (ALT PROFILE) ========== */
-/* A4 wrapper (compact profile) */
-#invoice-root{
-  position: relative !important;
-  width: 794px !important;
-  min-height: 1123px !important;
-  height: auto !important;
-  margin: 0 auto !important;
-  border: 0 !important; border-radius: 0 !important;
-  box-shadow: none !important;
-  overflow: visible !important;
-}
-/* Ensure pad fully visible */
-#invoice-root .invoice-pad-bg{
-  position: absolute !important;
-  inset: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  opacity: 1 !important;          /* no fade */
-  z-index: 0 !important;
-}
-/* content above pad */
-#invoice-root .invoice-inner{ position: relative !important; z-index: 2 !important; }
-
-/* Compact safe zone */
-#invoice-root .invoice-inner.pad-safe{
-  padding: 160px 100px 60px 100px !important;  /* top right bottom left */
- 
-}
-/* no preview zoom */
-.preview-mode .invoice-inner{ transform: none !important; }
-/* remove any scrims */
-#invoice-root::before, #invoice-root::after{ display:none !important; }
-
-/* Compact typography scale */
-.invoice--compact .invoice-panel{
-  font-size: 13.5px !important;
-  /* background: rgba(255,255,255,.96) !important; */
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  border-radius: 14px !important;
-  color: #0f172a !important;
-}
-.invoice--compact .price-title{ padding:10px 12px !important; font-size:14px !important; }
-.invoice--compact .tier-badge{ font-size:12px !important; padding:6px 10px !important; }
-.invoice--compact .info-grid{ font-size:13px !important; }
-.invoice--compact .info-title{ font-size:13.5px !important; }
-
-/* Compact table paddings */
-.invoice--compact .table{
-  width:100%;
-  border-collapse: collapse !important;
-  border-spacing: 0 !important;
-  border: 1px solid #dfe3ea !important;
-  border-radius: 0 !important;
-  overflow: visible !important;
-  background-clip: border-box !important;
-  font-size: 13px !important;
-}
-.invoice--compact .table thead th{
-  background:#f8fafc !important; color:#0f172a !important;
-  padding:10px 10px !important; border:1px solid #dfe3ea !important; text-align:left;
-}
-.invoice--compact .table td{
-  padding:10px 10px !important; border:1px solid #e6eaf1 !important; vertical-align:top;
-}
-.invoice--compact .row-subtle td{ background:#f5f7fb !important; }
-.invoice--compact .row-accent  td{ background:#ecfdf5 !important; }
-
-/* Compact spacing for in-words/signatures */
-.invoice--compact .in-words{ margin-top:14px !important; }
-.invoice--compact .signatures{ margin-top:12px !important; gap:12px !important; }
-.invoice--compact .seal-img{ height:78px !important; }
-.invoice--compact .sign-img{ height:60px !important; }
-
-/* Ref/Date tidy in compact */
-.ref-row.tidy{
-  display:flex; justify-content:space-between; align-items:flex-end;
-  margin-bottom:10px; padding-bottom:6px;
-  border-bottom:1px solid rgba(15,23,42,.12);
-}
-.ref-left,.ref-right{ font-size:13px; color:#0f172a; }
-
-/* Footer compact */
-.invoice-footer{
-  margin-top:12px; padding-top:8px;
-  border-top:1px solid rgba(15,23,42,.12);
-  color:#334155; font-size:12.5px; line-height:1.5;
+#invoice-root .table tr.row-grey td{
+  background:#e3e3e3 !important;
 }
 
-/* PDF capture exact A4 + same paddings (compact) */
-/* .invoice--pdf-scale #invoice-root{
-  width: 794px !important; height: 1123px !important; overflow: hidden !important;
-} */
-.invoice--pdf-scale .invoice-inner.pad-safe{
-  padding: 220px 100px 300px 100px 
+/* ================== 11) INVOICE — SIZE MODES ======================= */
+.invoice--bigger .price-title{ font-size:15px; padding:12px 14px; }
+.invoice--bigger .tier-badge{ font-size:13px; padding:7px 12px; }
+.invoice--bigger .info-grid{ font-size:14.5px; }
+.invoice--bigger .table thead th{ font-size:14.5px; padding:12px 14px; }
+.invoice--bigger .table td{ font-size:14.5px; padding:12px 14px; }
+.invoice--bigger .total-big{ font-size:18px; }
+
+.invoice--bigger-xl .price-title{ font-size:16px; padding:14px 16px; }
+.invoice--bigger-xl .tier-badge{ font-size:13.5px; padding:8px 12px; }
+.invoice--bigger-xl .info-grid{ font-size:15px; }
+.invoice--bigger-xl .table thead th{ font-size:15.5px; padding:14px 16px; }
+.invoice--bigger-xl .table td{ font-size:15.5px; padding:14px 16px; }
+.invoice--bigger-xl .total-big{ font-size:19px; }
+
+/* PDF scale mode */
+.invoice--pdf-scale .invoice-inner{
+  transform:none !important;
+  padding:180px 42px 100px 42px !important;
+}
+.invoice--pdf-scale .invoice-pad-bg{
+  opacity:1 !important;
+  object-fit:contain !important;
+}
+.invoice--pdf-scale .invoice-panel{
+  background:transparent !important;
+}
+.invoice--pdf-scale .table{
+  background:transparent !important;
+}
+.invoice--pdf-scale .table thead th,
+.invoice--pdf-scale .table td{
+  background:transparent !important;
+}
+.invoice--pdf-scale .row-subtle td,
+.invoice--pdf-scale .row-accent td{
+  background:transparent !important;
+}
+.invoice--pdf-scale #invoice-root{
+  width:794px !important;
+  height:1123px !important;
+  overflow:hidden !important;
 }
 @media print{
-  #invoice-root{ width:794px !important; height:1123px !important; }
-  #invoice-root .invoice-inner.pad-safe{ padding:200px 40px 150px 40px !important; }
-}
-
-
-
-/* ============================================================
-   MUGNEE — INVOICE PREVIEW FIX PATCH (append at end)
-   Scope: preview-only visual balance + selector/typo fixes
-   No change to PDF/print or rest of UI.
-   ============================================================ */
-
-/* 1) Wrong selector & cut-off: preview wrapper should be height:auto */
-.invoice-scope.preview-mode .invoice-wrap {
-  height: auto !important;
-  min-height: 1123px !important;
-  border: 0 !important;
-  box-shadow: none !important;
-}
-
-/* 2) Preview-এ কোনো zoom নয় (আগে একাধিক জায়গায় scale ছিল) */
-.invoice-scope.preview-mode .invoice-inner {
-  transform: none !important;
-  /* নিরাপদ প্যাডিং: header/footer overlap এড়াতে */
-  padding: 96px 42px 90px 42px !important;
-}
-
-/* 3) pdf-scale ছাড়া আর কোথাও zoom লাগবে না */
-.invoice-scope .invoice-inner { transform: none; }         /* base reset */
-.invoice-scope.invoice--pdf-scale .invoice-inner {
-  transform: scale(1.12) !important;
-  transform-origin: top center !important;
-}
-
-/* 4) Padding টাইপো ফিক্স (আগে ছিল: '40px px') — preview ছাড়া আর কোথাও প্রযোজ্য নয় */
-.invoice-scope .invoice-inner {
-  /* কোনো জায়গায় ভুল padding থাকলে override করবে */
-  padding: 20px 18px 40px 18px !important;
-}
-
-/* 5) Readability: preview-এ টেক্সট সামান্য slim দেখানো + line-height বাড়ানো */
-.invoice-scope.preview-mode .invoice-inner {
-  letter-spacing: -0.1px !important;
-  font-size: 14.25px !important;
-  line-height: 1.58 !important;
-}
-.invoice-scope.preview-mode .table thead th,
-.invoice-scope.preview-mode .table td {
-  line-height: 1.55 !important;
-  padding-top: 11px !important;
-  padding-bottom: 11px !important;
-}
-
-/* 6) Customer Information title — চূড়ান্ত রুল (white bg + black text) */
-.invoice-scope .info-box .info-title {
-  background: #ffffff !important;
-  color: #000000 !important;
-  border-bottom: 1px solid #000000 !important;
-}
-
-/* 7) Pad background স্তরবিন্যাস—সবসময় নিচে, কনটেন্ট উপরে */
-#invoice-root .invoice-pad-bg {
-  position: absolute !important;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: .22;
-  z-index: 0 !important;
-}
-#invoice-root .invoice-inner { position: relative !important; z-index: 2 !important; }
-
-/* 8) PDF/Print — preview tuning একদমই প্রযোজ্য নয় */
-@media print {
-  .invoice-scope .invoice-inner {
-    transform: none !important;
-    letter-spacing: normal !important;
-    font-size: inherit !important;
-    line-height: inherit !important;
-    padding: 150px 34px 128px 34px !important; /* তোমার safe zone */
-  }
-  .invoice-scope #invoice-root {
-    width: 794px !important; height: 1123px !important;
+  .invoice--pdf-scale .invoice-inner{
+    padding:180px 42px 180px 42px !important;
+    transform:none !important;
   }
 }
 
+/* Compact mode */
+.invoice--compact .invoice-inner{ padding:160px 100px 60px 100px !important; }
+.invoice--compact .invoice-panel{ font-size:13.5px; }
+.invoice--compact .table{ font-size:13px; }
+.invoice--compact .table th,
+.invoice--compact .table td{ padding:10px 10px; }
 
-/* ==================== PREVIEW SHRINK-TO-FIT (A4) ==================== */
-/* শুধু প্রিভিউ কলামের জন্য; PDF/print অপরিবর্তিত থাকবে */
-
-/* ==================== PREVIEW SHRINK-TO-FIT (A4) — SAFE ============= */
-/* No calc(… / px). Narrow container হলে fluid width ব্যবহার করি */
-
-.invoice-viewport{
-  container-type: inline-size;
-  width: 100%;
-  overflow: visible;
-  position: relative;
-}
-
-/* Base A4 preview when space allows */
-/* .invoice-viewport #invoice-root{
-  width: 794px !important;
-  min-height: 1123px !important;
-  height: auto !important;
-  transform: none !important;
-  transform-origin: top left !important;
-} */
-
-/* Container 794px-এর কম হলে, scale না করে fluid করে দাও */
-@container (max-width: 794px){
-  .invoice-viewport #invoice-root{
-    width: 100% !important;
-    height: auto !important;
-  }
-}
-
-
-
-
-/* =========================================================
-   MUGNEE FINAL FIT FIX — header/footer perfectly visible
-   ========================================================= */
-
-/* প্রিভিউতে zoom সম্পূর্ণ বন্ধ */
-.preview-mode .invoice-inner {
-  transform: none !important;
-}
-
-/* invoice preview wrapper full visible (no cut) */
-.invoice-viewport, 
-.invoice-wrap {
-  width: 794px !important;       /* A4 width */
-  height: auto !important;       /* dynamic height */
-  min-height: 1123px !important;
-  margin: 0 auto !important;
-  overflow: visible !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* inner safe padding — তোমার pad header/footer অনুযায়ী */
-.invoice-inner.pad-safe {
-  padding: 120px 34px 100px 34px !important; /* top/right/bottom/left */
-  
-}
-
-/* preview readability — text slightly smaller for perfect fit */
-.preview-mode .invoice-inner,
-.preview-mode .invoice-panel {
-  font-size: 13.75px !important;
-  line-height: 1.55 !important;
-  letter-spacing: -0.1px !important;
-}
-
-/* Background pad image fix */
-.invoice-pad-bg {
-  object-fit: cover !important;
-  width: 100% !important;
-  height: 100% !important;
-  opacity: 1 !important;
-
-}
-
-
-.invoice--pdf-scale .invoice-wrap {
-  width: 794px !important;
-  height: 1123px !important;
-  overflow: hidden !important;
-}
-
-
-
-
-/* === PAD IMAGE MODES === */
-.invoice-pad-bg{
-  position:absolute; inset:0;
-  width:100%; height:100%;
-  z-index:0;
-}
-
-/* preview = পুরো ইমেজ দেখাও (letterbox হলে সাদা মার্জিন থাকবে) */
-.pad--contain { object-fit: contain !important; background:#fff; opacity:1 !important; }
-
-/* pdf/print = পাতাজুড়ে ভরাও (ক্রপ হলেও চলবে) */
-.pad--cover   { object-fit: cover   !important; }
-
-/* A4 হার্ড সাইজ + overlay আটকাও (preview) */
-.preview-mode #invoice-root,
-.preview-mode .invoice-wrap{
-  width:794px !important; height:1123px !important;
-  overflow:hidden !important; border:0 !important; box-shadow:none !important;
-}
+/* ================= 12) INVOICE — PREVIEW/FIT HELPERS =============== */
 .preview-mode .invoice-inner{ transform:none !important; }
 
-/* Safe padding – প্রয়োজনে 2–4px এডজাস্ট করো */
-.preview-mode .invoice-inner.pad-safe{
-  padding: 118px 28px 104px 28px !important; /* top right bottom left */
+.invoice-viewport{
+  container-type:inline-size;
+  width:100%;
+  overflow:visible;
+  position:relative;
 }
 
-/* Panel বেশি হলে ভেতরেই স্ক্রল হবে; পেজ বাড়বে না */
+@container (max-width:794px){
+  .invoice-viewport #invoice-root{
+    width:100% !important;
+    height:auto !important;
+  }
+}
+
+.preview-mode #invoice-root,
+.preview-mode .invoice-wrap{
+  width:794px !important;
+  height:auto !important;
+  min-height:1123px !important;
+  overflow:visible !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
 .preview-mode .invoice-panel{
-  max-height: calc(823px - 118px - 104px) !important;
-  overflow:auto !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  max-height: calc(823px - 118px - 104px);
+  overflow:auto;
+}
+
+.preview-mode .table{
+  background: transparent !important;
+}
+
+.preview-mode .table thead th,
+.preview-mode .table td,
+.preview-mode .table tbody tr:nth-child(even) td,
+.preview-mode .row-subtle td,
+.preview-mode .row-accent td{
+  background: transparent !important;
+}
+
+/* ============================ 13) UTILITIES ========================= */
+.print-quality{
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:geometricPrecision;
+  image-rendering:-webkit-optimize-contrast;
+}
+.print-quality *{
+  filter:none !important;
+  backdrop-filter:none !important;
+  box-shadow:none !important;
+  transform:none !important;
+}
+.seal-img,.sign-img{
+  image-rendering:-webkit-optimize-contrast;
+  image-rendering:crisp-edges;
+}
+
+/* ===================== 14) FOOTER + EXTRA UI ======================= */
+
+/* Calculator footer (logo + credit) */
+.calc-footer{
+  margin-top:18px;
+  background:#0b1220;
+  padding:18px 0;
+}
+.calc-footer-inner{
+  max-width:1200px;
+  margin:0 auto;
+  padding:0 18px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+  text-align:center;
+}
+.calc-footer-logo{
+  height:32px;
+  width:auto;
+  filter:drop-shadow(0 6px 18px rgba(0,0,0,.25));
+}
+.calc-footer-text{
+  color:rgba(255,255,255,.92);
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:.2px;
+}
+
+/* Installation side-by-side boxes */
+.install-row{
+  display:grid;
+  gap:12px;
+  grid-template-columns:1fr;
+}
+@media (min-width:760px){
+  .install-row{
+    grid-template-columns:1fr 1fr;
+    align-items:start;
+  }
+}
+.install-box{
+  border:1px solid #000000;
+  border-radius:12px;
+  background:#ffffff;
+  padding:12px 14px;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.install-box h4{
+  margin:0 0 8px 0;
+  font-size:14px;
+  font-weight:800;
+  color:#111827;
+}
+.install-auto-line{ font-size:13px; color:#111827; font-weight:700; }
+.install-auto-hint{ margin-top:6px; font-size:12px; color:#64748b; }
+.install-box.manual{ background:#f8fafc; }
+.install-muted{ font-size:12px; color:#64748b; margin-top:6px; }
+.install-box.is-disabled{ opacity:.55; pointer-events:none; }
+
+
+
+
+
+/* Display Size section */
+.ds-wrap{
+  width:100%;
+  background:#f1f5f9;
+  padding:26px 16px;
+}
+.ds-card{
+  max-width:1400px;
+  margin:0 auto;
+  background:#ffffff;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:14px;
+  padding:18px 18px 14px 18px;
+}
+.ds-title{
+  text-align:center;
+  font-size:28px;
+  font-weight:700;
+  color:#0f172a;
+  margin:4px 0 14px 0;
+}
+.ds-grid{
+  display:grid;
+  
+  gap:14px 14px;
+  align-items:center;
+
+/* Cabinet specific styles only */
+
+.cabinet-label {
+  color: #0a7cff;
+  font-weight: 600;
+}
+
+.cabinet-line .ds-chip {
+  border-color: #0a7cff;
+}
+
+.cabinet-line .ds-chip.active {
+  background: #0a7cff;
+  color: #fff;
+}
+
+
+}
+.ds-label{
+  font-weight:700;
+  color:#0f172a;
+  font-size:14px;
+}
+.ds-line{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  padding-bottom:12px;
+  border-bottom:1px dashed rgba(15,23,42,.12);
+}
+.ds-chip{
+  border:1px solid rgba(15,23,42,.12);
+  background:#f8fafc;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  color:#0f172a;
+  cursor:pointer;
+  transition:.15s ease;
+}
+.ds-chip:hover{
+  background:#eef2ff;
+  border-color:rgba(15,23,42,.2);
+}
+.ds-chip.active{
+  background:#0b1220;
+  color:#fff;
+  border-color:#0b1220;
+}
+.ds-hint{
+  margin-top:10px;
+  font-size:12px;
+  color:#64748b;
+  text-align:center;
+}
+@media (max-width:768px){
+  .ds-grid{ grid-template-columns:70px 1fr; }
+  .ds-title{ font-size:22px; }
+}
+
+
+
+
+/* Brand header text wrapping fix */
+.brand-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+.brand-left{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex:1;
+  min-width:0;
+}
+.brand-left > div{ flex:1; min-width:0; }
+.brand-title{
+  white-space:normal;
+  word-break:normal;
+  overflow-wrap:normal;
+  line-height:1.2;
+  max-width:100%;
+  writing-mode:horizontal-tb;
+  text-orientation:mixed;
+}
+.brand-sub{
+  white-space:normal;
+  word-break:normal;
+  overflow-wrap:anywhere;
+  writing-mode:horizontal-tb;
+  text-orientation:mixed;
+}
+.brand-logo{ height:46px; width:auto; }
+
+
+
+
+
+
+
+
+
+/* =========================
+   Tier Buttons (Gold/Platinum/Diamond)
+   ========================= */
+
+.tier-row{
+  display:flex;
+  gap:10px;
+  margin-top:12px;
+  flex-wrap:wrap;
+}
+
+/* button look */
+.tier-chip{
+  appearance:none;
+  border:1px solid rgba(0,0,0,.18);
+  background:#fff;
+  border-radius:14px;              /* ✅ rounded */
+  padding:10px 12px;
+  cursor:pointer;
+  text-align:left;
+  min-width:120px;
+  line-height:1.15;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+  box-shadow:0 2px 10px rgba(2,6,23,.06);
+}
+
+/* typography */
+.tier-chip .tier-title{
+  font-weight:800;
+  font-size:13.5px;
+  color:#0f172a;
+}
+.tier-chip .tier-note{
+  font-size:12px;
+  font-weight:700;
+  margin-top:4px;
+  color:#475569;
+}
+
+/* hover */
+.tier-chip:hover{
+  transform: translateY(-1px);
+  border-color: rgba(0,0,0,.28);
+  box-shadow:0 6px 18px rgba(2,6,23,.12);
+}
+
+/* active (selected) */
+.tier-chip.active,
+.tier-chip[aria-pressed="true"]{
+  border-color:#0b1220;
+  box-shadow:0 0 0 3px rgba(11,18,32,.14), 0 10px 20px rgba(2,6,23,.12);
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+}
+
+/* small badge vibe per tier */
+.tier-chip.active .tier-title{
+  color:#0300b9;
+}
+
+/* optional: different accent per tier (only when active) */
+.tier-chip.gold.active{ border-color:#00ff9d; box-shadow:0 0 0 3px rgba(0, 226, 12, 0.18), 0 10px 20px rgba(196, 6, 32, 0.1); }
+.tier-chip.platinum.active{ border-color:#334155; box-shadow:0 0 0 3px rgba(51,65,85,.18), 0 10px 20px rgba(2,6,23,.10); }
+.tier-chip.diamond.active{ border-color:#06ce9c; box-shadow:0 0 0 3px rgba(35, 37, 37, 0.18), 0 10px 20px rgba(2,6,23,.10); }
+
+/* keyboard focus */
+.tier-chip:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 4px rgba(255, 0, 0, 0.22), 0 10px 20px rgba(2,6,23,.10);
+}
+
+
+
+
+
+/* ======================================================================
+   TERMS PAGE — CLEAN (NO DUPLICATES) + PDF SAFE
+   ----------------------------------------------------------------------
+   Goal:
+   1) Paragraph font size বড় ও readable
+   2) PDF export crisp
+   3) A4 height stable
+   ====================================================================== */
+
+/* -------------------------------
+   A) TERMS PAGE WRAPPER
+-------------------------------- */
+.terms-page{
+  margin-top: 0 !important;
+}
+
+/* ------------------------------------------
+   C) TERMS PANEL TYPOGRAPHY
+------------------------------------------- */
+.invoice-panel.terms-panel{
+  font-family: inherit;
+  color:#000000;
+
+  font-size: 16px;                /* 🔥 paragraph base size increased */
+  line-height: 1.6;                 /* 🔥 better readability */
+  font-weight: 500;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+
+  margin-bottom: 80px;
+}
+
+/* ------------------------------------------
+   D) TITLE BAR
+------------------------------------------- */
+.terms-title{
+  background:#2f6fab;
+  color:#fff;
+  text-align:center;
+
+  font-weight:800;
+  font-size:21px;                   /* slightly bigger */
+
+  padding: 10px;
+  border-radius:6px;
+  margin-bottom: 20px;
+  letter-spacing:.8px;
+}
+
+/* ------------------------------------------
+   E) LIST / SECTION SPACING
+------------------------------------------- */
+.terms-list{
+  margin:0;
+  padding-left:16px;
+}
+
+.terms-section{
+  margin-bottom:12px;
+}
+
+/* ------------------------------------------
+   F) HEADINGS + PARAGRAPH
+------------------------------------------- */
+.terms-h{
+  font-weight:700;
+  font-size:18.5px;                 /* 🔥 clearer section heading */
+  margin-bottom:5px;
+  color:#000;
+}
+
+.terms-p{
+  margin:4px 0 6px 0;
+  font-size:14.5px;                 /* 🔥 explicit for safety */
+  font-weight:500;
+  color:#000;
+}
+
+/* Sub list (i, ii, iii…) */
+.terms-sublist{
+  margin-top:4px;
+  padding-left:18px;
+}
+
+.terms-sublist li{
+  margin-bottom:4px;
+  font-size:16px;                 /* 🔥 this fixes circled text */
+  line-height:1.6;
   
 }
 
-
-
-/* Ensure full height expands naturally */
-.preview-mode #invoice-root,
-.preview-mode .invoice-wrap {
-  height: auto !important;
-  min-height: 1123px !important;
-  overflow: visible !important;
-}
-
-
-
-
-/* Center helper for table cells/headers */
-.td-center { text-align: center !important; }
-
-
-
-
-
-
-/* =================== PDF/PRINT HEIGHT BOOST VIA PADDING ============== */
-/* html2canvas/pdf-lib ক্যাপচারের সময় invoice--pdf-scale সক্রিয় থাকলে
-   এই প্যাডিংগুলো লাগবে। Print preview/actual print-এও একই থাকবে। */
-
-.invoice--pdf-scale #invoice-root {
-  width: 794px !important;          /* A4 width */
-  height: 1123px !important;        /* A4 height */
-  overflow: hidden !important;
-}
-
-/* মূল safe zone—এখানেই “height feel” বাড়বে */
-.invoice--pdf-scale .invoice-inner.pad-safe{
-  /* top | right | bottom | left */
-  padding: 180px 42px 100px 42px !important;
-}
-
-/* যদি pad-safe না থাকে, তবু কভার করতে */
-.invoice--pdf-scale .invoice-inner{
-  padding-top: 180px !important;
-  padding-right: 42px !important;
-  padding-bottom: 100px !important;
-  padding-left: 42px !important;
-
-  /* PDF-এ zoom বন্ধ রাখি যেন টেক্সট ব্লার না হয় */
-  transform: none !important;
-}
-
-/* Print মিডিয়াতেও একই প্যাডিং ফোর্স করো */
+/* ------------------------------------------
+   G) PRINT / PDF SAFE
+------------------------------------------- */
 @media print{
-  .invoice--pdf-scale .invoice-inner.pad-safe{
-    padding: 180px 42px 180px 42px !important;
+  .terms-page{
+    margin:0 !important;
   }
-  .invoice--pdf-scale #invoice-root{
-    width: 794px !important;
-    height: 1123px !important;
-    overflow: hidden !important;
+
+  .invoice-inner.terms-inner{
+    padding-top: 35px !important;
+    padding-bottom: 40px !important;
+  }
+
+  .invoice-panel.terms-panel{
+    text-rendering: geometricPrecision !important;
   }
 }
-
-
-
-
-
-
-
-
-
-

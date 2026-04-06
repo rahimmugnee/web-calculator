@@ -2,11 +2,11 @@
 :root{
   --bg:#f7f9fb;
   --surface:#fff;
-  --ink:#0f172a;
+  --ink:#000000;
   --muted:#667085;
   --brand:#059669;          /* emerald-600 */
   --brand-700:#047857;
-  --border:#e6e9ef;
+  --border:#000000;
   --ring:rgba(5,150,105,.35);
   --shadow:0 14px 34px rgba(2,6,23,.07), 0 2px 8px rgba(2,6,23,.05);
 }
@@ -103,7 +103,7 @@ label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px}
   margin-top:10px;
   background:rgba(255,255,255,.94);
   backdrop-filter:blur(2px);
-  border:1px solid rgba(15,23,42,.08);
+  border:1px solid rgba(0, 0, 0, 0.08);
   border-radius:14px;
   padding:16px;
   color:#111827;             /* darker ink */
@@ -112,8 +112,8 @@ label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px}
 .invoice-panel .brand-sub{color:#334155}
 .invoice-panel .meta-item,
 .invoice-panel .meta-item b{color:#111827}
-.invoice-panel .table thead th{background:#f8fafc;color:#0f172a;border-bottom:1px solid #e5e7eb}
-.invoice-panel .table td{color:#0f172a;border-bottom:1px solid #eef2f7}
+.invoice-panel .table thead th{background:#f8fafc;color:#0f172a;border-bottom:1px solid #000000}
+.invoice-panel .table td{color:#000000;border-bottom:1px solid #000000}
 .invoice-panel .row-subtle td{background:#f8fafc}
 .invoice-panel .row-accent td{background:#ecfdf5}
 .invoice-panel .invoice-foot{color:#1e293b}
