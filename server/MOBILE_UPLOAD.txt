@@ -1,0 +1,36 @@
+Quotation PDF backup — Android (Kotlin) contract
+================================================
+Endpoint: HTTPS POST (same as REACT_APP_QUOTATION_PDF_UPLOAD_URL)
+Header:   Authorization: Bearer <api_secret>   // same as api_secret in quotation-upload-config.php
+
+Multipart form fields (names must match exactly):
+  file          File (PDF), filename should match invoice ref + .pdf
+  refNo         String (quotation ref, e.g. HO/MQ-260405-1234)
+  source        Literal "android"
+  generatedAt   ISO-8601 string, e.g. Instant.now().toString()
+
+OkHttp 4 example (run on Dispatchers.IO):
+
+  val url = BuildConfig.QUOTATION_PDF_UPLOAD_URL  // define in build.gradle — do not commit secrets in VCS if public
+  val body = MultipartBody.Builder().setType(MultipartBody.FORM)
+    .addFormDataPart("refNo", refNo)
+    .addFormDataPart("source", "android")
+    .addFormDataPart("generatedAt", java.time.Instant.now().toString())
+    .addFormDataPart("file", fileName, pdfFile.asRequestBody("application/pdf".toMediaType()))
+    .build()
+  val req = Request.Builder()
+    .url(url)
+    .header("Authorization", "Bearer ${BuildConfig.QUOTATION_PDF_UPLOAD_KEY}")
+    .post(body)
+    .build()
+  client.newCall(req).execute().use { resp ->
+    if (!resp.isSuccessful) throw IOException("Backup ${resp.code}")
+  }
+
+Rules:
+- Do not block the user if backup fails; local share/save must still work.
+- Use the same ref string as on the invoice for traceability.
+- Optional CORS: only needed for browser; Android does not use CORS.
+
+Response JSON (200): { "ok": true, "savedAs": "android/filename.pdf", ... }
+Errors: 401 unauthorized, 400 bad request, 413 too large.

@@ -1,0 +1,234 @@
+import { useEffect, useMemo, useState } from "react";
+import ConferenceComponentCard from "./ConferenceComponentCard.jsx";
+import { conferenceBrands, conferenceProducts } from "../data/conferenceProducts.js";
+import {
+  applyConferenceProductToRow,
+  buildConferenceCustomRow,
+  buildConferenceItemsFromTemplate,
+  buildConferenceRow,
+  calculateConferenceQuotation,
+  cloneConferenceRow,
+  findConferenceProductById,
+} from "../lib/conferenceCalculationUtils.js";
+
+function TextField({ label, value, onChange, type = "text" }) {
+  return (
+    <label>
+      {label}
+      <input className="input" type={type} value={value} onFocus={(event) => event.currentTarget.select()} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}
+
+export default function ConferenceSystemForm({ onChange, onCalculated }) {
+  const [systemType, setSystemType] = useState("wired");
+  const [preferredBrand, setPreferredBrand] = useState("Spoon");
+  const [customer, setCustomer] = useState({ name: "", position: "", company: "", mobile: "", email: "", address: "" });
+  const [projectDetails, setProjectDetails] = useState({
+    name: "",
+    location: "",
+    type: "Conference System Installation",
+    preparedBy: "Mugnee Multiple Limited",
+  });
+  const [vatEnabled, setVatEnabled] = useState(false);
+  const [discountEnabled, setDiscountEnabled] = useState(false);
+  const [discountTk, setDiscountTk] = useState(0);
+  const [paymentTermId, setPaymentTermId] = useState("PT_75_25");
+  const [deliveryDays, setDeliveryDays] = useState(30);
+  const [customWarranty, setCustomWarranty] = useState("");
+  const [items, setItems] = useState([]);
+  const [newComponentType, setNewComponentType] = useState("");
+
+  useEffect(() => {
+    setItems(buildConferenceItemsFromTemplate({ systemType, brand: preferredBrand, products: conferenceProducts }));
+  }, [systemType, preferredBrand]);
+
+  const componentTypes = useMemo(() => {
+    const set = new Set();
+    conferenceProducts.forEach((product) => {
+      if (product.systemType === systemType || product.systemType === "both") set.add(product.componentType);
+    });
+    return [...set].sort();
+  }, [systemType]);
+
+  useEffect(() => {
+    if (!newComponentType && componentTypes.length) setNewComponentType(componentTypes[0]);
+  }, [componentTypes, newComponentType]);
+
+  const selectProductForItem = (id, productId) => {
+    setItems((prev) =>
+      prev.map((row) => {
+        if (row.id !== id) return row;
+        const product = findConferenceProductById(conferenceProducts, productId);
+        return product ? applyConferenceProductToRow(row, product) : row;
+      })
+    );
+  };
+
+  const snapshot = useMemo(
+    () => ({
+      quotationType: "conference",
+      conferenceSystemType: systemType,
+      preferredBrand,
+      customer,
+      projectDetails,
+      vatEnabled,
+      discountEnabled,
+      discountTk: Number(discountTk) || 0,
+      paymentTermId,
+      deliveryDays: Number(deliveryDays) || 30,
+      customWarranty,
+      defaultWarrantyYears: 1,
+      items,
+    }),
+    [systemType, preferredBrand, customer, projectDetails, vatEnabled, discountEnabled, discountTk, paymentTermId, deliveryDays, customWarranty, items]
+  );
+
+  const calcResult = useMemo(() => calculateConferenceQuotation(snapshot), [snapshot]);
+
+  useEffect(() => {
+    onChange?.(snapshot);
+    onCalculated?.(calcResult, snapshot, { userSubmit: false });
+  }, [snapshot, calcResult, onChange, onCalculated]);
+
+  return (
+    <>
+      <section>
+        <h3>Conference System</h3>
+        <div className="form-row">
+          <label>
+            System Type
+            <select className="select" value={systemType} onChange={(event) => setSystemType(event.target.value)}>
+              <option value="wired">Wired Conference System</option>
+              <option value="wireless">Wireless Conference System</option>
+            </select>
+          </label>
+
+          <label>
+            Preferred Brand
+            <select className="select" value={preferredBrand} onChange={(event) => setPreferredBrand(event.target.value)}>
+              {conferenceBrands.map((brand) => (
+                <option key={brand} value={brand}>
+                  {brand}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section>
+        <div className="section-title-row">
+          <h3>Items</h3>
+        </div>
+        {items.map((item) => (
+          <ConferenceComponentCard
+            key={item.id}
+            item={item}
+            products={conferenceProducts}
+            systemType={systemType}
+            onSelectProduct={(productId) => selectProductForItem(item.id, productId)}
+            onUpdate={(patch) => setItems((prev) => prev.map((row) => (row.id === item.id ? { ...row, ...patch } : row)))}
+            onDuplicate={() =>
+              setItems((prev) => {
+                const index = prev.findIndex((row) => row.id === item.id);
+                const next = [...prev];
+                next.splice(index + 1, 0, cloneConferenceRow(item));
+                return next;
+              })
+            }
+            onRemove={() => setItems((prev) => prev.filter((row) => row.id !== item.id))}
+          />
+        ))}
+
+        <div className="pa-add-row">
+          <select className="select pa-add-select" value={newComponentType} onChange={(event) => setNewComponentType(event.target.value)}>
+            {componentTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="btn btn-light"
+            onClick={() => setItems((prev) => [...prev, buildConferenceRow({ componentType: newComponentType, qty: 1, products: conferenceProducts, brand: preferredBrand, systemType })])}
+          >
+            Add Item
+          </button>
+          <button type="button" className="btn btn-light" onClick={() => setItems((prev) => [...prev, buildConferenceCustomRow()])}>
+            Add Custom Item
+          </button>
+        </div>
+      </section>
+
+      <section>
+        <h3>VAT</h3>
+        <div className="inline" style={{ gap: 18 }}>
+          <label className="inline">
+            <input className="radio" type="radio" checked={!vatEnabled} onChange={() => setVatEnabled(false)} />
+            <span>Without VAT</span>
+          </label>
+          <label className="inline">
+            <input className="radio" type="radio" checked={vatEnabled} onChange={() => setVatEnabled(true)} />
+            <span>With VAT (15%)</span>
+          </label>
+        </div>
+      </section>
+
+      <section>
+        <h3>Discount</h3>
+        <div className="inline" style={{ gap: 18, marginBottom: 12 }}>
+          <label className="inline">
+            <input className="radio" type="radio" checked={!discountEnabled} onChange={() => setDiscountEnabled(false)} />
+            <span>No Discount</span>
+          </label>
+          <label className="inline">
+            <input className="radio" type="radio" checked={discountEnabled} onChange={() => setDiscountEnabled(true)} />
+            <span>Special Discount</span>
+          </label>
+        </div>
+        {discountEnabled ? <TextField label="Discount Amount (Tk)" value={discountTk} onChange={setDiscountTk} type="number" /> : null}
+      </section>
+
+      <section>
+        <h3>Payment &amp; Delivery</h3>
+        <div className="form-row">
+          <label>
+            Payment Terms
+            <select className="select" value={paymentTermId} onChange={(event) => setPaymentTermId(event.target.value)}>
+              <option value="PT_75_25">75% Advance / 25% on Arrival</option>
+              <option value="PT_50_50">50% Advance / 50% on Arrival</option>
+              <option value="PT_100">100% Advance</option>
+              <option value="PT_NO_ADV_7D">No Advance / 7 Days After Delivery</option>
+            </select>
+          </label>
+          <TextField label="Delivery (Days)" value={deliveryDays} onChange={setDeliveryDays} type="number" />
+          <TextField label="Custom Warranty (Years)" value={customWarranty} onChange={setCustomWarranty} type="number" />
+        </div>
+      </section>
+
+      <section>
+        <h3>Client's Information</h3>
+        <div className="form-row">
+          <TextField label="Client Name" value={customer.name} onChange={(value) => setCustomer((prev) => ({ ...prev, name: value }))} />
+          <TextField label="Designation" value={customer.position} onChange={(value) => setCustomer((prev) => ({ ...prev, position: value }))} />
+          <TextField label="Organization Name" value={customer.company} onChange={(value) => setCustomer((prev) => ({ ...prev, company: value }))} />
+          <TextField label="Mobile Number" value={customer.mobile} onChange={(value) => setCustomer((prev) => ({ ...prev, mobile: value }))} />
+          <TextField label="Email Address" value={customer.email} onChange={(value) => setCustomer((prev) => ({ ...prev, email: value }))} />
+          <TextField label="Address" value={customer.address} onChange={(value) => setCustomer((prev) => ({ ...prev, address: value }))} />
+        </div>
+      </section>
+
+      <section>
+        <h3>Project Details</h3>
+        <div className="form-row">
+          <TextField label="Project Name" value={projectDetails.name} onChange={(value) => setProjectDetails((prev) => ({ ...prev, name: value }))} />
+          <TextField label="Project Location" value={projectDetails.location} onChange={(value) => setProjectDetails((prev) => ({ ...prev, location: value }))} />
+          <TextField label="Project Type" value={projectDetails.type} onChange={(value) => setProjectDetails((prev) => ({ ...prev, type: value }))} />
+          <TextField label="Prepared By" value={projectDetails.preparedBy} onChange={(value) => setProjectDetails((prev) => ({ ...prev, preparedBy: value }))} />
+        </div>
+      </section>
+    </>
+  );
+}

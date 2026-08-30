@@ -7,9 +7,11 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
+    "express": "^5.1.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
     "pdf-lib": "^1.17.1",
+    "pg": "^8.16.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-scripts": "5.0.1",
@@ -17,9 +19,15 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "sync-catalog": "node scripts/sync-catalog.mjs",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "api:start": "node server/index.mjs",
+    "db:migrate": "node scripts/db/migrate.mjs",
+    "db:catalog:export": "node scripts/db/export-static-catalog.mjs",
+    "db:seed": "node scripts/db/seed.mjs",
+    "db:setup": "npm run db:migrate && npm run db:seed",
+    "db:test": "node --test scripts/db/catalog-mapper.test.mjs",
+    "api:test": "node --test server/auth/password.test.mjs server/validation.test.mjs",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

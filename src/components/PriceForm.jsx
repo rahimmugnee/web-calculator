@@ -3,24 +3,32 @@
 // ===============================
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCatalog } from "../context/CatalogContext.jsx";
-import { getCabinetFootprintFt } from "../data/defaultQuotationCatalog.js";
+import RentalPriceForm from "./RentalPriceForm.jsx";
+import PASystemForm from "./PASystemForm.jsx";
+import ConferenceSystemForm from "./ConferenceSystemForm.jsx";
+import { getCabinetFootprintFt } from "../data/component-model-and-price.js";
+import { getTierPriceFromGold } from "../lib/tierPricing.js";
 import {
   moduleFootprintFt,
   pickReceivingCard,
   getRcCapacity,
   getPsuCapacity,
+  getCabinetRcPsuPerCabinet,
+  getModuleRes,
   pickPSUModel,
   gridAndPixels,
   pickControllerByPixels,
+  getNovastarControllersForDisplayType,
+  getNovastarControllerMax,
   pickNovastarControllerByPixels,
   controllerPriceById,
   novastarControllerPriceById,
   roundInt,
-} from "../lib/priceFormCatalogHelpers.js";
+} from "../lib/price-form-catalog-helpers.js";
 import { calcAll } from "../lib/calc.js";
 
 /* =========================
-   ✅ ZERO-CLEAR INPUT HELPERS
+   âœ… ZERO-CLEAR INPUT HELPERS
    ========================= */
 function zeroClearOnFocus(value, setter, disabled = false) {
   if (disabled) return;
@@ -31,21 +39,247 @@ function zeroRestoreOnBlur(value, setter, disabled = false) {
   if (value === "" || value === null || typeof value === "undefined") setter(0);
 }
 
+function buildStepSeries(step, max) {
+  const values = [];
+  for (let current = step; current <= max + 0.001; current += step) {
+    values.push(Number(current.toFixed(2)));
+  }
+  return values;
+}
+
+const RATIO_HEIGHT_OPTIONS = buildStepSeries(0.525, 25.2);
+const RATIO_WIDTH_OPTIONS = buildStepSeries(1.05, 45.15);
+const COB_P125_HEIGHT_OPTIONS = buildStepSeries(337.5 / 304.8, 25.2);
+const COB_P125_PANEL_WIDTH_FT = 600 / 304.8;
+const COB_P125_PANEL_HEIGHT_FT = 337.5 / 304.8;
+const COB_P125_PIXELS_PER_PANEL = 480 * 270;
+const MIN_AUTO_DISPLAY_SFT = 10;
+const pixelFormatter = new Intl.NumberFormat("en-BD", { maximumFractionDigits: 0 });
+const CUSTOM_MODULE_BRAND_VALUE = "Custom";
+const CABINET_AREA_SIZE_ROWS = {
+  "640x480": {
+    widthRow: "cabinetWidth",
+    heightRow: "cabinetHeight",
+    widthOptions: buildStepSeries(2.1, 40),
+    heightOptions: buildStepSeries(1.575, 25.2),
+  },
+  "640x640": {
+    widthRow: "cabinetWidth",
+    heightRow: "cabinetHeight640",
+    widthOptions: buildStepSeries(2.1, 40),
+    heightOptions: buildStepSeries(2.1, 25.2),
+  },
+  "960x960": {
+    widthRow: "cabinetWidth960",
+    heightRow: "cabinetHeight960",
+    widthOptions: buildStepSeries(3.15, 41),
+    heightOptions: buildStepSeries(3.15, 25.2),
+  },
+  "1280x1280": {
+    widthRow: "cabinetWidth1280",
+    heightRow: "cabinetHeight1280",
+    widthOptions: buildStepSeries(4.2, 42),
+    heightOptions: buildStepSeries(4.2, 25.2),
+  },
+};
+const CABINET_SIZE_PICK_ROWS = {
+  cabinetWidth: "640x480",
+  cabinetHeight: "640x480",
+  cabinetHeight640: "640x640",
+  cabinetWidth960: "960x960",
+  cabinetHeight960: "960x960",
+  cabinetWidth1280: "1280x1280",
+  cabinetHeight1280: "1280x1280",
+};
+const CABINET_WIDTH_PICK_ROWS = ["cobP125Width", "cabinetWidth", "cabinetWidth960", "cabinetWidth1280"];
+const CABINET_HEIGHT_PICK_ROWS = ["cobP125Height", "cabinetHeight", "cabinetHeight640", "cabinetHeight960", "cabinetHeight1280"];
+const CABINET_PICK_ROWS = [...CABINET_WIDTH_PICK_ROWS, ...CABINET_HEIGHT_PICK_ROWS];
+
+function formatDisplayMeasure(value) {
+  return (Math.round(value * 100) / 100).toFixed(2).replace(/\.?0+$/, "");
+}
+
+function getNearestSizeOption(options, target) {
+  return options.reduce((closest, option) => {
+    if (closest === null) return option;
+    return Math.abs(option - target) < Math.abs(closest - target) ? option : closest;
+  }, null);
+}
+
+function getAutoHeightFromWidth(widthFt, heightOptions = RATIO_HEIGHT_OPTIONS) {
+  const width = parseFloat(widthFt);
+  if (isNaN(width) || width <= 0) return "";
+
+  const exactHeight = (width * 9) / 16;
+  const nearestHeight = getNearestSizeOption(heightOptions, exactHeight);
+
+  return nearestHeight ? formatDisplayMeasure(nearestHeight) : formatDisplayMeasure(exactHeight);
+}
+
+function getDimensionsFromWidth(widthFt, widthOptions = RATIO_WIDTH_OPTIONS, heightOptions = RATIO_HEIGHT_OPTIONS) {
+  const width = parseFloat(widthFt);
+  if (isNaN(width) || width <= 0) return { widthFt: "", heightFt: "", widthValue: null, heightValue: null };
+
+  const nearestWidth = getNearestSizeOption(widthOptions, width);
+  if (!nearestWidth) return { widthFt: "", heightFt: "", widthValue: null, heightValue: null };
+
+  const heightFt = getAutoHeightFromWidth(nearestWidth, heightOptions);
+  const heightValue = parseFloat(heightFt);
+
+  return {
+    widthFt: formatDisplayMeasure(nearestWidth),
+    heightFt,
+    widthValue: nearestWidth,
+    heightValue: Number.isNaN(heightValue) ? null : heightValue,
+  };
+}
+
+function getDimensionsFromArea(areaSft, widthOptions = RATIO_WIDTH_OPTIONS, heightOptions = RATIO_HEIGHT_OPTIONS) {
+  const area = parseFloat(areaSft);
+  if (isNaN(area) || area < MIN_AUTO_DISPLAY_SFT) {
+    return { widthFt: "", heightFt: "" };
+  }
+
+  const bestMatch = widthOptions.reduce((closest, widthOption) => {
+    const heightOption = parseFloat(getAutoHeightFromWidth(widthOption, heightOptions));
+    const matchedArea = widthOption * heightOption;
+    if (matchedArea < MIN_AUTO_DISPLAY_SFT) return closest;
+    const diff = Math.abs(matchedArea - area);
+
+    if (!closest || diff < closest.diff) {
+      return { widthOption, heightOption, diff };
+    }
+
+    return closest;
+  }, null);
+
+  return bestMatch
+    ? {
+        widthFt: formatDisplayMeasure(bestMatch.widthOption),
+        heightFt: formatDisplayMeasure(bestMatch.heightOption),
+      }
+    : { widthFt: "", heightFt: "" };
+}
+
+function clearSizeSelectionRows(selection, rows) {
+  rows.forEach((row) => {
+    delete selection[row];
+  });
+}
+
+function uniqueCabinetOptions(options, valueKey, labelKey) {
+  const seen = new Set();
+  return options.reduce((items, option) => {
+    const value = option?.[valueKey];
+    if (!value || seen.has(value)) return items;
+    seen.add(value);
+    items.push({ value, label: option?.[labelKey] || value });
+    return items;
+  }, []);
+}
+
+function buildLegacyCabinetOptions(catalog) {
+  const sizes = catalog.cabinetSizes?.length
+    ? catalog.cabinetSizes
+    : [{ id: "cabinet_640x480", label: "640mm x 480mm", widthMm: 640, heightMm: 480, modulesPerCabinet: 6 }];
+
+  return sizes.map((size) => ({
+    ...size,
+    id: size.id?.startsWith("cabinet_indoor_") ? size.id : `cabinet_indoor_aluminium_${size.widthMm}x${size.heightMm}`,
+    displayType: "indoor",
+    materialCode: "aluminium",
+    materialLabel: "Aluminium",
+    variantCode: "",
+    variantLabel: "",
+    sizeKey: size.sizeKey || `${size.widthMm}x${size.heightMm}`,
+    price: Number(size.price ?? catalog.cabinetCasePrice ?? 8000),
+  }));
+}
+
+function buildCabinetInvoiceLabel(cabinet) {
+  const material = cabinet?.materialLabel || "Aluminium";
+  const variant = cabinet?.variantLabel ? `${cabinet.variantLabel} ` : "";
+  return `${material} ${variant}Cabinet`.replace(/\s+/g, " ").trim();
+}
+
+function CustomSelect({ value, options, onChange, ariaLabel }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const selected = options.find((option) => option.value === value) || options[0];
+  const disabled = !options.length;
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (!wrapRef.current?.contains(event.target)) setOpen(false);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open]);
+
+  return (
+    <div
+      className={`custom-select${open ? " open" : ""}${disabled ? " disabled" : ""}`}
+      ref={wrapRef}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        className="custom-select-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={ariaLabel}
+        disabled={disabled}
+        onClick={() => setOpen((next) => !next)}
+      >
+        <span>{selected?.label || ""}</span>
+      </button>
+
+      {open ? (
+        <div className="custom-select-menu" role="listbox" aria-label={ariaLabel}>
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className="custom-select-option"
+              role="option"
+              aria-selected={option.value === value}
+              onClick={() => {
+                onChange(option.value);
+                setOpen(false);
+              }}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function buildTotalsForCalc({
   snapshot,
   autoModulesQty,
   moduleUnitPrice,
   rcUnitPrice,
-  psUnitPrice, // ✅ NEW
+  psUnitPrice, // âœ… NEW
   cabinetQty,
   cabinetUnitPrice,
 }) {
   const { items, install, display, accessories } = snapshot;
+  const moduleBillingQty = items?.cobP125SftPricing
+    ? Math.max(0, Number(display?.sft) || 0)
+    : autoModulesQty;
 
   return calcAll({
-    modulesQty: autoModulesQty,
+    quotationMode: snapshot.quotationMode,
+    irregularQty: snapshot.irregular?.qty,
+    modulesQty: moduleBillingQty,
 
-    // ✅ With Cabinet হলে rc/ps cabinetQty অনুযায়ী যাবে (snapshot এ already set)
+    // âœ… With Cabinet à¦¹à¦²à§‡ rc/ps cabinetQty à¦…à¦¨à§à¦¯à¦¾à§Ÿà§€ à¦¯à¦¾à¦¬à§‡ (snapshot à¦ already set)
     rcQty: items.rcQty ?? 0,
     psQty: items.psQty ?? 0,
 
@@ -55,10 +289,14 @@ function buildTotalsForCalc({
     unitModule: moduleUnitPrice,
     unitRC: rcUnitPrice,
 
-    // ✅ PSU unit price (manual override capable)
+    // âœ… PSU unit price (manual override capable)
     unitPS: psUnitPrice,
 
-    // ✅ Cabinet (only when enabled) — NOW uses manual override price
+    customItemEnabled: items?.customItem?.enabled ?? false,
+    customItemPrice: items?.customItem?.price ?? 0,
+    customItems: items?.customItems ?? [],
+
+    // âœ… Cabinet (only when enabled) â€” NOW uses manual override price
     cabinetQty: items?.cabinetEnabled ? (cabinetQty || 0) : 0,
     unitCabinet: items?.cabinetEnabled ? (cabinetUnitPrice || 0) : 0,
 
@@ -68,6 +306,9 @@ function buildTotalsForCalc({
     installMode: install.installMode,
     installIsPercent: install.installIsPercent,
     installValue: install.installValue,
+
+    transportEnabled: snapshot.transport?.enabled ?? false,
+    transportValue: snapshot.transport?.value ?? 0,
 
     sft: display?.sft,
     dispType: snapshot.items?.dispType || "indoor",
@@ -79,46 +320,139 @@ function buildTotalsForCalc({
   });
 }
 
-export default function PriceForm({ onChange, onCalculated }) {
-  const { catalog, loading, error, reload } = useCatalog();
-  const { w: CAB_W_FT, h: CAB_H_FT } = useMemo(() => getCabinetFootprintFt(catalog.physical), [catalog.physical]);
-
+export default function PriceForm({
+  onChange,
+  onCalculated,
+  sizePick,
+  onSizeSelectionChange,
+  rentalSizePick,
+  onRentalSizeSelectionChange,
+  onInstallationTypeChange,
+}) {
+  const { catalog } = useCatalog();
+  const loading = false;
+  const error = null;
+  const reload = () => {};
+  const [installationType, setInstallationType] = useState("fixed");
   const [dispType, setDispType] = useState("indoor");
+  const [cabinetMaterial, setCabinetMaterial] = useState("aluminium");
+  const [cabinetVariant, setCabinetVariant] = useState("");
+  const [cabinetSizeId, setCabinetSizeId] = useState("cabinet_indoor_aluminium_640x480");
 
-  // ✅ Cabinet mode (default: without cabinet)
+  const cabinetAllOptions = useMemo(() => {
+    const options = catalog.cabinetOptions?.length ? catalog.cabinetOptions : buildLegacyCabinetOptions(catalog);
+    return options.map((option) => ({
+      ...option,
+      price: Number(option.price ?? catalog.cabinetCasePrice ?? 8000),
+    }));
+  }, [catalog]);
+
+  const cabinetMaterialOptions = useMemo(
+    () => uniqueCabinetOptions(cabinetAllOptions.filter((option) => option.displayType === dispType), "materialCode", "materialLabel"),
+    [cabinetAllOptions, dispType]
+  );
+  const activeCabinetMaterial =
+    cabinetMaterialOptions.find((option) => option.value === cabinetMaterial)?.value ||
+    cabinetMaterialOptions[0]?.value ||
+    "aluminium";
+
+  useEffect(() => {
+    if (cabinetMaterial !== activeCabinetMaterial) setCabinetMaterial(activeCabinetMaterial);
+  }, [activeCabinetMaterial, cabinetMaterial]);
+
+  const cabinetVariantOptions = useMemo(
+    () =>
+      uniqueCabinetOptions(
+        cabinetAllOptions.filter(
+          (option) => option.displayType === dispType && option.materialCode === activeCabinetMaterial && option.variantCode
+        ),
+        "variantCode",
+        "variantLabel"
+      ),
+    [activeCabinetMaterial, cabinetAllOptions, dispType]
+  );
+  const activeCabinetVariant =
+    cabinetVariantOptions.find((option) => option.value === cabinetVariant)?.value ||
+    cabinetVariantOptions[0]?.value ||
+    "";
+
+  useEffect(() => {
+    if (!cabinetVariantOptions.length) {
+      if (cabinetVariant) setCabinetVariant("");
+      return;
+    }
+    if (cabinetVariant !== activeCabinetVariant) setCabinetVariant(activeCabinetVariant);
+  }, [activeCabinetVariant, cabinetVariant, cabinetVariantOptions.length]);
+
+  const cabinetSizeOptions = useMemo(() => {
+    const filtered = cabinetAllOptions.filter(
+      (option) =>
+        option.displayType === dispType &&
+        option.materialCode === activeCabinetMaterial &&
+        (!cabinetVariantOptions.length || option.variantCode === activeCabinetVariant)
+    );
+
+    return filtered.length ? filtered : cabinetAllOptions.filter((option) => option.displayType === dispType);
+  }, [activeCabinetMaterial, activeCabinetVariant, cabinetAllOptions, cabinetVariantOptions.length, dispType]);
+  const selectedCabinetSize = useMemo(
+    () => cabinetSizeOptions.find((size) => size.id === cabinetSizeId) ?? cabinetSizeOptions[0],
+    [cabinetSizeId, cabinetSizeOptions]
+  );
+
+  useEffect(() => {
+    if (!cabinetSizeOptions.length) return;
+    if (!cabinetSizeOptions.some((size) => size.id === cabinetSizeId)) {
+      setCabinetSizeId(cabinetSizeOptions[0].id);
+    }
+  }, [cabinetSizeId, cabinetSizeOptions]);
+
+  const cabinetSizeLabel = selectedCabinetSize?.label || "640mm x 480mm";
+  const cabinetModulesPerCabinet = selectedCabinetSize?.modulesPerCabinet || catalog.modulesPerCabinet || 6;
+  const { w: CAB_W_FT, h: CAB_H_FT } = useMemo(
+    () => getCabinetFootprintFt(catalog.physical, selectedCabinetSize?.id || cabinetSizeId, cabinetAllOptions),
+    [cabinetAllOptions, cabinetSizeId, catalog.physical, selectedCabinetSize?.id]
+  );
+
+  // âœ… Cabinet mode (default: without cabinet)
   const [cabinetEnabled, setCabinetEnabled] = useState(false);
+  const [quotationMode, setQuotationMode] = useState("regular");
+  const [irregularQty, setIrregularQty] = useState(1);
 
-  // ✅ VAT (default OFF)
+  // âœ… VAT (default OFF)
   const [vatEnabled, setVatEnabled] = useState(false);
 
-  // ✅ Discount (default OFF)
+  // âœ… Discount (default OFF)
   const [discountEnabled, setDiscountEnabled] = useState(false);
   const [discountTk, setDiscountTk] = useState(0);
 
-  // ✅ Technology (default SMD)
+  // âœ… Technology (default SMD)
   const [technology, setTechnology] = useState("smd"); // smd | gob | cob
+  const [moduleBrand, setModuleBrand] = useState("Lampro");
+  const [customModuleBrandName, setCustomModuleBrandName] = useState("");
 
-  // ✅ Payment Term (default 100%)
+  // âœ… Payment Term (default 100%)
   const [paymentTermId, setPaymentTermId] = useState("PT_100");
+  const [deliveryDays, setDeliveryDays] = useState(45);
 
-  // ✅ Outdoor হলে force SMD
+  // âœ… Outdoor à¦¹à¦²à§‡ force SMD
   useEffect(() => {
     if (dispType === "outdoor" && technology !== "smd") {
       setTechnology("smd");
     }
   }, [dispType, technology]);
 
-  // ✅ Technology list: Outdoor => only SMD
+  // âœ… Technology list: Outdoor => only SMD
   const techOptions = useMemo(() => {
     if (dispType === "outdoor") return catalog.technologiesAll.filter((t) => t.id === "smd");
     return catalog.technologiesAll;
   }, [dispType, catalog.technologiesAll]);
 
-  // ✅ models list depends on technology + display type
+  // âœ… models list depends on technology + display type
   const modelsForType = useMemo(() => {
     const techBlock = catalog.modelGroups[technology] || catalog.modelGroups.smd;
-    return techBlock?.[dispType] || [];
-  }, [technology, dispType, catalog.modelGroups]);
+    const models=techBlock?.[dispType] || [],allowed=catalog.moduleBrandModelIds?.[moduleBrand];
+    return Array.isArray(allowed)?models.filter((item)=>allowed.includes(item.id)):models;
+  }, [technology, dispType, moduleBrand, catalog.modelGroups, catalog.moduleBrandModelIds]);
 
   const [modelId, setModelId] = useState(modelsForType[0]?.id || "");
 
@@ -134,54 +468,70 @@ export default function PriceForm({ onChange, onCalculated }) {
 
   const [customer, setCustomer] = useState({ name: "", company: "", address: "", mobile: "", position: "" });
 
-  // ✅ IMPORTANT: sft will be auto ONLY
+  // âœ… IMPORTANT: sft will be auto ONLY
   const [display, setDisplay] = useState({ widthFt: "", heightFt: "", sft: "" });
 
   const [rcQty, setRcQty] = useState(10);
+  const [receivingCardId, setReceivingCardId] = useState("");
   const [psQty, setPsQty] = useState(17);
+  const [psuBrand, setPsuBrand] = useState("Lampro");
 
   const [accessoriesMode, setAccessoriesMode] = useState("auto");
   const [accessoriesValue, setAccessoriesValue] = useState(0);
+  const [customItemEnabled, setCustomItemEnabled] = useState(false);
+  const [customItems, setCustomItems] = useState([{ id: 1, name: "", price: 0 }]);
+  const nextCustomItemId = useRef(2);
 
   const [installMode, setInstallMode] = useState("auto");
 
-  // ✅ IMPORTANT: Installation percent option removed; always Tk
+  // âœ… IMPORTANT: Installation percent option removed; always Tk
   const installIsPercent = false;
   const [installValue, setInstallValue] = useState(0);
 
-  const [moduleBrand, setModuleBrand] = useState("Lampro by Unilumin");
+  const [transportEnabled, setTransportEnabled] = useState(false);
+  const [transportValue, setTransportValue] = useState(0);
 
   const [tierId, setTierId] = useState("gold");
   const hasCalculatedRef = useRef(false);
   const [customWarranty, setCustomWarranty] = useState("");
 
-  // ✅ Module Unit Price override
+  // âœ… Module Unit Price override
   const [modulePriceOverrideStr, setModulePriceOverrideStr] = useState("");
   const [modulePriceOverrideEnabled, setModulePriceOverrideEnabled] = useState(false);
 
-  // ✅ Receiving Card Unit Price override
+  // âœ… Receiving Card Unit Price override
   const [rcPriceOverrideStr, setRcPriceOverrideStr] = useState("");
   const [rcPriceOverrideEnabled, setRcPriceOverrideEnabled] = useState(false);
 
-  // ✅ Power Supply Unit Price override (✅ NEW)
+  // âœ… Power Supply Unit Price override (âœ… NEW)
   const [psPriceOverrideStr, setPsPriceOverrideStr] = useState("");
   const [psPriceOverrideEnabled, setPsPriceOverrideEnabled] = useState(false);
 
-  // ✅ Controller Price override
+  // âœ… Controller Price override
   const [controllerPriceOverrideStr, setControllerPriceOverrideStr] = useState("");
   const [controllerPriceOverrideEnabled, setControllerPriceOverrideEnabled] = useState(false);
 
-  // ✅ Cabinet Unit Price override (NEW)
+  // âœ… Cabinet Unit Price override (NEW)
   const [cabinetPriceOverrideStr, setCabinetPriceOverrideStr] = useState("");
   const [cabinetPriceOverrideEnabled, setCabinetPriceOverrideEnabled] = useState(false);
+  const [cabinetQtyOverrideStr, setCabinetQtyOverrideStr] = useState("");
+  const [cabinetQtyOverrideEnabled, setCabinetQtyOverrideEnabled] = useState(false);
 
-  // display type / technology change -> reset model
+  const updateSizeSelection = useCallback(
+    (updater) => {
+      if (!onSizeSelectionChange) return;
+      onSizeSelectionChange(updater);
+    },
+    [onSizeSelectionChange]
+  );
+
+  // display type / technology / brand change -> reset model
   useEffect(() => {
-    const first = (catalog.modelGroups[technology] || catalog.modelGroups.smd)?.[dispType]?.[0];
+    const first = modelsForType[0];
     setModelId(first?.id || "");
-  }, [dispType, technology, catalog.modelGroups]);
+  }, [modelsForType]);
 
-  // ✅ area auto (LOCKED)
+  // âœ… area auto from width/height, but area input can also back-calculate 16:9 size
   useEffect(() => {
     const w = parseFloat(display.widthFt);
     const h = parseFloat(display.heightFt);
@@ -194,8 +544,8 @@ export default function PriceForm({ onChange, onCalculated }) {
     }
   }, [display.widthFt, display.heightFt]);
 
-  // ✅ Cabinet qty from Width/Height
-  const cabinetQty = useMemo(() => {
+  // âœ… Cabinet qty from Width/Height
+  const autoCabinetQty = useMemo(() => {
     if (!cabinetEnabled) return 0;
     const w = parseFloat(display.widthFt);
     const h = parseFloat(display.heightFt);
@@ -206,34 +556,45 @@ export default function PriceForm({ onChange, onCalculated }) {
     return across * down;
   }, [cabinetEnabled, display.widthFt, display.heightFt, CAB_W_FT, CAB_H_FT]);
 
+  useEffect(() => {
+    setCabinetQtyOverrideEnabled(false);
+    setCabinetQtyOverrideStr(String(autoCabinetQty || 0));
+  }, [autoCabinetQty, cabinetEnabled, cabinetSizeId]);
+
+  const cabinetQty = useMemo(() => {
+    if (!cabinetQtyOverrideEnabled) return autoCabinetQty;
+    const value = parseFloat(cabinetQtyOverrideStr);
+    return Number.isFinite(value) && value >= 0 ? value : autoCabinetQty;
+  }, [autoCabinetQty, cabinetQtyOverrideEnabled, cabinetQtyOverrideStr]);
+
   const autoModulesQty = useMemo(() => {
     const w = parseFloat(display.widthFt);
     const h = parseFloat(display.heightFt);
     if (isNaN(w) || isNaN(h) || w <= 0 || h <= 0) return 0;
 
-    // ✅ With cabinet: modules = cabinetQty * 6
-    if (cabinetEnabled) return (cabinetQty || 0) * catalog.modulesPerCabinet;
+    // âœ… With cabinet: modules = cabinetQty * 6
+    if (cabinetEnabled) return (cabinetQty || 0) * cabinetModulesPerCabinet;
 
-    // ✅ Without cabinet: existing logic
+    // âœ… Without cabinet: existing logic
     const fp = moduleFootprintFt(model.id || model.name, catalog.physical);
     const across = roundInt(w / fp.w);
     const down = roundInt(h / fp.h);
     return across * down;
-  }, [display.widthFt, display.heightFt, model, cabinetEnabled, cabinetQty, catalog.modulesPerCabinet, catalog.physical]);
+  }, [display.widthFt, display.heightFt, model, cabinetEnabled, cabinetQty, cabinetModulesPerCabinet, catalog.physical]);
 
-  // ✅ AUTO module price by tier
+  // âœ… AUTO module price by tier
   const moduleUnitPriceAuto = useMemo(() => {
-    const p = model?.prices || {};
-    return p[tierId] ?? 0;
-  }, [model, tierId]);
+    const p = catalog.moduleBrandPrices?.[moduleBrand]?.[model?.id] || model?.prices || {};
+    return getTierPriceFromGold(p.gold, tierId);
+  }, [catalog.moduleBrandPrices, model, tierId, moduleBrand]);
 
-  // ✅ reset module override on model/tier/tech/type change
+  // âœ… reset module override on model/tier/tech/type change
   useEffect(() => {
     setModulePriceOverrideEnabled(false);
     setModulePriceOverrideStr(moduleUnitPriceAuto ? String(Math.round(moduleUnitPriceAuto)) : "");
-  }, [modelId, tierId, technology, dispType, moduleUnitPriceAuto]);
+  }, [modelId, tierId, technology, dispType, moduleBrand, moduleUnitPriceAuto]);
 
-  // ✅ final module price
+  // âœ… final module price
   const moduleUnitPrice = useMemo(() => {
     if (!modulePriceOverrideEnabled) return moduleUnitPriceAuto;
     const v = parseFloat(modulePriceOverrideStr);
@@ -241,8 +602,27 @@ export default function PriceForm({ onChange, onCalculated }) {
     return v;
   }, [modulePriceOverrideEnabled, modulePriceOverrideStr, moduleUnitPriceAuto]);
 
-  // ✅ Cabinet Unit Price (auto + manual) — NEW
-  const cabinetUnitPriceAuto = useMemo(() => catalog.cabinetCasePrice, [catalog.cabinetCasePrice]);
+  const isCobP125 =
+    dispType === "indoor" &&
+    technology === "cob" &&
+    moduleBrand === "Leyard" &&
+    (model?.id === "cob-in-p1_25" || model?.name === "P1.25");
+
+  const cobP125PanelQty = useMemo(() => {
+    if (!isCobP125) return 0;
+    const widthFt = Number(display.widthFt);
+    const heightFt = Number(display.heightFt);
+    if (!Number.isFinite(widthFt) || !Number.isFinite(heightFt) || widthFt <= 0 || heightFt <= 0) return 0;
+    const panelsAcross = Math.max(1, Math.round(widthFt / COB_P125_PANEL_WIDTH_FT));
+    const panelsDown = Math.max(1, Math.round(heightFt / COB_P125_PANEL_HEIGHT_FT));
+    return panelsAcross * panelsDown;
+  }, [display.heightFt, display.widthFt, isCobP125]);
+
+  // âœ… Cabinet Unit Price (auto + manual) â€” NEW
+  const cabinetUnitPriceAuto = useMemo(
+    () => Number(selectedCabinetSize?.price ?? catalog.cabinetCasePrice ?? 0),
+    [catalog.cabinetCasePrice, selectedCabinetSize?.price]
+  );
   useEffect(() => {
     // When cabinet toggles ON, reset to default auto
     if (cabinetEnabled) {
@@ -259,16 +639,27 @@ export default function PriceForm({ onChange, onCalculated }) {
     return v;
   }, [cabinetEnabled, cabinetPriceOverrideEnabled, cabinetPriceOverrideStr, cabinetUnitPriceAuto]);
 
-  const { totalPixels } = useMemo(
-    () => gridAndPixels(model.name, display.widthFt, display.heightFt, catalog.moduleRes, catalog.physical),
-    [model.name, display.widthFt, display.heightFt, catalog.moduleRes, catalog.physical]
-  );
+  const { totalPixels } = useMemo(() => {
+    if (isCobP125) return { totalPixels: cobP125PanelQty * COB_P125_PIXELS_PER_PANEL };
+    return gridAndPixels(model.id || model.name, display.widthFt, display.heightFt, catalog.moduleRes, catalog.physical);
+  }, [cobP125PanelQty, isCobP125, model.id, model.name, display.widthFt, display.heightFt, catalog.moduleRes, catalog.physical]);
+
+  const totalModulePixels = useMemo(() => {
+    if (isCobP125) return cobP125PanelQty * COB_P125_PIXELS_PER_PANEL;
+    const res = getModuleRes(model.id || model.name, catalog.moduleRes);
+    if (!res || !autoModulesQty) return 0;
+    return autoModulesQty * res.pxW * res.pxH;
+  }, [isCobP125, cobP125PanelQty, model.id, model.name, autoModulesQty, catalog.moduleRes]);
+
+  const irregularMultiplier = quotationMode === "irregular" ? Math.max(1, Math.ceil(parseFloat(irregularQty || 1) || 1)) : 1;
+  const displayTotalModulePixels = totalModulePixels * irregularMultiplier;
+  const controllerSelectionPixels = quotationMode === "irregular" ? displayTotalModulePixels : totalPixels;
 
   useEffect(() => {
     const autoLocal =
       ctrlSystemBrand === "Novastar"
-        ? pickNovastarControllerByPixels(dispType, totalPixels, catalog.novastarControllers)
-        : pickControllerByPixels(dispType, totalPixels, catalog.ctrlCap);
+        ? pickNovastarControllerByPixels(dispType, controllerSelectionPixels, catalog.novastarCtrlCap)
+        : pickControllerByPixels(dispType, controllerSelectionPixels, catalog.ctrlCap);
 
     if (!autoLocal) {
       setControllerId("");
@@ -277,14 +668,49 @@ export default function PriceForm({ onChange, onCalculated }) {
     }
     setControllerId(autoLocal.id);
     setControllerQty(1);
-  }, [ctrlSystemBrand, dispType, totalPixels, catalog.novastarControllers, catalog.ctrlCap]);
+  }, [ctrlSystemBrand, dispType, controllerSelectionPixels, catalog.novastarCtrlCap, catalog.ctrlCap]);
 
-  const rcPicked = useMemo(
-    () => pickReceivingCard(dispType, model?.name || "", ctrlSystemBrand, technology, catalog.receivingCards),
-    [dispType, model?.name, ctrlSystemBrand, technology, catalog.receivingCards]
+  const autoRcPicked = useMemo(
+    () => pickReceivingCard(dispType, model?.id || model?.name || "", ctrlSystemBrand, technology, catalog.receivingCards),
+    [dispType, model?.id, model?.name, ctrlSystemBrand, technology, catalog.receivingCards]
   );
 
-  // ✅ RC auto unit price + reset override when picked changes
+  const receivingCardOptions = useMemo(() => {
+    const ids =
+      ctrlSystemBrand === "Novastar"
+        ? ["NS_NV3210", "NS_NV7512", "NS_A5S_26", "NS_A5S_16"]
+        : ["R732", "R712"];
+
+    return ids
+      .map((id) => {
+        const card = catalog.receivingCards?.[id];
+        if (!card) return null;
+        const pinLabel = card.pin ? ` (${card.pin} pin)` : "";
+        return {
+          value: id,
+          label: `${card.label || id}${pinLabel}`,
+        };
+      })
+      .filter(Boolean);
+  }, [ctrlSystemBrand, catalog.receivingCards]);
+
+  useEffect(() => {
+    setReceivingCardId(autoRcPicked?.id || receivingCardOptions[0]?.value || "");
+  }, [autoRcPicked?.id, receivingCardOptions]);
+
+  const rcPicked = useMemo(() => {
+    const selectedId = receivingCardId || autoRcPicked?.id;
+    const selected = catalog.receivingCards?.[selectedId];
+    if (!selected) return autoRcPicked;
+    return {
+      id: selectedId,
+      label: selected.label || selectedId,
+      unitPrice: selected.unitPrice ?? 0,
+      pin: selected.pin,
+    };
+  }, [autoRcPicked, catalog.receivingCards, receivingCardId]);
+
+  // âœ… RC auto unit price + reset override when picked changes
   const rcUnitPriceAuto = useMemo(() => rcPicked?.unitPrice ?? 0, [rcPicked]);
 
   useEffect(() => {
@@ -299,31 +725,81 @@ export default function PriceForm({ onChange, onCalculated }) {
     return v;
   }, [rcPriceOverrideEnabled, rcPriceOverrideStr, rcUnitPriceAuto]);
 
-  const autoRcQty = useMemo(() => {
-    // ✅ With cabinet: RC = cabinet qty
-    if (cabinetEnabled) return cabinetQty || 0;
+  const cabinetRcPsuPerCabinet = useMemo(
+    () => getCabinetRcPsuPerCabinet(model?.id || model?.name || "", selectedCabinetSize),
+    [model?.id, model?.name, selectedCabinetSize]
+  );
 
-    const cap = getRcCapacity(dispType, model.name, ctrlSystemBrand, catalog.rcCapacityHuidu, catalog.rcCapacityNovastar);
+  const autoRcQty = useMemo(() => {
+    if (isCobP125) return 0;
+    // With cabinet, RC qty follows the selected cabinet size and pixel pitch.
+    if (cabinetEnabled) return (cabinetQty || 0) * cabinetRcPsuPerCabinet.rc;
+
+    const cap = getRcCapacity(dispType, model.id || model.name, ctrlSystemBrand, catalog.rcCapacityHuidu, catalog.rcCapacityNovastar);
     return cap > 0 ? Math.ceil((autoModulesQty || 0) / cap) : 0;
-  }, [dispType, model.name, autoModulesQty, ctrlSystemBrand, cabinetEnabled, cabinetQty, catalog.rcCapacityHuidu, catalog.rcCapacityNovastar]);
+  }, [
+    dispType,
+    isCobP125,
+    model.id,
+    model.name,
+    autoModulesQty,
+    ctrlSystemBrand,
+    cabinetEnabled,
+    cabinetQty,
+    cabinetRcPsuPerCabinet.rc,
+    catalog.rcCapacityHuidu,
+    catalog.rcCapacityNovastar,
+  ]);
 
   const autoPsQty = useMemo(() => {
-    // ✅ With cabinet: PSU = cabinet qty
-    if (cabinetEnabled) return cabinetQty || 0;
+    if (isCobP125) return 0;
+    // With cabinet, PSU qty follows the selected cabinet size and pixel pitch.
+    if (cabinetEnabled) return (cabinetQty || 0) * cabinetRcPsuPerCabinet.psu;
 
-    const cap = getPsuCapacity(dispType, model.name, catalog.psuCapacity);
+    const cap = getPsuCapacity(dispType, model.id || model.name, catalog.psuCapacity);
     return cap > 0 ? Math.ceil((autoModulesQty || 0) / cap) : 0;
-  }, [dispType, model.name, autoModulesQty, cabinetEnabled, cabinetQty, catalog.psuCapacity]);
+  }, [dispType, isCobP125, model.id, model.name, autoModulesQty, cabinetEnabled, cabinetQty, cabinetRcPsuPerCabinet.psu, catalog.psuCapacity]);
 
   useEffect(() => setRcQty(autoRcQty), [autoRcQty, dispType, modelId, display.widthFt, display.heightFt, cabinetEnabled]);
   useEffect(() => setPsQty(autoPsQty), [autoPsQty, dispType, modelId, display.widthFt, display.heightFt, cabinetEnabled]);
 
+  const psuBrandOptions = useMemo(
+    () =>
+      (catalog.powerSupplyBrands?.length ? catalog.powerSupplyBrands : ["Lampro", "G-Energy", "Mean well"]).map((brand) =>
+        typeof brand === "string" ? { value: brand, label: brand } : { value: brand.value, label: brand.label || brand.value }
+      ),
+    [catalog.powerSupplyBrands]
+  );
+
+  useEffect(() => {
+    if (psuBrandOptions.length && !psuBrandOptions.some((option) => option.value === psuBrand)) {
+      setPsuBrand(psuBrandOptions[0].value);
+    }
+  }, [psuBrand, psuBrandOptions]);
+
+  const moduleBrandOptions = useMemo(
+    () =>
+      (catalog.moduleBrands || []).map((brand) =>
+        typeof brand === "string" ? { value: brand, label: brand } : { value: brand.value, label: brand.label || brand.value }
+      ),
+    [catalog.moduleBrands]
+  );
+
+  const isCustomModuleBrand = moduleBrand === CUSTOM_MODULE_BRAND_VALUE;
+  const selectedModuleBrand = isCustomModuleBrand ? customModuleBrandName.trim() || CUSTOM_MODULE_BRAND_VALUE : moduleBrand;
+
+  useEffect(() => {
+    if (moduleBrandOptions.length && !moduleBrandOptions.some((option) => option.value === moduleBrand)) {
+      setModuleBrand(moduleBrandOptions[0].value);
+    }
+  }, [moduleBrand, moduleBrandOptions]);
+
   const psuPicked = useMemo(() => pickPSUModel(catalog.psuModelLabel), [catalog.psuModelLabel]);
 
-  // ✅ PSU unit price (auto + manual) — NEW
-  const psUnitPriceAuto = useMemo(() => Number(catalog.powerSupplyPrice || 0), [catalog.powerSupplyPrice]);
+  // âœ… PSU unit price (auto + manual) â€” NEW
+  const psUnitPriceAuto = useMemo(() => Number(catalog.powerSupplyPrices?.[psuBrand] ?? catalog.powerSupplyPrice ?? 0), [catalog.powerSupplyPrices, catalog.powerSupplyPrice, psuBrand]);
   useEffect(() => {
-    // model/type/tech/cabinet change হলেও default reset
+    // model/type/tech/cabinet change à¦¹à¦²à§‡à¦“ default reset
     setPsPriceOverrideEnabled(false);
     setPsPriceOverrideStr(psUnitPriceAuto ? String(Math.round(psUnitPriceAuto)) : "");
   }, [dispType, modelId, technology, cabinetEnabled, psUnitPriceAuto]);
@@ -335,20 +811,20 @@ export default function PriceForm({ onChange, onCalculated }) {
     return v;
   }, [psPriceOverrideEnabled, psPriceOverrideStr, psUnitPriceAuto]);
 
-  // ✅ Controller auto price
+  // âœ… Controller auto price
   const controllerPriceAuto = useMemo(() => {
     if (!controllerId) return 0;
     if (ctrlSystemBrand === "Novastar") return novastarControllerPriceById(dispType, controllerId, catalog.novastarControllers);
     return controllerPriceById(controllerId, catalog.controllers);
   }, [ctrlSystemBrand, dispType, controllerId, catalog.novastarControllers, catalog.controllers]);
 
-  // ✅ reset controller override when selection changes
+  // âœ… reset controller override when selection changes
   useEffect(() => {
     setControllerPriceOverrideEnabled(false);
     setControllerPriceOverrideStr(controllerPriceAuto ? String(Math.round(controllerPriceAuto)) : "");
   }, [ctrlSystemBrand, dispType, controllerId, controllerPriceAuto]);
 
-  // ✅ final controller price
+  // âœ… final controller price
   const controllerPrice = useMemo(() => {
     if (!controllerPriceOverrideEnabled) return controllerPriceAuto;
     const v = parseFloat(controllerPriceOverrideStr);
@@ -359,10 +835,25 @@ export default function PriceForm({ onChange, onCalculated }) {
   const controllerLabel = useMemo(() => {
     if (!controllerId) return "";
     if (ctrlSystemBrand === "Novastar") {
-      return (catalog.novastarControllers[dispType] || []).find((c) => c.id === controllerId)?.label || controllerId;
+      return getNovastarControllersForDisplayType(dispType, catalog.novastarControllers, catalog.novastarCtrlCap).find((c) => c.id === controllerId)?.label || controllerId;
     }
     return catalog.controllers.find((c) => c.id === controllerId)?.label || controllerId;
-  }, [ctrlSystemBrand, dispType, controllerId, catalog.novastarControllers, catalog.controllers]);
+  }, [ctrlSystemBrand, dispType, controllerId, catalog.novastarControllers, catalog.novastarCtrlCap, catalog.controllers]);
+
+  const controllerPixelCapacity = useMemo(() => {
+    if (!controllerId) return 0;
+    if (ctrlSystemBrand === "Novastar") {
+      return getNovastarControllerMax(controllerId, dispType, catalog.novastarCtrlCap) || 0;
+    }
+
+    const match = (catalog.ctrlCap?.[dispType] || []).find((item) => item.id === controllerId);
+    return Number.isFinite(match?.max) ? match.max : 0;
+  }, [ctrlSystemBrand, dispType, controllerId, catalog.novastarCtrlCap, catalog.ctrlCap]);
+
+  const novastarControllerOptions = useMemo(
+    () => getNovastarControllersForDisplayType(dispType, catalog.novastarControllers, catalog.novastarCtrlCap),
+    [dispType, catalog.novastarControllers, catalog.novastarCtrlCap]
+  );
 
   const paymentTermLabel = useMemo(() => {
     const terms = catalog.paymentTerms;
@@ -375,30 +866,40 @@ export default function PriceForm({ onChange, onCalculated }) {
     return 1;
   }, [tierId]);
 
-  // ✅ Snapshot
-  const snapshot = useMemo(
-    () => ({
-      model: {
-        ...model,
+  // âœ… Snapshot
+	  const snapshot = useMemo(
+	    () => ({
+	      quotationType: "fixed",
+	      model: {
+	        ...model,
         name: `${model.name} ${dispType === "indoor" ? "Indoor" : "Outdoor"}`,
       },
-      customer,
-      display,
+	      customer,
+	      display,
+	      quotationMode,
+	      irregular: {
+	        unit: "Set",
+	        qty: Math.max(1, parseFloat(irregularQty || 1) || 1),
+	      },
 
-      vatEnabled,
+	      vatEnabled,
 
       discountEnabled,
       discountTk: discountEnabled ? parseFloat(discountTk || 0) : 0,
 
       paymentTermId,
       paymentTermLabel,
+      deliveryDays: parseFloat(deliveryDays) || 0,
 
       items: {
         modulesQty: autoModulesQty,
-        rcQty,
-        psQty,
+        rcQty: isCobP125 ? 0 : rcQty,
+        psQty: isCobP125 ? 0 : psQty,
+        cobP125SftPricing: isCobP125,
+        cobP125PanelQty,
+        cobP125PixelsPerPanel: isCobP125 ? COB_P125_PIXELS_PER_PANEL : 0,
 
-        // ✅ Cabinet
+        // âœ… Cabinet
         cabinetEnabled,
         cabinetQty,
         cabinetUnitPrice,
@@ -412,17 +913,39 @@ export default function PriceForm({ onChange, onCalculated }) {
         receivingUnitPrice: rcUnitPrice,
 
         psuPicked,
-        psUnitPrice, // ✅ NEW: PSU final unit price
+        customItem: {
+          enabled: customItemEnabled,
+          name: customItems[0]?.name.trim() || "",
+          price: customItemEnabled ? parseFloat(customItems[0]?.price || 0) : 0,
+        },
+        customItems: customItemEnabled
+          ? customItems.map((item) => ({ name: item.name.trim(), price: parseFloat(item.price || 0) }))
+          : [],
+        psUnitPrice, // âœ… NEW: PSU final unit price
         dispType,
 
         technology,
         moduleUnitPrice,
 
         brands: {
-          module: moduleBrand,
+          module: selectedModuleBrand,
           controller: ctrlSystemBrand,
           receiving: ctrlSystemBrand,
-          psu: "G-Energy",
+          psu: psuBrand,
+        },
+        brandSelections: {
+          module: moduleBrand,
+        },
+        cabinet: {
+          optionId: selectedCabinetSize?.id || cabinetSizeId,
+          sizeId: selectedCabinetSize?.sizeKey || cabinetSizeId,
+          sizeLabel: cabinetSizeLabel,
+          materialCode: selectedCabinetSize?.materialCode || activeCabinetMaterial,
+          materialLabel: selectedCabinetSize?.materialLabel || "Aluminium",
+          variantCode: selectedCabinetSize?.variantCode || "",
+          variantLabel: selectedCabinetSize?.variantLabel || "",
+          invoiceLabel: buildCabinetInvoiceLabel(selectedCabinetSize),
+          modulesPerCabinet: cabinetModulesPerCabinet,
         },
 
         capacity: {
@@ -446,6 +969,10 @@ export default function PriceForm({ onChange, onCalculated }) {
         installIsPercent,
         installValue: parseFloat(installValue || 0),
       },
+      transport: {
+        enabled: transportEnabled,
+        value: transportEnabled ? parseFloat(transportValue || 0) : 0,
+      },
 
       tier: catalog.priceTiers.find((t) => t.id === tierId) || catalog.priceTiers[0],
       customWarranty: customWarranty?.trim() || "",
@@ -455,9 +982,13 @@ export default function PriceForm({ onChange, onCalculated }) {
       model,
       dispType,
       technology,
-      customer,
-      display,
+	      customer,
+	      display,
+	      quotationMode,
+	      irregularQty,
       autoModulesQty,
+      isCobP125,
+      cobP125PanelQty,
       rcQty,
       psQty,
       cabinetEnabled,
@@ -471,12 +1002,23 @@ export default function PriceForm({ onChange, onCalculated }) {
       rcUnitPrice,
       psuPicked,
       psUnitPrice,
+      psuBrand,
+      customItemEnabled,
+      customItems,
       moduleBrand,
+      selectedModuleBrand,
       ctrlSystemBrand,
+      cabinetSizeId,
+      selectedCabinetSize,
+      activeCabinetMaterial,
+      cabinetSizeLabel,
+      cabinetModulesPerCabinet,
       accessoriesMode,
       accessoriesValue,
       installMode,
       installValue,
+      transportEnabled,
+      transportValue,
       tierId,
       customWarranty,
       defaultWarrantyYears,
@@ -487,46 +1029,228 @@ export default function PriceForm({ onChange, onCalculated }) {
       installIsPercent,
       paymentTermId,
       paymentTermLabel,
+      deliveryDays,
       catalog.priceTiers,
       catalog.rcCapacityHuidu,
       catalog.rcCapacityNovastar,
       catalog.psuCapacity,
     ]
-  );
+	  );
 
-  useEffect(() => onChange?.(snapshot), [snapshot, onChange]);
+  useEffect(() => {
+    onInstallationTypeChange?.(installationType);
+  }, [installationType, onInstallationTypeChange]);
+
+  useEffect(() => {
+    if (installationType !== "fixed") return;
+    onChange?.(snapshot);
+  }, [installationType, snapshot, onChange]);
 
   const computeAndSend = useCallback(
     (userSubmit = false) => {
+      if (installationType !== "fixed") return;
       const result = buildTotalsForCalc({
         snapshot,
         autoModulesQty,
         moduleUnitPrice,
         rcUnitPrice,
-        psUnitPrice, // ✅ NEW
+        psUnitPrice, // âœ… NEW
         cabinetQty,
         cabinetUnitPrice,
       });
       onCalculated?.(result, snapshot, { userSubmit });
     },
-    [snapshot, autoModulesQty, moduleUnitPrice, rcUnitPrice, psUnitPrice, cabinetQty, cabinetUnitPrice, onCalculated]
+    [installationType, snapshot, autoModulesQty, moduleUnitPrice, rcUnitPrice, psUnitPrice, cabinetQty, cabinetUnitPrice, onCalculated]
   );
 
   const handleCalculate = (e) => {
     e?.preventDefault?.();
-    hasCalculatedRef.current = true;
-    computeAndSend(true);
   };
 
+  const setCabinetSizeByKey = useCallback(
+    (sizeKey) => {
+      const match =
+        cabinetSizeOptions.find((option) => option.sizeKey === sizeKey) ||
+        cabinetAllOptions.find((option) => option.displayType === dispType && option.sizeKey === sizeKey);
+      if (match) setCabinetSizeId(match.id);
+    },
+    [cabinetAllOptions, cabinetSizeOptions, dispType]
+  );
+
+  const snapWidthToNearestSize = useCallback(() => {
+    const cabinetRows = cabinetEnabled
+      ? CABINET_AREA_SIZE_ROWS[selectedCabinetSize?.sizeKey] || CABINET_AREA_SIZE_ROWS["640x480"]
+      : null;
+    const { widthFt, heightFt, widthValue, heightValue } = getDimensionsFromWidth(
+      display.widthFt,
+      cabinetRows?.widthOptions,
+      cabinetRows?.heightOptions
+    );
+
+    if (!widthFt) return;
+
+    setDisplay((d) => ({
+      ...d,
+      widthFt,
+      heightFt,
+    }));
+    updateSizeSelection((prev) => {
+      const next = { ...(prev || {}) };
+      delete next.width;
+      delete next.height;
+      delete next.p3p6;
+      clearSizeSelectionRows(next, CABINET_PICK_ROWS);
+
+      if (cabinetRows) {
+        next[cabinetRows.widthRow] = widthValue;
+        if (heightValue !== null) next[cabinetRows.heightRow] = heightValue;
+      } else {
+        next.width = widthValue;
+        if (heightValue !== null) next.height = heightValue;
+      }
+
+      return next;
+    });
+  }, [cabinetEnabled, display.widthFt, selectedCabinetSize?.sizeKey, updateSizeSelection]);
+
   useEffect(() => {
-    if (hasCalculatedRef.current) computeAndSend(false);
+    hasCalculatedRef.current = true;
+    computeAndSend(false);
   }, [computeAndSend]);
+
+  // âœ… Accept preset size chips (width/height) and allow manual override afterward
+  useEffect(() => {
+    if (!sizePick) return;
+    const isCobP125WidthPick = isCobP125 && sizePick.row === "cobP125Width" && sizePick.width !== undefined;
+    const autoHeight = isCobP125WidthPick
+      ? getNearestSizeOption(COB_P125_HEIGHT_OPTIONS, Number(sizePick.width) * 9 / 16)
+      : sizePick.width !== undefined && (sizePick.row === "width" || sizePick.row === "p3p6")
+      ? parseFloat(getAutoHeightFromWidth(sizePick.width))
+      : null;
+
+    const cabinetSizeKey = CABINET_SIZE_PICK_ROWS[sizePick.row];
+    const isCabinetPick = Boolean(cabinetSizeKey);
+    const isCabinetWidthPick = CABINET_WIDTH_PICK_ROWS.includes(sizePick.row);
+    const isCabinetHeightPick = CABINET_HEIGHT_PICK_ROWS.includes(sizePick.row);
+
+    if (cabinetSizeKey) {
+      setCabinetSizeByKey(cabinetSizeKey);
+    }
+    setDisplay((d) => ({
+      ...d,
+      widthFt: sizePick.width !== undefined ? String(sizePick.width) : d.widthFt,
+      heightFt:
+        sizePick.height !== undefined
+          ? String(sizePick.height)
+          : autoHeight !== null
+          ? String(autoHeight)
+          : d.heightFt,
+    }));
+    updateSizeSelection((prev) => {
+      const next = { ...(prev || {}) };
+
+      if (sizePick.row === "width" || sizePick.row === "p3p6" || isCabinetWidthPick) {
+        delete next.width;
+        delete next.p3p6;
+        clearSizeSelectionRows(next, CABINET_WIDTH_PICK_ROWS);
+      }
+      if (isCabinetHeightPick) {
+        clearSizeSelectionRows(next, CABINET_HEIGHT_PICK_ROWS);
+      }
+      if (isCobP125WidthPick) {
+        clearSizeSelectionRows(next, CABINET_HEIGHT_PICK_ROWS);
+      }
+      if (sizePick.row === "width" || sizePick.row === "height" || sizePick.row === "p3p6") {
+        clearSizeSelectionRows(next, CABINET_PICK_ROWS);
+      }
+      if (isCabinetPick) {
+        delete next.width;
+        delete next.height;
+        delete next.p3p6;
+        clearSizeSelectionRows(
+          next,
+          CABINET_PICK_ROWS.filter((row) => CABINET_SIZE_PICK_ROWS[row] !== cabinetSizeKey)
+        );
+      }
+
+      if (sizePick.width !== undefined) next[sizePick.row] = sizePick.width;
+      if (sizePick.height !== undefined) next[sizePick.row] = sizePick.height;
+
+      if (
+        autoHeight !== null &&
+        !Number.isNaN(autoHeight) &&
+        !isCabinetPick
+      ) {
+        if (isCobP125WidthPick) {
+          delete next.height;
+          next.cobP125Height = autoHeight;
+        } else {
+          next.height = autoHeight;
+        }
+      } else if (sizePick.row === "height" && sizePick.height !== undefined) {
+        next.height = sizePick.height;
+      }
+
+      return next;
+    });
+  }, [isCobP125, setCabinetSizeByKey, sizePick, updateSizeSelection]);
+
+  const showTechnologyControl = dispType === "indoor";
+	  const displayControlsClassName = `form-row${
+	    dispType === "outdoor" && cabinetEnabled ? " form-row-cabinet-outdoor" : ""
+	  }`;
+
+	  const changeInstallationType = useCallback(
+	    (nextType) => {
+	      setInstallationType(nextType);
+	      onInstallationTypeChange?.(nextType);
+	    },
+	    [onInstallationTypeChange]
+	  );
+
+  const cabinetControls = cabinetEnabled ? (
+    <>
+      {dispType === "outdoor" ? (
+        <label>
+          Cabinet Material
+          <CustomSelect
+            ariaLabel="Cabinet Material"
+            value={activeCabinetMaterial}
+            options={cabinetMaterialOptions}
+            onChange={setCabinetMaterial}
+          />
+        </label>
+      ) : null}
+
+      {cabinetVariantOptions.length ? (
+        <label>
+          Cabinet Type
+          <CustomSelect
+            ariaLabel="Cabinet Type"
+            value={activeCabinetVariant}
+            options={cabinetVariantOptions.map((variant) => ({ ...variant, label: `${variant.label} Cabinet` }))}
+            onChange={setCabinetVariant}
+          />
+        </label>
+      ) : null}
+
+      <label>
+        Cabinet Size
+        <CustomSelect
+          ariaLabel="Cabinet Size"
+          value={selectedCabinetSize?.id || ""}
+          options={cabinetSizeOptions.map((size) => ({ value: size.id, label: size.label }))}
+          onChange={setCabinetSizeId}
+        />
+      </label>
+    </>
+  ) : null;
 
   return (
     <form onSubmit={handleCalculate} className="form-grid">
       {loading ? (
         <div className="brand-sub" style={{ marginBottom: 8 }}>
-          Loading latest product catalog…
+          Loading latest product catalog...
         </div>
       ) : null}
       {error ? (
@@ -536,99 +1260,205 @@ export default function PriceForm({ onChange, onCalculated }) {
             Retry
           </button>
         </div>
-      ) : null}
+	      ) : null}
 
-      {/* === Display Type === */}
-      <section>
+	      <section>
+	        <h3>Calculator Category</h3>
+	        <div className="inline" style={{ gap: 18 }}>
+	          <label className="inline">
+	            <input
+		              className="radio"
+		              type="radio"
+		              checked={installationType === "fixed"}
+		              onChange={() => changeInstallationType("fixed")}
+		            />
+	            <span>Fixed Installation</span>
+	          </label>
+	          <label className="inline">
+	            <input
+		              className="radio"
+		              type="radio"
+		              checked={installationType === "rental"}
+		              onChange={() => changeInstallationType("rental")}
+		            />
+	            <span>Rental</span>
+	          </label>
+		          <label className="inline">
+		            <input
+		              className="radio"
+		              type="radio"
+		              checked={installationType === "pa"}
+		              onChange={() => changeInstallationType("pa")}
+		            />
+		            <span>PA System</span>
+		          </label>
+		          <label className="inline">
+		            <input
+		              className="radio"
+		              type="radio"
+		              checked={installationType === "conference"}
+		              onChange={() => changeInstallationType("conference")}
+		            />
+		            <span>Conference System</span>
+		          </label>
+		        </div>
+		      </section>
+
+	      {installationType === "rental" ? (
+	        <RentalPriceForm
+	          onChange={onChange}
+	          onCalculated={onCalculated}
+	          sizePick={rentalSizePick}
+	          onSizeSelectionChange={onRentalSizeSelectionChange}
+	        />
+		      ) : installationType === "pa" ? (
+		        <PASystemForm onChange={onChange} onCalculated={onCalculated} />
+		      ) : installationType === "conference" ? (
+		        <ConferenceSystemForm onChange={onChange} onCalculated={onCalculated} />
+		      ) : (
+	        <>
+	      {/* === Display Type === */}
+	      <section>
         <h3>Display Type</h3>
 
         <div className="inline" style={{ flexWrap: "wrap", gap: 18 }}>
           <label className="inline">
-            <input className="radio" type="radio" checked={dispType === "indoor"} onChange={() => setDispType("indoor")} />
+            <input
+              className="radio"
+              type="radio"
+              checked={dispType === "indoor"}
+              onChange={() => {
+                setDispType("indoor");
+                setCabinetMaterial("aluminium");
+                setCabinetVariant("");
+              }}
+            />
             <span>Indoor</span>
           </label>
 
           <label className="inline">
-            <input className="radio" type="radio" checked={dispType === "outdoor"} onChange={() => setDispType("outdoor")} />
+            <input
+              className="radio"
+              type="radio"
+              checked={dispType === "outdoor"}
+              onChange={() => {
+                setDispType("outdoor");
+                setCabinetMaterial("mild_steel");
+                setCabinetVariant("open");
+              }}
+            />
             <span>Outdoor</span>
           </label>
 
-          {/* ✅ Cabinet options */}
+          {/* âœ… Cabinet options */}
           <label className="inline" style={{ marginLeft: 50 }}>
             <input className="radio" type="radio" checked={!cabinetEnabled} onChange={() => setCabinetEnabled(false)} />
             <span>Without Cabinet</span>
           </label>
 
-          <label className="inline">
-            <input className="radio" type="radio" checked={cabinetEnabled} onChange={() => setCabinetEnabled(true)} />
-            <span>With Cabinet</span>
-          </label>
-        </div>
+	          <label className="inline">
+	            <input className="radio" type="radio" checked={cabinetEnabled} onChange={() => setCabinetEnabled(true)} />
+	            <span>With Cabinet</span>
+	          </label>
 
-        {/* ✅ Technology dropdown show/hide */}
-        {techOptions.length > 1 ? (
-          <div className="form-row" style={{ marginTop: 12 }}>
-            <label>
-              Technology
-              <select className="select" value={technology} onChange={(e) => setTechnology(e.target.value)}>
-                {techOptions.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+	          <label className="inline" style={{ marginLeft: 50 }}>
+	            <input className="radio" type="radio" checked={quotationMode === "regular"} onChange={() => setQuotationMode("regular")} />
+	            <span>Regular</span>
+	          </label>
 
-            {cabinetEnabled ? (
+	          <label className="inline">
+	            <input className="radio" type="radio" checked={quotationMode === "irregular"} onChange={() => setQuotationMode("irregular")} />
+	            <span>Irregular</span>
+	          </label>
+	        </div>
+
+        {/* âœ… Technology dropdown show/hide */}
+        {showTechnologyControl || cabinetEnabled ? (
+          <div className={displayControlsClassName} style={{ marginTop: 12 }}>
+            {showTechnologyControl ? (
               <label>
-                Cabinet Size
-                <input className="input" value="640mm × 480mm" readOnly />
+                Technology
+                {techOptions.length > 1 ? (
+                  <CustomSelect
+                    ariaLabel="Technology"
+                    value={technology}
+                    options={techOptions.map((t) => ({ value: t.id, label: t.label }))}
+                    onChange={setTechnology}
+                  />
+                ) : (
+                  <input className="input" value={techOptions[0]?.label || "SMD"} readOnly />
+                )}
               </label>
             ) : null}
-          </div>
-        ) : (
-          <div className="form-row" style={{ marginTop: 12 }}>
-            <label>
-              Technology
-              <input className="input" value="SMD" readOnly />
-            </label>
 
-            {cabinetEnabled ? (
-              <label>
-                Cabinet Size
-                <input className="input" value="640mm × 480mm" readOnly />
-              </label>
-            ) : null}
+            {cabinetControls}
           </div>
-        )}
-      </section>
+        ) : null}
+	      </section>
 
-      {/* Product model */}
-      <section>
+	      {quotationMode === "irregular" ? (
+	        <section>
+	          <h3>Irregular Quotation</h3>
+	          <div className="form-row">
+	            <label>
+	              Unit
+	              <input className="input" value="Set" readOnly />
+	            </label>
+
+	            <label>
+	              Quantity
+	              <input
+	                className="input"
+	                type="number"
+	                min="1"
+	                step="1"
+	                value={irregularQty}
+	                onFocus={() => zeroClearOnFocus(irregularQty, setIrregularQty)}
+	                onChange={(e) => setIrregularQty(e.target.value)}
+	                onBlur={() => zeroRestoreOnBlur(irregularQty, setIrregularQty)}
+	              />
+	            </label>
+	          </div>
+	        </section>
+	      ) : null}
+
+	      {/* Product model */}
+	      <section>
         <h3>Product Model</h3>
 
         <div className="form-row">
           <label>
             Select Model (Pixel Pitch)
-            <select className="select" value={modelId} onChange={(e) => setModelId(e.target.value)}>
-              {modelsForType.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
+            <CustomSelect
+              ariaLabel="Select Model"
+              value={modelId}
+              options={modelsForType.map((m) => ({ value: m.id, label: m.name }))}
+              onChange={setModelId}
+            />
           </label>
 
           <label>
             Module Brand
-            <select className="select" value={moduleBrand} onChange={(e) => setModuleBrand(e.target.value)}>
-              {(catalog.moduleBrands || []).map((b) => (
-                <option key={b.value} value={b.value}>
-                  {b.label || b.value}
-                </option>
-              ))}
-            </select>
+            <CustomSelect
+              ariaLabel="Module Brand"
+              value={moduleBrand}
+              options={moduleBrandOptions}
+              onChange={setModuleBrand}
+            />
           </label>
+
+          {isCustomModuleBrand ? (
+            <label>
+              Brand Name
+              <input
+                className="input"
+                type="text"
+                value={customModuleBrandName}
+                onChange={(e) => setCustomModuleBrandName(e.target.value)}
+                placeholder="e.g. Your Brand"
+              />
+            </label>
+          ) : null}
         </div>
 
         <div className="form-row">
@@ -637,25 +1467,124 @@ export default function PriceForm({ onChange, onCalculated }) {
             <input
               className="input"
               value={display.widthFt}
-              onChange={(e) => setDisplay((d) => ({ ...d, widthFt: e.target.value }))}
-              placeholder="e.g. 16"
-            />
-          </label>
+              onChange={(e) => {
+                const nextWidth = e.target.value;
+                const nextHeight = nextWidth === "" ? display.heightFt : getAutoHeightFromWidth(nextWidth);
+                setDisplay((d) => ({
+                  ...d,
+                  widthFt: nextWidth,
+                  heightFt: nextHeight,
+                }));
+                updateSizeSelection((prev) => {
+                  const next = { ...(prev || {}) };
+                  delete next.width;
+                  delete next.p3p6;
+                  clearSizeSelectionRows(next, CABINET_PICK_ROWS);
+                  if (nextWidth === "") {
+                    delete next.height;
+                  } else {
+                    const parsedHeight = parseFloat(nextHeight);
+                    if (!Number.isNaN(parsedHeight)) next.height = parsedHeight;
+                  }
+                  return next;
+	                });
+	              }}
+	              onKeyDown={(e) => {
+	                if (e.key !== "Enter") return;
+	                e.preventDefault();
+	                snapWidthToNearestSize();
+	              }}
+	              placeholder="e.g. 16"
+	            />
+	          </label>
 
           <label>
             Height (ft)
             <input
               className="input"
               value={display.heightFt}
-              onChange={(e) => setDisplay((d) => ({ ...d, heightFt: e.target.value }))}
+              onChange={(e) => {
+                const nextHeight = e.target.value;
+                setDisplay((d) => ({ ...d, heightFt: nextHeight }));
+                updateSizeSelection((prev) => {
+                  const next = { ...(prev || {}) };
+                  clearSizeSelectionRows(next, CABINET_PICK_ROWS);
+                  if (!prev?.height) return next;
+                  delete next.height;
+                  return next;
+                });
+              }}
               placeholder="e.g. 9"
             />
           </label>
 
-          {/* ✅ LOCKED: Area auto only */}
           <label>
             Area (sft)
-            <input className="input" value={display.sft || ""} readOnly title="Auto calculated from Width × Height" />
+            <input
+              className="input"
+              value={display.sft || ""}
+              onChange={(e) => {
+                const nextArea = e.target.value;
+                if (nextArea === "") {
+                  setDisplay((d) => ({ ...d, sft: "", widthFt: "", heightFt: "" }));
+                  updateSizeSelection((prev) => {
+                    const next = { ...(prev || {}) };
+                    delete next.width;
+                    delete next.height;
+                    delete next.p3p6;
+                    clearSizeSelectionRows(next, CABINET_PICK_ROWS);
+                    return next;
+                  });
+                  return;
+                }
+                setDisplay((d) => ({ ...d, sft: nextArea }));
+              }}
+              onBlur={() => {
+                const nextArea = String(display.sft || "").trim();
+                if (nextArea === "") return;
+
+                const cabinetAreaRows = cabinetEnabled
+                  ? CABINET_AREA_SIZE_ROWS[selectedCabinetSize?.sizeKey] || CABINET_AREA_SIZE_ROWS["640x480"]
+                  : null;
+                const { widthFt, heightFt } = getDimensionsFromArea(
+                  nextArea,
+                  cabinetAreaRows?.widthOptions,
+                  cabinetAreaRows?.heightOptions
+                );
+                setDisplay((d) => ({
+                  ...d,
+                  widthFt,
+                  heightFt,
+                }));
+                updateSizeSelection((prev) => {
+                  const next = { ...(prev || {}) };
+                  delete next.width;
+                  delete next.height;
+                  delete next.p3p6;
+                  clearSizeSelectionRows(next, CABINET_PICK_ROWS);
+                  if (!widthFt || !heightFt) return next;
+
+                  const parsedWidth = parseFloat(widthFt);
+                  const parsedHeight = parseFloat(heightFt);
+                  if (Number.isNaN(parsedWidth) || Number.isNaN(parsedHeight)) return next;
+
+                  if (cabinetAreaRows) {
+                    next[cabinetAreaRows.widthRow] = parsedWidth;
+                    next[cabinetAreaRows.heightRow] = parsedHeight;
+                  } else {
+                    next.width = parsedWidth;
+                    next.height = parsedHeight;
+                  }
+                  return next;
+                });
+              }}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter") return;
+                e.preventDefault();
+                e.currentTarget.blur();
+              }}
+              title="Enter area to auto-calculate 16:9 Width and Height"
+            />
           </label>
         </div>
 
@@ -686,13 +1615,13 @@ export default function PriceForm({ onChange, onCalculated }) {
           </label>
         </div>
 
-        <div className="form-row" style={{ marginTop: 10 }}>
+        <div className="form-row form-3" style={{ marginTop: 10, gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
           <label>
-            Modules (auto)
-            <input className="input" value={autoModulesQty || 0} readOnly />
-            {cabinetEnabled ? (
+            {isCobP125 ? "Area (sft)" : "Modules (auto)"}
+            <input className="input" value={isCobP125 ? display.sft || 0 : autoModulesQty || 0} readOnly />
+            {!isCobP125 && cabinetEnabled ? (
               <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
-                Cabinet: {cabinetQty || 0} pcs • 6 modules/cabinet
+                Cabinet: {cabinetQty || 0} pcs - {cabinetModulesPerCabinet} modules/cabinet
               </div>
             ) : null}
           </label>
@@ -724,15 +1653,77 @@ export default function PriceForm({ onChange, onCalculated }) {
                   setModulePriceOverrideStr(moduleUnitPriceAuto ? String(Math.round(moduleUnitPriceAuto)) : "");
                 }
               }}
-              placeholder={moduleUnitPriceAuto ? String(Math.round(moduleUnitPriceAuto)) : "—"}
+              placeholder={moduleUnitPriceAuto ? String(Math.round(moduleUnitPriceAuto)) : "-"}
+            />
+          </label>
+
+          <label>
+            {isCobP125 ? "Total Panel Pixels" : "Total Module Pixels"}
+	            <input className="input pixel-value-input" value={pixelFormatter.format(displayTotalModulePixels)} readOnly />
+          </label>
+
+        </div>
+
+      </section>
+
+      {/* Controller */}
+      <section>
+        <h3>Controller and Receiving Card Brand</h3>
+
+        <div className="form-row">
+          <label>
+            Controller & RC Brand
+            <CustomSelect
+              ariaLabel="Controller and Receiving Card Brand"
+              value={ctrlSystemBrand}
+              options={(catalog.controllerSystemBrands || []).map((b) => ({ value: b.value, label: b.label || b.value }))}
+              onChange={setCtrlSystemBrand}
+            />
+          </label>
+
+          <label>
+            Controller Model
+            <CustomSelect
+              ariaLabel="Controller Model"
+              value={controllerId}
+              options={[
+                { value: "", label: "-- No controller (pixel over) --" },
+                ...(ctrlSystemBrand === "Novastar"
+                  ? novastarControllerOptions.map((c) => ({
+                      value: c.id,
+                      label: `${c.label} - Tk ${Math.round(c.price).toLocaleString("en-BD")}`,
+                    }))
+                  : catalog.controllers
+                      .filter((c) => c.kind !== "receiving")
+                      .map((c) => ({
+                        value: c.id,
+                        label: `${c.label} - Tk ${Math.round(c.price).toLocaleString("en-BD")}`,
+                      }))),
+              ]}
+              onChange={setControllerId}
+            />
+          </label>
+
+          <label>
+            Controller Pixel Capacity
+            <input
+              className="input pixel-value-input"
+              value={controllerPixelCapacity ? pixelFormatter.format(controllerPixelCapacity) : ""}
+              placeholder="-"
+              readOnly
             />
           </label>
         </div>
 
         <div className="form-row" style={{ marginTop: 10 }}>
           <label>
-            Receiving Card (auto)
-            <input className="input" value={rcPicked.label} readOnly />
+            Receiving Card
+            <CustomSelect
+              ariaLabel="Receiving Card"
+              value={receivingCardId}
+              options={receivingCardOptions}
+              onChange={setReceivingCardId}
+            />
           </label>
 
           <label>
@@ -756,45 +1747,8 @@ export default function PriceForm({ onChange, onCalculated }) {
                   setRcPriceOverrideStr(rcUnitPriceAuto ? String(Math.round(rcUnitPriceAuto)) : "");
                 }
               }}
-              placeholder={rcUnitPriceAuto ? String(Math.round(rcUnitPriceAuto)) : "—"}
+              placeholder={rcUnitPriceAuto ? String(Math.round(rcUnitPriceAuto)) : "-"}
             />
-          </label>
-        </div>
-      </section>
-
-      {/* Controller */}
-      <section>
-        <h3>Controller and Receiving Card Brand</h3>
-
-        <div className="form-row">
-          <label>
-            Controller & RC Brand
-            <select className="select" value={ctrlSystemBrand} onChange={(e) => setCtrlSystemBrand(e.target.value)}>
-              {(catalog.controllerSystemBrands || []).map((b) => (
-                <option key={b.value} value={b.value}>
-                  {b.label || b.value}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Controller Model
-            <select className="select" value={controllerId} onChange={(e) => setControllerId(e.target.value)}>
-              <option value="">-- No controller (pixel over) --</option>
-
-              {ctrlSystemBrand === "Novastar"
-                ? (catalog.novastarControllers[dispType] || []).map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.label} — ৳{Math.round(c.price).toLocaleString("en-BD")}
-                    </option>
-                  ))
-                : catalog.controllers.filter((c) => c.kind !== "receiving").map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.label} — ৳{Math.round(c.price).toLocaleString("en-BD")}
-                    </option>
-                  ))}
-            </select>
           </label>
 
           <label>
@@ -824,7 +1778,7 @@ export default function PriceForm({ onChange, onCalculated }) {
                   setControllerPriceOverrideStr(controllerPriceAuto ? String(Math.round(controllerPriceAuto)) : "");
                 }
               }}
-              placeholder={controllerPriceAuto ? String(Math.round(controllerPriceAuto)) : "—"}
+              placeholder={controllerPriceAuto ? String(Math.round(controllerPriceAuto)) : "-"}
               disabled={!controllerId}
             />
           </label>
@@ -839,16 +1793,37 @@ export default function PriceForm({ onChange, onCalculated }) {
         {cabinetEnabled ? (
           <div className="form-row">
             <label>
-              Cabinet (auto)
-              <span style={{ fontSize: 12, color: "#64748b" }}>auto: {cabinetQty || 0} (640mm × 480mm)</span>
-              <input className="input" type="number" value={cabinetQty || 0} readOnly />
+              Cabinet (pcs)
+              <span style={{ fontSize: 12, color: "#64748b" }}>auto: {autoCabinetQty || 0} ({cabinetSizeLabel})</span>
+              <input
+                className="input"
+                type="number"
+                min="0"
+                step="1"
+                value={cabinetQtyOverrideEnabled ? cabinetQtyOverrideStr : autoCabinetQty || 0}
+                onFocus={() => {
+                  setCabinetQtyOverrideEnabled(true);
+                  setCabinetQtyOverrideStr((previous) => (previous !== "" ? previous : String(autoCabinetQty || 0)));
+                }}
+                onChange={(e) => {
+                  setCabinetQtyOverrideEnabled(true);
+                  setCabinetQtyOverrideStr(e.target.value);
+                }}
+                onBlur={() => {
+                  const value = parseFloat(cabinetQtyOverrideStr);
+                  if (cabinetQtyOverrideStr === "" || !Number.isFinite(value) || value < 0) {
+                    setCabinetQtyOverrideEnabled(false);
+                    setCabinetQtyOverrideStr(String(autoCabinetQty || 0));
+                  }
+                }}
+              />
             </label>
 
-            {/* ✅ Cabinet Case Unit Price manual override */}
+            {/* âœ… Cabinet Case Unit Price manual override */}
             <label>
               Cabinet Case Unit Price (Tk)
               <span style={{ fontSize: 12, color: "#64748b" }}>
-                default: ৳{Math.round(cabinetUnitPriceAuto).toLocaleString("en-BD")}
+                default: Tk {Math.round(cabinetUnitPriceAuto).toLocaleString("en-BD")}
               </span>
               <input
                 className="input"
@@ -875,7 +1850,7 @@ export default function PriceForm({ onChange, onCalculated }) {
                     setCabinetPriceOverrideStr(String(Math.round(cabinetUnitPriceAuto || 0)));
                   }
                 }}
-                placeholder={cabinetUnitPriceAuto ? String(Math.round(cabinetUnitPriceAuto)) : "—"}
+                placeholder={cabinetUnitPriceAuto ? String(Math.round(cabinetUnitPriceAuto)) : "-"}
               />
             </label>
           </div>
@@ -886,7 +1861,7 @@ export default function PriceForm({ onChange, onCalculated }) {
             Receiving Cards (pcs)
             <span style={{ fontSize: 12, color: "#64748b" }}>
               {cabinetEnabled
-                ? `auto: ${autoRcQty} (1 per cabinet)`
+                ? `auto: ${autoRcQty} (${cabinetRcPsuPerCabinet.rc}/cabinet x ${cabinetQty || 0})`
                 : `auto: ${autoRcQty} (cap: ${getRcCapacity(
                     dispType,
                     model?.name || "",
@@ -898,11 +1873,21 @@ export default function PriceForm({ onChange, onCalculated }) {
             <input
               className="input"
               type="number"
+              min="0"
+              step="1"
               value={rcQty}
               onChange={(e) => setRcQty(parseFloat(e.target.value || 0))}
-              disabled={cabinetEnabled}
-              readOnly={cabinetEnabled}
-              title={cabinetEnabled ? "With cabinet, RC qty is fixed = cabinet qty" : ""}
+            />
+          </label>
+
+          <label>
+            Power Supply Brand
+            <span style={{ fontSize: 12, color: "#64748b" }}>default: Lampro</span>
+            <CustomSelect
+              ariaLabel="Power Supply Brand"
+              value={psuBrand}
+              options={psuBrandOptions}
+              onChange={setPsuBrand}
             />
           </label>
 
@@ -910,27 +1895,26 @@ export default function PriceForm({ onChange, onCalculated }) {
             Power Supplies (pcs)
             <span style={{ fontSize: 12, color: "#64748b" }}>
               {cabinetEnabled
-                ? `auto: ${autoPsQty} (1 per cabinet) • ${psuPicked.model}`
-                : `auto: ${autoPsQty} (cap: ${getPsuCapacity(dispType, model?.name || "", catalog.psuCapacity)} modules/PSU) • ${
+                ? `auto: ${autoPsQty} (${cabinetRcPsuPerCabinet.psu}/cabinet x ${cabinetQty || 0}) - ${psuPicked.model}`
+                : `auto: ${autoPsQty} (cap: ${getPsuCapacity(dispType, model?.name || "", catalog.psuCapacity)} modules/PSU) - ${
                     psuPicked.model
                   }`}
             </span>
             <input
               className="input"
               type="number"
+              min="0"
+              step="1"
               value={psQty}
               onChange={(e) => setPsQty(parseFloat(e.target.value || 0))}
-              disabled={cabinetEnabled}
-              readOnly={cabinetEnabled}
-              title={cabinetEnabled ? "With cabinet, PSU qty is fixed = cabinet qty" : ""}
             />
           </label>
 
-          {/* ✅ NEW: Power Supply Unit Price manual override */}
+          {/* âœ… NEW: Power Supply Unit Price manual override */}
           <label>
             Power Supply Unit Price (Tk)
             <span style={{ fontSize: 12, color: "#64748b" }}>
-              default: ৳{Math.round(psUnitPriceAuto).toLocaleString("en-BD")}
+              default: Tk {Math.round(psUnitPriceAuto).toLocaleString("en-BD")}
             </span>
             <input
               className="input"
@@ -951,10 +1935,87 @@ export default function PriceForm({ onChange, onCalculated }) {
                   setPsPriceOverrideStr(psUnitPriceAuto ? String(Math.round(psUnitPriceAuto)) : "");
                 }
               }}
-              placeholder={psUnitPriceAuto ? String(Math.round(psUnitPriceAuto)) : "—"}
+              placeholder={psUnitPriceAuto ? String(Math.round(psUnitPriceAuto)) : "-"}
             />
           </label>
         </div>
+      </section>
+
+      {/* Custom Field */}
+      <section>
+        <div className="inline" style={{ justifyContent: "space-between", alignItems: "center" }}>
+          <h3 style={{ margin: 0 }}>Custom Field</h3>
+          {customItemEnabled ? (
+            <button
+              type="button"
+              className="btn secondary"
+              style={{ backgroundColor: "#2563eb", borderColor: "#2563eb", color: "#ffffff" }}
+              onClick={() => setCustomItems((current) => [...current, { id: nextCustomItemId.current++, name: "", price: 0 }])}
+            >
+              + Add Custom Field
+            </button>
+          ) : null}
+        </div>
+
+        <div className="inline" style={{ gap: 18, marginTop: 10 }}>
+          <label className="inline">
+            <input
+              className="radio"
+              type="radio"
+              checked={!customItemEnabled}
+              onChange={() => {
+                setCustomItemEnabled(false);
+                setCustomItems([{ id: nextCustomItemId.current++, name: "", price: 0 }]);
+              }}
+            />
+            <span>Without Custom Field</span>
+          </label>
+
+          <label className="inline">
+            <input className="radio" type="radio" checked={customItemEnabled} onChange={() => setCustomItemEnabled(true)} />
+            <span>With Custom Field</span>
+          </label>
+        </div>
+
+        {customItemEnabled ? (
+          <div style={{ marginTop: 10 }}>
+            {customItems.map((item, index) => (
+              <div className="form-row" style={{ marginTop: index ? 10 : 0 }} key={item.id}>
+                <label>
+                  Item Name
+                  <input
+                    className="input"
+                    type="text"
+                    aria-label={`Custom item name ${index + 1}`}
+                    value={item.name}
+                    onChange={(e) => setCustomItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, name: e.target.value } : entry))}
+                    placeholder="e.g. Spare Module"
+                  />
+                </label>
+
+                <label>
+                  Price (Tk)
+                  <input
+                    className="input"
+                    type="number"
+                    min="0"
+                    aria-label={`Custom item price ${index + 1}`}
+                    value={item.price}
+                    onChange={(e) => setCustomItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, price: e.target.value } : entry))}
+                    placeholder="e.g. 2500"
+                  />
+                </label>
+
+                {customItems.length > 1 ? (
+                  <button type="button" className="btn secondary" onClick={() => setCustomItems((current) => current.filter((entry) => entry.id !== item.id))}>
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+            ))}
+
+          </div>
+        ) : null}
       </section>
 
       {/* Structure & Accessories */}
@@ -979,12 +2040,12 @@ export default function PriceForm({ onChange, onCalculated }) {
         </div>
 
         <div className="install-row">
-          <div className="install-box">
+          <div className="install-box accessories-auto-box">
             <div className="install-title">Auto Accessories</div>
-            <div className="install-hint">Auto mode এ area অনুযায়ী Structure & Accessories auto-calculate হবে (Outdoor হলে multiplier apply হবে)।</div>
+            <div className="install-hint">Auto mode calculates Structure & Accessories from display area. Outdoor displays use the outdoor multiplier.</div>
           </div>
 
-          <div className={`install-box manual ${accessoriesMode === "auto" ? "is-disabled" : ""}`}>
+          <div className={`install-box manual accessories-manual-box ${accessoriesMode === "auto" ? "is-disabled" : ""}`}>
             <div className="install-title">Manual Override</div>
 
             <input
@@ -1000,7 +2061,7 @@ export default function PriceForm({ onChange, onCalculated }) {
             />
 
             <div className="install-hint" style={{ marginTop: 6 }}>
-              শুধু Manual mode এ কাজ করবে।
+              Works only in Manual mode.
             </div>
           </div>
         </div>
@@ -1023,9 +2084,9 @@ export default function PriceForm({ onChange, onCalculated }) {
         </div>
 
         <div className="install-row">
-          <div className="install-box">
+          <div className="install-box installation-auto-box">
             <div className="install-title">Auto Installation</div>
-            <div className="install-hint">Auto mode এ area অনুযায়ী installation cost auto-calculate হবে।</div>
+            <div className="install-hint">Auto mode calculates installation cost from display area.</div>
           </div>
 
           <div className={`install-box manual ${installMode === "auto" ? "is-disabled" : ""}`}>
@@ -1048,7 +2109,54 @@ export default function PriceForm({ onChange, onCalculated }) {
         </div>
       </section>
 
-      {/* ✅ VAT option */}
+      <section>
+        <h3>Transport Cost</h3>
+
+        <div className="inline" style={{ gap: 18 }}>
+          <label className="inline">
+            <input
+              className="radio"
+              type="radio"
+              checked={!transportEnabled}
+              onChange={() => {
+                setTransportEnabled(false);
+                setTransportValue(0);
+              }}
+            />
+            <span>Without Transport Cost</span>
+          </label>
+
+          <label className="inline">
+            <input className="radio" type="radio" checked={transportEnabled} onChange={() => setTransportEnabled(true)} />
+            <span>With Transport Cost</span>
+          </label>
+        </div>
+
+        {transportEnabled ? (
+          <>
+            <div className="form-row" style={{ marginTop: 10 }}>
+              <label>
+                Transport Cost (Tk)
+                <input
+                  className="input"
+                  type="number"
+                  value={transportValue}
+                  onFocus={() => zeroClearOnFocus(transportValue, setTransportValue, false)}
+                  onChange={(e) => setTransportValue(e.target.value)}
+                  onBlur={() => zeroRestoreOnBlur(transportValue, setTransportValue, false)}
+                  placeholder="e.g. 15000"
+                />
+              </label>
+            </div>
+
+            <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
+              Invoice table-e `Transport Cost` name ar `Lot` unit diye row show hobe, ar amount Grand Total-e jog hobe.
+            </div>
+          </>
+        ) : null}
+      </section>
+
+      {/* âœ… VAT option */}
       <section>
         <h3>VAT</h3>
 
@@ -1065,11 +2173,11 @@ export default function PriceForm({ onChange, onCalculated }) {
         </div>
 
         <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
-          VAT enabled হলে সব আইটেমের Unit Price +5% (Tax) হবে, তারপর Total-এর উপর 10% VAT যোগ হবে।
+          When VAT is enabled, each item unit price includes 5% tax, then 10% VAT is added on the total.
         </div>
       </section>
 
-      {/* ✅ Discount toggle */}
+      {/* âœ… Discount toggle */}
       <section>
         <h3>Discount</h3>
 
@@ -1111,13 +2219,13 @@ export default function PriceForm({ onChange, onCalculated }) {
             </div>
 
             <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
-              VAT সহ Grand Total থেকে এই Discount বাদ দিয়ে Payable হিসাব হবে।
+              This discount is deducted from the VAT-inclusive Grand Total to calculate the payable amount.
             </div>
           </>
         ) : null}
       </section>
 
-      {/* ✅ Payment Terms selection */}
+      {/* âœ… Payment Terms selection */}
       <section>
         <h3>Payment Terms (For T&amp;C)</h3>
 
@@ -1131,13 +2239,26 @@ export default function PriceForm({ onChange, onCalculated }) {
         </div>
 
         <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
-          Terms &amp; Conditions এর “Payment Terms” সেকশন এই সিলেকশন অনুযায়ী auto update হবে।
+          Terms &amp; Conditions Payment Terms section will update automatically based on this selection.
+        </div>
+
+        <div className="form-row" style={{ marginTop: 12 }}>
+          <label>
+            Delivery Time (days)
+            <input
+              className="input"
+              type="number"
+              value={deliveryDays}
+              onChange={(e) => setDeliveryDays(e.target.value)}
+              placeholder="e.g. 45"
+            />
+          </label>
         </div>
       </section>
 
       {/* Customer */}
-      <section>
-        <h3>Client's Information</h3>
+	      <section>
+	        <h3>Client's Information</h3>
         <div className="form-row">
           <TextField label="Name" value={customer.name} onChange={(v) => setCustomer((c) => ({ ...c, name: v }))} />
           <TextField
@@ -1153,14 +2274,11 @@ export default function PriceForm({ onChange, onCalculated }) {
           <TextField label="Mobile Number" value={customer.mobile} onChange={(v) => setCustomer((c) => ({ ...c, mobile: v }))} />
           <TextField label="Address" value={customer.address} onChange={(v) => setCustomer((c) => ({ ...c, address: v }))} />
         </div>
-      </section>
+	      </section>
+	      </>
+	      )}
 
-      <div className="inline" style={{ marginTop: 6 }}>
-        <button type="submit" className="btn btn-primary">
-          Calculate
-        </button>
-      </div>
-    </form>
+	    </form>
   );
 }
 

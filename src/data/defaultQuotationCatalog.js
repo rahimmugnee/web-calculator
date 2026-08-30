@@ -3,6 +3,69 @@
  * Deployed copy for edits without rebuild: /quotation-catalog.json (same shape).
  * Keep schemaVersion when merging; mobile app should fetch the same JSON URL.
  */
+
+const CABINET_DEFAULT_PRICE = 8000;
+
+const CABINET_SIZE_SPECS = {
+  "640x480": { label: "640mm x 480mm", widthMm: 640, heightMm: 480, modulesPerCabinet: 6 },
+  "640x640": { label: "640mm x 640mm", widthMm: 640, heightMm: 640, modulesPerCabinet: 8 },
+  "960x960": { label: "960mm x 960mm", widthMm: 960, heightMm: 960, modulesPerCabinet: 18 },
+  "1280x1280": { label: "1280mm x 1280mm", widthMm: 1280, heightMm: 1280, modulesPerCabinet: 32 },
+};
+
+function cabinetOption({ displayType, materialCode, materialLabel, variantCode = "", variantLabel = "", sizeKey }) {
+  const size = CABINET_SIZE_SPECS[sizeKey];
+  const idParts = [displayType, materialCode, variantCode, sizeKey].filter(Boolean);
+  return {
+    id: `cabinet_${idParts.join("_")}`,
+    displayType,
+    materialCode,
+    materialLabel,
+    variantCode,
+    variantLabel,
+    sizeKey,
+    label: size.label,
+    widthMm: size.widthMm,
+    heightMm: size.heightMm,
+    modulesPerCabinet: size.modulesPerCabinet,
+    price: CABINET_DEFAULT_PRICE,
+  };
+}
+
+const INDOOR_CABINET_OPTIONS = ["640x480", "640x640"].map((sizeKey) =>
+  cabinetOption({
+    displayType: "indoor",
+    materialCode: "aluminium",
+    materialLabel: "Aluminium",
+    sizeKey,
+  })
+);
+
+const OUTDOOR_CABINET_OPTIONS = [
+  ...["open", "backdoor"].flatMap((variantCode) =>
+    ["640x480", "640x640", "960x960", "1280x1280"].map((sizeKey) =>
+      cabinetOption({
+        displayType: "outdoor",
+        materialCode: "mild_steel",
+        materialLabel: "Mild Steel",
+        variantCode,
+        variantLabel: variantCode === "open" ? "Open" : "Backdoor",
+        sizeKey,
+      })
+    )
+  ),
+  ...["magnesium", "aluminium"].flatMap((materialCode) =>
+    ["640x480", "640x640", "960x960", "1280x1280"].map((sizeKey) =>
+      cabinetOption({
+        displayType: "outdoor",
+        materialCode,
+        materialLabel: materialCode === "magnesium" ? "Magnesium" : "Aluminium",
+        sizeKey,
+      })
+    )
+  ),
+];
+
 export const defaultQuotationCatalog = {
   schemaVersion: 1,
 
@@ -11,7 +74,7 @@ export const defaultQuotationCatalog = {
       indoor: [
         { id: "smd-in-p1_25", name: "P1.25", prices: { gold: 9300, platinum: 10500, diamond: 11500 } },
         { id: "smd-in-p1_53", name: "P1.53", prices: { gold: 6082, platinum: 7115, diamond: 9478 } },
-        { id: "smd-in-p1_86", name: "P1.86", prices: { gold: 4020, platinum: 4850, diamond: 5400 } },
+        { id: "smd-in-p1_86", name: "P1.8", prices: { gold: 4020, platinum: 4850, diamond: 5400 } },
         { id: "smd-in-p2", name: "P2", prices: { gold: 3000, platinum: 3400, diamond: 3800 } },
         { id: "smd-in-p2_5", name: "P2.5", prices: { gold: 2145, platinum: 2500, diamond: 2860 } },
         { id: "smd-in-p3", name: "P3", prices: { gold: 1445, platinum: 1840, diamond: 2550 } },
@@ -20,7 +83,7 @@ export const defaultQuotationCatalog = {
         { id: "smd-out-p2_5", name: "P2.5", prices: { gold: 6500, platinum: 7200, diamond: 8100 } },
         { id: "smd-out-p3", name: "P3", prices: { gold: 2618, platinum: 3237, diamond: 3627 } },
         { id: "smd-out-p3.91", name: "P3.91", prices: { gold: 3500, platinum: 4250, diamond: 5020 } },
-        { id: "smd-out-p4", name: "P4", prices: { gold: 2503, platinum: 2939, diamond: 3214 } },
+        { id: "smd-out-p4", name: "P4", prices: { gold: 2500, platinum: 2939, diamond: 3214 } },
         { id: "smd-out-p5", name: "P5", prices: { gold: 2170, platinum: 2500, diamond: 2950 } },
         { id: "smd-out-p6", name: "P6", prices: { gold: 1860, platinum: 1998, diamond: 2227 } },
         { id: "smd-out-p6_67", name: "P6.67", prices: { gold: 2205, platinum: 2365, diamond: 2640 } },
@@ -32,7 +95,7 @@ export const defaultQuotationCatalog = {
       indoor: [
         { id: "gob-in-p1_25", name: "P1.25", prices: { gold: 5800, platinum: 6450, diamond: 7200 } },
         { id: "gob-in-p1_53", name: "P1.53", prices: { gold: 4600, platinum: 5350, diamond: 6320 } },
-        { id: "gob-in-p1_86", name: "P1.86", prices: { gold: 3973, platinum: 4825, diamond: 5676 } },
+        { id: "gob-in-p1_86", name: "P1.8", prices: { gold: 3973, platinum: 4825, diamond: 5676 } },
         { id: "gob-in-p2", name: "P2", prices: { gold: 3618, platinum: 4393, diamond: 5168 } },
         { id: "gob-in-p2.5", name: "P2.5", prices: { gold: 3200, platinum: 3800, diamond: 4500 } },
       ],
@@ -41,7 +104,7 @@ export const defaultQuotationCatalog = {
       indoor: [
         { id: "cob-in-p1_25", name: "P1.25", prices: { gold: 11550, platinum: 12700, diamond: 8900 } },
         { id: "cob-in-p1_53", name: "P1.53", prices: { gold: 6550, platinum: 7350, diamond: 7800 } },
-        { id: "cob-in-p1_86", name: "P1.86", prices: { gold: 4820, platinum: 6050, diamond: 6650 } },
+        { id: "cob-in-p1_86", name: "P1.8", prices: { gold: 4820, platinum: 6050, diamond: 6650 } },
       ],
     },
   },
@@ -64,12 +127,29 @@ export const defaultQuotationCatalog = {
     { id: "VP1640A", label: "HD VP1640A", price: 139500 },
   ],
 
+ctrlCap: {
+    indoor: [
+      { id: "VP210H", max: 1200000 },
+      { id: "VP410H", max: 2500000 },
+      { id: "VP630", max: 3750000 },
+      { id: "VP830", max: 5050000 },
+      { id: "VP1240A", max: 7550000 },
+      { id: "VP1640A", max: 9940000 },
+    ],
+    outdoor: [
+      { id: "A3L", max: 550000 },
+      { id: "A5L", max: 1150000 },
+      { id: "A6L", max: 2500000 },
+    ],
+  },
+
+
   powerSupplyPrice: 1600,
 
   priceTiers: [
     { id: "gold", label: "Gold", note: "Standard", warrantyYears: 1 },
-    { id: "platinum", label: "Platinum", note: "≈6% premium", warrantyYears: 2 },
-    { id: "diamond", label: "Diamond", note: "≈12% premium", warrantyYears: 3 },
+    { id: "platinum", label: "Platinum", note: "15% premium", warrantyYears: 2 },
+    { id: "diamond", label: "Diamond", note: "25% premium", warrantyYears: 3 },
   ],
 
   technologiesAll: [
@@ -86,7 +166,7 @@ export const defaultQuotationCatalog = {
   ],
 
   moduleBrands: [
-    { value: "Lampro by Unilumin", label: "Lampro by Unilumin" },
+    { value: "Lampro", label: "Lampro" },
     { value: "Leyard", label: "Leyard" },
     { value: "Absen", label: "Absen" },
   ],
@@ -98,18 +178,22 @@ export const defaultQuotationCatalog = {
 
   novastarControllers: {
     indoor: [
-      { id: "NS_TB2", label: "Controller: TB-2", price: 34000, max: 550000 },
+      { id: "NS_TB2", label: "Controller: TB-20 Plus", price: 34000, max: 600000 },
       { id: "NS_TB40", label: "Controller: TB-40", price: 35000, max: 1150000 },
-      { id: "NS_DSP400", label: "Video Processor: DSP-400", price: 130000, max: 2500000 },
+      { id: "NS_TU20PRO", label: "Controller: TU-20 Pro", price: 150000 },
+      { id: "NS_TU40PRO", label: "Controller: TU-40 Pro", price: 260000 },
+      { id: "NS_DSP400", label: "Video Processor: DSP-400", price: 165000, max: 2500000 },
       { id: "NS_DSP600", label: "Video Processor: DSP-600 Pro", price: 150000, max: 3750000 },
       { id: "NS_DSP1000", label: "Video Processor: DSP-1000 Pro", price: 240000, max: 6300000 },
       { id: "NS_DSP2000", label: "Video Processor: VX2000 Pro", price: 460000, max: 12800000 },
     ],
     outdoor: [
       { id: "NS_TB1", label: "Controller: TB-1", price: 17500 },
-      { id: "NS_TB2", label: "Controller: TB-2", price: 34000, max: 550000 },
+      { id: "NS_TB2", label: "Controller: TB-20 Plus", price: 34000, max: 550000 },
       { id: "NS_TB40", label: "Controller: TB-40", price: 35000, max: 1150000 },
-      { id: "NS_DSP400", label: "Video Processor: DSP-400", price: 130000, max: 2500000 },
+      { id: "NS_TU20PRO", label: "Controller: TU-20 Pro", price: 150000, max: 3900000 },
+      { id: "NS_TU40PRO", label: "Controller: TU-40 Pro", price: 260000, max: 13000000 },
+      { id: "NS_DSP400", label: "Video Processor: DSP-400", price: 165000, max: 2500000 },
       { id: "NS_DSP600", label: "Video Processor: DSP-600 Pro", price: 150000, max: 3750000 },
       { id: "NS_DSP1000", label: "Video Processor: DSP-1000 Pro", price: 240000, max: 6300000 },
     ],
@@ -122,8 +206,13 @@ export const defaultQuotationCatalog = {
     R712: { label: "Receiving Card: R-712", unitPrice: 2500 },
   },
 
-  cabinetCasePrice: 8000,
+  cabinetCasePrice: CABINET_DEFAULT_PRICE,
   modulesPerCabinet: 6,
+  cabinetOptions: [...INDOOR_CABINET_OPTIONS, ...OUTDOOR_CABINET_OPTIONS],
+  cabinetSizes: [
+    { id: "cabinet_640x480", label: "640mm x 480mm", widthMm: 640, heightMm: 480, modulesPerCabinet: 6 },
+    { id: "cabinet_640x640", label: "640mm x 640mm", widthMm: 640, heightMm: 640, modulesPerCabinet: 8 },
+  ],
 
   physical: {
     ft320: 1.0499,
@@ -152,7 +241,7 @@ export const defaultQuotationCatalog = {
 
   rcCapacityHuidu: {
     indoor: { "1.25": 4, "1.53": 4, "1.667": 6, "1.86": 8, "2": 10, "2.5": 11, "3": 12, "3.076": 16, "4": 20, "5": 24 },
-    outdoor: { "2.5": 10, "3": 20, "3.076": 16, "3.91": 20, "4": 20, "5": 24, "6": 36, "6.67": 30, "8": 40, "10": 40 },
+    outdoor: { "2.5": 10, "3": 12, "3.076": 16, "3.91": 20, "4": 20, "5": 24, "6": 30, "6.67": 36, "8": 40, "10": 40 },
   },
 
   rcCapacityNovastar: {
@@ -165,26 +254,21 @@ export const defaultQuotationCatalog = {
     outdoor: { "2.5": 6, "3": 6, "3.076": 6, "3.91": 6, "4": 6, "5": 6, "6": 6, "6.67": 6, "6.7": 6, "8": 6, "10": 6 },
   },
 
-  ctrlCap: {
-    indoor: [
-      { id: "VP210H", max: 150000 },
-      { id: "VP410H", max: 2500000 },
-      { id: "VP630", max: 3750000 },
-      { id: "VP830", max: 5050000 },
-      { id: "VP1240A", max: 7550000 },
-      { id: "VP1640A", max: 9940000 },
-    ],
-    outdoor: [
-      { id: "A3L", max: 550000 },
-      { id: "A5L", max: 1150000 },
-      { id: "A6L", max: 2500000 },
-    ],
-  },
+
 
   psuModelLabel: "N200V5-A (5V40A)",
 };
 
-export function getCabinetFootprintFt(physical) {
+export function getCabinetFootprintFt(physical, cabinetSizeId = "cabinet_indoor_aluminium_640x480", cabinetOptions = []) {
   const p = physical || defaultQuotationCatalog.physical;
+  const option = (cabinetOptions?.length ? cabinetOptions : defaultQuotationCatalog.cabinetOptions).find(
+    (cabinet) => cabinet.id === cabinetSizeId
+  );
+
+  if (option?.widthMm && option?.heightMm) {
+    return { w: option.widthMm / 304.8, h: option.heightMm / 304.8 };
+  }
+
+  if (cabinetSizeId === "cabinet_640x640") return { w: p.ft320 * 2, h: p.ft320 * 2 };
   return { w: p.ft320 * 2, h: p.ft160 * 3 };
 }

@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
+import RentalTermsPage from "./RentalTermsPage.jsx";
 
-function renderPaymentTerms(paymentTermId) {
+function renderPaymentTerms(paymentTermId, subjectLabel = "LED display system") {
   switch (paymentTermId) {
     case "PT_50_50":
       return (
@@ -9,8 +10,8 @@ function renderPaymentTerms(paymentTermId) {
             <b>50%</b> (Fifty Percent) of the total contract value shall be payable upon confirmation of the order.
           </li>
           <li>
-            The remaining <b>50%</b> (Fifty Percent) shall become due and payable upon arrival of the LED display
-            system at the project site, and <b>before any installation work is initiated</b>.
+            The remaining <b>50%</b> (Fifty Percent) shall become due and payable upon arrival of the {subjectLabel}
+            at the project site, and <b>before any installation work is initiated</b>.
           </li>
         </ol>
       );
@@ -30,7 +31,7 @@ function renderPaymentTerms(paymentTermId) {
         <ol type="i" className="terms-sublist">
           <li>
             No advance payment is required. The full amount shall be payable within <b>7 (seven)</b> days from the date of
-            delivery of the LED display system.
+            delivery of the {subjectLabel}.
           </li>
         </ol>
       );
@@ -43,8 +44,8 @@ function renderPaymentTerms(paymentTermId) {
             <b>75%</b> (Seventy-Five Percent) of the total contract value shall be payable upon confirmation of the order.
           </li>
           <li>
-            The remaining <b>25%</b> (Twenty-Five Percent) shall become due and payable upon arrival of the LED
-            display system at the project site, and <b>before any installation work is initiated</b>.
+            The remaining <b>25%</b> (Twenty-Five Percent) shall become due and payable upon arrival of the {subjectLabel}
+            at the project site, and <b>before any installation work is initiated</b>.
           </li>
         </ol>
       );
@@ -52,6 +53,10 @@ function renderPaymentTerms(paymentTermId) {
 }
 
 const TermsPage = forwardRef(function TermsPage({ snapshot, calc }, ref) {
+  if (snapshot?.quotationType === "rental") {
+    return <RentalTermsPage ref={ref} calc={calc} snapshot={snapshot} />;
+  }
+
   const totals = calc?.totals;
 
   const customWarrantyRaw = (snapshot?.customWarranty ?? "").toString().trim();
@@ -67,6 +72,16 @@ const TermsPage = forwardRef(function TermsPage({ snapshot, calc }, ref) {
     : "exclusive of VAT & taxes";
 
   const paymentTermId = snapshot?.paymentTermId || "PT_75_25";
+  const deliveryDays = Number.isFinite(parseFloat(snapshot?.deliveryDays))
+    ? Math.max(1, Math.round(parseFloat(snapshot.deliveryDays)))
+    : 30;
+  const subjectLabel =
+    snapshot?.quotationType === "conference"
+      ? "Conference System"
+      : snapshot?.quotationType === "pa"
+      ? "PA System"
+      : "LED Display";
+  const subjectDeliveryLabel = `${subjectLabel.charAt(0).toLowerCase()}${subjectLabel.slice(1)}`;
 
   return (
     <div ref={ref} className="terms-page">
@@ -82,13 +97,14 @@ const TermsPage = forwardRef(function TermsPage({ snapshot, calc }, ref) {
                 The quoted price is <b>{vatWording}</b>.
               </li>
               <li>
-                The quoted price includes <b>complete system making, installation, testing, and commissioning</b> of the LED
-                Display. There are no additional charges for these services.
+                The quoted price includes <b>complete system making, installation, testing, and commissioning</b> of the {subjectLabel}. There are no additional charges for these services.
               </li>
               <li>
-                This quotation is valid for a period of <b>30 (thirty)</b> days from the date of issuance.
+                This quotation is valid for a period of <b>15 (fifteen)</b> days from the date of issuance.
               </li>
-              <li>Delivery will be made within 30 days from the date of the work order.</li>
+              <li>
+                Delivery will be made within <b>{deliveryDays} days</b> from the date of the work order.
+              </li>
             </ol>
           </li>
 
@@ -97,7 +113,7 @@ const TermsPage = forwardRef(function TermsPage({ snapshot, calc }, ref) {
             <div className="terms-p">Payment shall be made in the following stages:</div>
 
             {/* ✅ Dynamic payment terms based on selected option */}
-            {renderPaymentTerms(paymentTermId)}
+            {renderPaymentTerms(paymentTermId, subjectDeliveryLabel)}
           </li>
 
           <li className="terms-section">

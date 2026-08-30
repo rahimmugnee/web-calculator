@@ -1,8 +1,8 @@
 /** Pure helpers: last argument is always a slice from quotation catalog (or full catalog). */
 
 export function parsePitch(modelName = "") {
-  const m = (String(modelName).match(/P(\d+(?:\.\d+)?)/i) || [])[1];
-  return m || "";
+  const m = (String(modelName).match(/P(\d+(?:[._]\d+)?)/i) || [])[1];
+  return m ? m.replace("_", ".") : "";
 }
 
 export const roundInt = (x) => Math.max(1, Math.round(Number(x) || 0));
@@ -80,6 +80,56 @@ export function getPsuCapacity(dispType, modelName = "", psuCapacity) {
   return psuCapacity[dispType]?.[p] ?? 6;
 }
 
+function nearlyPitch(pitch, target) {
+  return Math.abs(Number(pitch) - target) < 0.01;
+}
+
+function normalizeCabinetSizeKey(cabinet = {}) {
+  const width = Number(cabinet.widthMm);
+  const height = Number(cabinet.heightMm);
+  if (width && height) return `${width}x${height}`;
+
+  const raw = [cabinet.sizeKey, cabinet.id, cabinet.label]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/mm/g, "");
+
+  if (raw.includes("640x480")) return "640x480";
+  if (raw.includes("640x640")) return "640x640";
+  if (raw.includes("960x960")) return "960x960";
+  if (raw.includes("1240x960")) return "1240x960";
+  if (raw.includes("1280x1280")) return "1280x1280";
+  return "";
+}
+
+export function getCabinetRcPsuPerCabinet(modelName = "", cabinet = {}) {
+  const pitch = Number(parsePitch(modelName));
+  const sizeKey = normalizeCabinetSizeKey(cabinet);
+  const isP125OrP153 = nearlyPitch(pitch, 1.25) || nearlyPitch(pitch, 1.53);
+
+  if (sizeKey === "640x480") {
+    return isP125OrP153 ? { rc: 2, psu: 2 } : { rc: 1, psu: 1 };
+  }
+
+  if (sizeKey === "640x640") {
+    return isP125OrP153 ? { rc: 2, psu: 2 } : { rc: 1, psu: 2 };
+  }
+
+  if (sizeKey === "960x960") {
+    const needsTwoRc = nearlyPitch(pitch, 2.5) || nearlyPitch(pitch, 3) || nearlyPitch(pitch, 3.076);
+    return { rc: needsTwoRc ? 2 : 1, psu: 3 };
+  }
+
+  if (sizeKey === "1240x960" || sizeKey === "1280x1280") {
+    const needsTwoRc = pitch >= 2.5 && pitch <= 4;
+    return { rc: needsTwoRc ? 2 : 1, psu: 4 };
+  }
+
+  return { rc: 1, psu: 1 };
+}
+
 export function pickPSUModel(psuModelLabel) {
   return { model: psuModelLabel || "N200V5-A (5V40A)" };
 }
@@ -106,10 +156,15 @@ export function pickControllerByPixels(dispType, totalPixels, ctrlCap) {
 }
 
 export function pickNovastarControllerByPixels(dispType, totalPixels, novastarControllers) {
-  const list = novastarControllers[dispType] || [];
+  const list = (novastarControllers[dispType] || []).filter(
+    (c) => Number.isFinite(c.max) && c.max > 0
+  );
+
   if (!totalPixels || !list.length) return null;
-  const fit = list.find((c) => totalPixels <= (c.max ?? Infinity));
+
+  const fit = list.find((c) => totalPixels <= c.max);
   if (!fit) return null;
+
   return { id: fit.id, max: fit.max, qty: 1 };
 }
 

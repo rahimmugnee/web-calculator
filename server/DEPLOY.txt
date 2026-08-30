@@ -1,0 +1,24 @@
+Mugnee quotation PDF backup (CyberPanel / cPanel / PHP)
+
+1) Upload this folder to your host (example):
+   public_html/calculator-api/
+   Files:
+   - upload-quotation.php
+   - quotation-upload-config.php   (create from quotation-upload-config.sample.php)
+   - quotations/.htaccess         (blocks public web access to PDFs)
+
+2) On the server:
+   cp quotation-upload-config.sample.php quotation-upload-config.php
+   Edit quotation-upload-config.php: set a long random api_secret.
+
+3) Web app (.env.production.local then npm run build):
+   REACT_APP_QUOTATION_PDF_UPLOAD_URL=https://calculator.mugnee.com/calculator-api/upload-quotation.php
+   REACT_APP_QUOTATION_PDF_UPLOAD_API_KEY=<same as api_secret>
+
+4) Android: use the same URL and Bearer token; multipart field names must match (see MOBILE_UPLOAD.txt).
+
+5) Retrieve PDFs: CyberPanel File Manager → quotations/web/ or quotations/android/ (not browsable via URL by default).
+
+6) If the React app and this PHP script are on different origins (e.g. app on Netlify, API on mugnee.com), set allowed_origins in quotation-upload-config.php to include the app origin (see sample file).
+
+7) If upload returns 401: token mismatch. If 500 config missing: add quotation-upload-config.php.

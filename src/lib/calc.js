@@ -60,19 +60,38 @@ export function bdtToWords(amount) {
   return parts.join(" ") + " Taka Only.";
 }
 
-export function generateRef() {
-  const d = new Date();
-  const y = String(d.getFullYear()).slice(-2);
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const rnd = Math.floor(1000 + Math.random() * 9000);
-  return `HO/MQ-${y}${m}${day}-${rnd}`;
+export function quotationCompanyPrefix(companyCode = "mugnee") {
+  const code = String(companyCode || "").toLowerCase();
+  if (code.includes("renex")) return "REN";
+  if (code.includes("sasha")) return "SAS";
+  return "MUG";
+}
+
+export function generateRef(companyCode = "mugnee", requestedSequence, date = new Date()) {
+  const prefix = quotationCompanyPrefix(companyCode);
+  const year = date.getFullYear();
+  let sequence = Number(requestedSequence);
+  if (!Number.isInteger(sequence) || sequence < 1) {
+    const storageKey = `quotationReferenceSequence:${prefix}:${year}`;
+    try {
+      sequence = Number(window.localStorage.getItem(storageKey) || 0) + 1;
+      window.localStorage.setItem(storageKey, String(sequence));
+    } catch {
+      sequence = 1;
+    }
+  }
+  return `${prefix}-${year}-${String(sequence).padStart(4, "0")}`;
 }
 
 /** Safe PDF filename stem from quotation Ref (matches invoice identity). */
 export function sanitizeRefForFilename(refNo) {
   const s = String(refNo || "MQ").trim();
-  const cleaned = s.replace(/[/\\:*?"<>|]/g, "-").replace(/\s+/g, "_");
+  const cleaned = s
+    .replace(/[/\\:*?"<>|]/g, "-")
+    .replace(/\s+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/-+/g, "-")
+    .replace(/^[._-]+|[._-]+$/g, "");
   return cleaned || "MQ";
 }
 
@@ -80,7 +99,80 @@ export function quotationPdfFilename(refNo) {
   return `${sanitizeRefForFilename(refNo)}.pdf`;
 }
 
+export function buildQuotationTitle(snapshot = {}) {
+  if (snapshot?.quotationType === "pa") {
+    return snapshot.paInstallationType === "ip" ? "Proposal For IP PA System" : "Proposal For Wired PA System";
+  }
+
+  if (snapshot?.quotationType === "conference") {
+    return snapshot.conferenceSystemType === "wireless"
+      ? "Proposal For Wireless Conference System"
+      : "Proposal For Wired Conference System";
+  }
+
+  if (snapshot?.quotationType === "rental") {
+    const widthFt = String(snapshot?.display?.widthFt || "").trim();
+    const heightFt = String(snapshot?.display?.heightFt || "").trim();
+    const sizePart = widthFt || heightFt ? ` (${widthFt || "-"}ft x ${heightFt || "-"}ft)` : "";
+    return `Rental LED Display Quotation${sizePart}`.replace(/\s+/g, " ").trim();
+  }
+
+  const modelName = String(snapshot?.model?.name || "LED Display").trim();
+  const technology = String(snapshot?.items?.technology || "").trim().toUpperCase();
+  const widthFt = String(snapshot?.display?.widthFt || "").trim();
+  const heightFt = String(snapshot?.display?.heightFt || "").trim();
+  const sft = String(snapshot?.display?.sft || "").trim();
+
+  const techPart = technology ? ` (${technology})` : "";
+  const sizePart = widthFt || heightFt ? ` (${widthFt || "-"}ft x ${heightFt || "-"}ft)` : "";
+  const sftPart = sft ? ` Sft ${sft}` : "";
+
+  return `Proposal for ${modelName}${techPart} LED Display.${sizePart}${sftPart}`
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function buildQuotationFilenameTitle(snapshot = {}) {
+  if (snapshot?.quotationType === "pa") {
+    return snapshot.paInstallationType === "ip" ? "Proposal For IP PA System" : "Proposal For Wired PA System";
+  }
+
+  if (snapshot?.quotationType === "conference") {
+    return snapshot.conferenceSystemType === "wireless"
+      ? "Proposal For Wireless Conference System"
+      : "Proposal For Wired Conference System";
+  }
+
+  if (snapshot?.quotationType === "rental") {
+    const widthFt = String(snapshot?.display?.widthFt || "").trim();
+    const heightFt = String(snapshot?.display?.heightFt || "").trim();
+    const sizePart = widthFt || heightFt ? ` (${widthFt || "-"}ft x ${heightFt || "-"}ft)` : "";
+    return `Rental LED Display Quotation${sizePart}`.replace(/\s+/g, " ").trim();
+  }
+
+  const modelName = String(snapshot?.model?.name || "LED Display").trim();
+  const technology = String(snapshot?.items?.technology || "").trim().toUpperCase();
+  const widthFt = String(snapshot?.display?.widthFt || "").trim();
+  const heightFt = String(snapshot?.display?.heightFt || "").trim();
+
+  const techPart = technology ? ` (${technology})` : "";
+  const sizePart = widthFt || heightFt ? ` (${widthFt || "-"}ft x ${heightFt || "-"}ft)` : "";
+
+  return `Proposal for ${modelName}${techPart} LED Display.${sizePart}`
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function quotationTitlePdfFilename(snapshot) {
+  const title = buildQuotationFilenameTitle(snapshot);
+  const safeTitle = sanitizeRefForFilename(title);
+  const titleStem = safeTitle.slice(0, 160).replace(/^[._-]+|[._-]+$/g, "") || "Mugnee_Quotation";
+  return `${titleStem}.pdf`;
+}
+
 export function calcAll({
+  quotationMode = "regular",
+  irregularQty = 1,
   modulesQty = 0,
   rcQty = 0,
   psQty = 0,
@@ -89,6 +181,10 @@ export function calcAll({
   unitModule = 0,
   unitRC = 0,
   unitPS = 0,
+
+  customItemEnabled = false,
+  customItemPrice = 0,
+  customItems = [],
 
   cabinetQty = 0,
   unitCabinet = 0,
@@ -99,6 +195,9 @@ export function calcAll({
   installMode = "auto",
   installIsPercent = false,
   installValue = 0,
+
+  transportEnabled = false,
+  transportValue = 0,
 
   sft = 0,
   dispType = "indoor",
@@ -111,6 +210,8 @@ export function calcAll({
   discountTk = 0,
 }) {
   const area = parseFloat(sft) || 0;
+  const isIrregular = quotationMode === "irregular";
+  const irregularQtyInt = isIrregular ? Math.max(1, ceilNonNeg(irregularQty)) : 1;
 
   const modulesQtyInt = ceilNonNeg(modulesQty);
   const rcQtyInt = ceilNonNeg(rcQty);
@@ -123,6 +224,11 @@ export function calcAll({
   const psUnitBase = ceilNonNeg(unitPS);
   const ctrlUnitBase = ceilNonNeg(controllerPrice);
   const cabinetUnitBase = ceilNonNeg(unitCabinet);
+  const customItemUnitBases = customItemEnabled && customItems.length
+    ? customItems.map((item) => ceilNonNeg(item?.price))
+    : customItemEnabled
+    ? [ceilNonNeg(customItemPrice)]
+    : [];
 
   const priceFactor = vatEnabled ? 1 + taxMarkupRate : 1;
 
@@ -131,33 +237,43 @@ export function calcAll({
   const effUnitPS = ceilNonNeg(psUnitBase * priceFactor);
   const effUnitCtrl = ceilNonNeg(ctrlUnitBase * priceFactor);
   const effUnitCabinet = ceilNonNeg(cabinetUnitBase * priceFactor);
+  const effUnitCustomItems = customItemUnitBases.map((price) => ceilNonNeg(price * priceFactor));
+  const effUnitCustomItem = effUnitCustomItems.reduce((sum, price) => sum + price, 0);
 
-  const totalModules = ceilNonNeg(modulesQtyInt * effUnitModule);
-  const totalRC = ceilNonNeg(rcQtyInt * effUnitRC);
-  const totalPS = ceilNonNeg(psQtyInt * effUnitPS);
+  const totalModulesBase = ceilNonNeg(modulesQtyInt * effUnitModule);
+  const totalRCBase = ceilNonNeg(rcQtyInt * effUnitRC);
+  const totalPSBase = ceilNonNeg(psQtyInt * effUnitPS);
+  const totalCabinetBase = ceilNonNeg(cabinetQtyInt * effUnitCabinet);
+  const ledSetUnitTotal = ceilNonNeg(totalModulesBase + totalRCBase + totalPSBase + totalCabinetBase);
+
+  const totalModules = ceilNonNeg(totalModulesBase * irregularQtyInt);
+  const totalRC = ceilNonNeg(totalRCBase * irregularQtyInt);
+  const totalPS = ceilNonNeg(totalPSBase * irregularQtyInt);
   const controllerTotal = ceilNonNeg(controllerQtyInt * effUnitCtrl);
-  const totalCabinet = ceilNonNeg(cabinetQtyInt * effUnitCabinet);
+  const totalCabinet = ceilNonNeg(totalCabinetBase * irregularQtyInt);
+  const totalCustomItem = effUnitCustomItem;
 
-  const goodsSubTotal = totalModules + totalRC + totalPS + controllerTotal + totalCabinet;
+  const goodsSubTotal = totalModules + totalRC + totalPS + controllerTotal + totalCabinet + totalCustomItem;
 
-  let accTk = 0;
+  let accTkBase = 0;
   if (accessoriesMode === "manual") {
-    accTk = ceilNonNeg(accessoriesValue);
+    accTkBase = ceilNonNeg(accessoriesValue);
   } else {
     if (area > 0 && area < 60) {
-      accTk = 24000;
+      accTkBase = 24000;
     } else if (area >= 60) {
-      accTk = ceilNonNeg(area * 420);
+      accTkBase = ceilNonNeg(area * 420);
     } else {
-      accTk = 0;
+      accTkBase = 0;
     }
 
     if (dispType === "outdoor") {
-      accTk = ceilNonNeg(accTk * 1.67);
+      accTkBase = ceilNonNeg(accTkBase * 1.67);
     }
   }
 
-  if (vatEnabled) accTk = ceilNonNeg(accTk * (1 + taxMarkupRate));
+  if (vatEnabled) accTkBase = ceilNonNeg(accTkBase * (1 + taxMarkupRate));
+  const accTk = ceilNonNeg(accTkBase * (isIrregular ? irregularQtyInt : 1));
 
   let installTk = 0;
   const subTotalForInstall = goodsSubTotal + accTk;
@@ -180,9 +296,15 @@ export function calcAll({
   }
 
   if (vatEnabled) installTk = ceilNonNeg(installTk * (1 + taxMarkupRate));
+  if (isIrregular && !(installMode === "manual" && installIsPercent)) {
+    installTk = ceilNonNeg(installTk * irregularQtyInt);
+  }
+
+  let transportTk = transportEnabled ? ceilNonNeg(transportValue) : 0;
+  if (vatEnabled) transportTk = ceilNonNeg(transportTk * (1 + taxMarkupRate));
 
   const subTotal = ceilNonNeg(goodsSubTotal + accTk);
-  const totalBeforeVat = ceilNonNeg(goodsSubTotal + accTk + installTk);
+  const totalBeforeVat = ceilNonNeg(goodsSubTotal + accTk + installTk + transportTk);
   const vatAmount = vatEnabled ? ceilNonNeg(totalBeforeVat * vatRate) : 0;
   const grandTotal = ceilNonNeg(totalBeforeVat + vatAmount);
 
@@ -198,8 +320,10 @@ export function calcAll({
       totalPS,
       controllerTotal,
       totalCabinet,
+      totalCustomItem,
       accessories: accTk,
       installation: installTk,
+      transport: transportTk,
       subTotal,
       totalBeforeVat,
       vatAmount,
@@ -209,6 +333,10 @@ export function calcAll({
       discountEnabled,
       discount: discountApplied,
       payable,
+      ledSetUnitTotal,
+      accessoriesUnit: accTkBase,
+      installationUnit: isIrregular && irregularQtyInt > 0 ? ceilNonNeg(installTk / irregularQtyInt) : installTk,
+      irregularQty: irregularQtyInt,
     },
     unitPrices: {
       unitModule: effUnitModule,
@@ -216,7 +344,10 @@ export function calcAll({
       unitPS: effUnitPS,
       unitCtrl: effUnitCtrl,
       unitCabinet: effUnitCabinet,
-      accessories: accTk,
+      customItem: effUnitCustomItem,
+      customItems: effUnitCustomItems,
+      accessories: isIrregular ? accTkBase : accTk,
+      transport: transportTk,
     },
   };
 }

@@ -23,7 +23,7 @@
         },
         {
           "id": "smd-in-p1_86",
-          "name": "P1.86",
+          "name": "P1.8",
           "prices": {
             "gold": 4020,
             "platinum": 4850,
@@ -90,7 +90,7 @@
           "id": "smd-out-p4",
           "name": "P4",
           "prices": {
-            "gold": 2503,
+            "gold": 2500,
             "platinum": 2939,
             "diamond": 3214
           }
@@ -164,7 +164,7 @@
         },
         {
           "id": "gob-in-p1_86",
-          "name": "P1.86",
+          "name": "P1.8",
           "prices": {
             "gold": 3973,
             "platinum": 4825,
@@ -213,7 +213,7 @@
         },
         {
           "id": "cob-in-p1_86",
-          "name": "P1.86",
+          "name": "P1.8",
           "prices": {
             "gold": 4820,
             "platinum": 6050,
@@ -300,6 +300,48 @@
       "price": 139500
     }
   ],
+  "ctrlCap": {
+    "indoor": [
+      {
+        "id": "VP210H",
+        "max": 1200000
+      },
+      {
+        "id": "VP410H",
+        "max": 2500000
+      },
+      {
+        "id": "VP630",
+        "max": 3750000
+      },
+      {
+        "id": "VP830",
+        "max": 5050000
+      },
+      {
+        "id": "VP1240A",
+        "max": 7550000
+      },
+      {
+        "id": "VP1640A",
+        "max": 9940000
+      }
+    ],
+    "outdoor": [
+      {
+        "id": "A3L",
+        "max": 550000
+      },
+      {
+        "id": "A5L",
+        "max": 1150000
+      },
+      {
+        "id": "A6L",
+        "max": 2500000
+      }
+    ]
+  },
   "powerSupplyPrice": 1600,
   "priceTiers": [
     {
@@ -311,13 +353,13 @@
     {
       "id": "platinum",
       "label": "Platinum",
-      "note": "≈6% premium",
+      "note": "15% premium",
       "warrantyYears": 2
     },
     {
       "id": "diamond",
       "label": "Diamond",
-      "note": "≈12% premium",
+      "note": "25% premium",
       "warrantyYears": 3
     }
   ],
@@ -355,8 +397,8 @@
   ],
   "moduleBrands": [
     {
-      "value": "Lampro by Unilumin",
-      "label": "Lampro by Unilumin"
+      "value": "Lampro",
+      "label": "Lampro"
     },
     {
       "value": "Leyard",
@@ -377,80 +419,120 @@
       "label": "Novastar"
     }
   ],
-  "novastarControllers": {
+  "novastarControllers": [
+    {
+      "id": "NS_TB1",
+      "label": "Controller: TB-1",
+      "price": 17500
+    },
+    {
+      "id": "NS_TB2",
+      "label": "Controller: TB-20 Plus",
+      "price": 34000
+    },
+    {
+      "id": "NS_TB40",
+      "label": "Controller: TB-40",
+      "price": 35000
+    },
+    {
+      "id": "NS_TU20PRO",
+      "label": "Controller: TU-20 Pro",
+      "price": 150000
+    },
+    {
+      "id": "NS_TU40PRO",
+      "label": "Controller: TU-40 Pro",
+      "price": 260000
+    },
+    {
+      "id": "NS_DSP400",
+      "label": "Video Processor: DSP-400",
+      "price": 165000
+    },
+    {
+      "id": "NS_DSP600",
+      "label": "Video Processor: DSP-600 Pro",
+      "price": 150000
+    },
+    {
+      "id": "NS_DSP1000",
+      "label": "Video Processor: DSP-1000 Pro",
+      "price": 240000
+    },
+    {
+      "id": "NS_DSP2000",
+      "label": "Video Processor: VX2000 Pro",
+      "price": 460000
+    }
+  ],
+  "novastarCtrlCap": {
     "indoor": [
       {
         "id": "NS_TB2",
-        "label": "Controller: TB-2",
-        "price": 34000,
-        "max": 550000
+        "max": 600000
       },
       {
         "id": "NS_TB40",
-        "label": "Controller: TB-40",
-        "price": 35000,
         "max": 1150000
       },
       {
+        "id": "NS_TU20PRO",
+        "max": 3750000
+      },
+      {
+        "id": "NS_TU40PRO",
+        "max": 12800000
+      },
+      {
         "id": "NS_DSP400",
-        "label": "Video Processor: DSP-400",
-        "price": 130000,
         "max": 2500000
       },
       {
         "id": "NS_DSP600",
-        "label": "Video Processor: DSP-600 Pro",
-        "price": 150000,
         "max": 3750000
       },
       {
         "id": "NS_DSP1000",
-        "label": "Video Processor: DSP-1000 Pro",
-        "price": 240000,
         "max": 6300000
       },
       {
         "id": "NS_DSP2000",
-        "label": "Video Processor: VX2000 Pro",
-        "price": 460000,
         "max": 12800000
       }
     ],
     "outdoor": [
       {
         "id": "NS_TB1",
-        "label": "Controller: TB-1",
-        "price": 17500
+        "max": 0
       },
       {
         "id": "NS_TB2",
-        "label": "Controller: TB-2",
-        "price": 34000,
         "max": 550000
       },
       {
         "id": "NS_TB40",
-        "label": "Controller: TB-40",
-        "price": 35000,
         "max": 1150000
       },
       {
-        "id": "NS_DSP400",
-        "label": "Video Processor: DSP-400",
-        "price": 130000,
-        "max": 2500000
-      },
-      {
-        "id": "NS_DSP600",
-        "label": "Video Processor: DSP-600 Pro",
-        "price": 150000,
+        "id": "NS_TU20PRO",
         "max": 3750000
       },
       {
+        "id": "NS_TU40PRO",
+        "max": 12800000
+      },
+      {
+        "id": "NS_DSP400",
+        "max": 0
+      },
+      {
+        "id": "NS_DSP600",
+        "max": 0
+      },
+      {
         "id": "NS_DSP1000",
-        "label": "Video Processor: DSP-1000 Pro",
-        "price": 240000,
-        "max": 6300000
+        "max": 0
       }
     ]
   },
@@ -477,6 +559,276 @@
   },
   "cabinetCasePrice": 8000,
   "modulesPerCabinet": 6,
+  "cabinetOptions": [
+    {
+      "id": "cabinet_indoor_aluminium_640x480",
+      "displayType": "indoor",
+      "materialCode": "aluminium",
+      "materialLabel": "Aluminium",
+      "variantCode": "",
+      "variantLabel": "",
+      "sizeKey": "640x480",
+      "label": "640mm x 480mm",
+      "widthMm": 640,
+      "heightMm": 480,
+      "modulesPerCabinet": 6,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_indoor_aluminium_640x640",
+      "displayType": "indoor",
+      "materialCode": "aluminium",
+      "materialLabel": "Aluminium",
+      "variantCode": "",
+      "variantLabel": "",
+      "sizeKey": "640x640",
+      "label": "640mm x 640mm",
+      "widthMm": 640,
+      "heightMm": 640,
+      "modulesPerCabinet": 8,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_mild_steel_open_640x480",
+      "displayType": "outdoor",
+      "materialCode": "mild_steel",
+      "materialLabel": "Mild Steel",
+      "variantCode": "open",
+      "variantLabel": "Open",
+      "sizeKey": "640x480",
+      "label": "640mm x 480mm",
+      "widthMm": 640,
+      "heightMm": 480,
+      "modulesPerCabinet": 6,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_mild_steel_open_640x640",
+      "displayType": "outdoor",
+      "materialCode": "mild_steel",
+      "materialLabel": "Mild Steel",
+      "variantCode": "open",
+      "variantLabel": "Open",
+      "sizeKey": "640x640",
+      "label": "640mm x 640mm",
+      "widthMm": 640,
+      "heightMm": 640,
+      "modulesPerCabinet": 8,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_mild_steel_open_960x960",
+      "displayType": "outdoor",
+      "materialCode": "mild_steel",
+      "materialLabel": "Mild Steel",
+      "variantCode": "open",
+      "variantLabel": "Open",
+      "sizeKey": "960x960",
+      "label": "960mm x 960mm",
+      "widthMm": 960,
+      "heightMm": 960,
+      "modulesPerCabinet": 18,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_mild_steel_open_1280x1280",
+      "displayType": "outdoor",
+      "materialCode": "mild_steel",
+      "materialLabel": "Mild Steel",
+      "variantCode": "open",
+      "variantLabel": "Open",
+      "sizeKey": "1280x1280",
+      "label": "1280mm x 1280mm",
+      "widthMm": 1280,
+      "heightMm": 1280,
+      "modulesPerCabinet": 32,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_mild_steel_backdoor_640x480",
+      "displayType": "outdoor",
+      "materialCode": "mild_steel",
+      "materialLabel": "Mild Steel",
+      "variantCode": "backdoor",
+      "variantLabel": "Backdoor",
+      "sizeKey": "640x480",
+      "label": "640mm x 480mm",
+      "widthMm": 640,
+      "heightMm": 480,
+      "modulesPerCabinet": 6,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_mild_steel_backdoor_640x640",
+      "displayType": "outdoor",
+      "materialCode": "mild_steel",
+      "materialLabel": "Mild Steel",
+      "variantCode": "backdoor",
+      "variantLabel": "Backdoor",
+      "sizeKey": "640x640",
+      "label": "640mm x 640mm",
+      "widthMm": 640,
+      "heightMm": 640,
+      "modulesPerCabinet": 8,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_mild_steel_backdoor_960x960",
+      "displayType": "outdoor",
+      "materialCode": "mild_steel",
+      "materialLabel": "Mild Steel",
+      "variantCode": "backdoor",
+      "variantLabel": "Backdoor",
+      "sizeKey": "960x960",
+      "label": "960mm x 960mm",
+      "widthMm": 960,
+      "heightMm": 960,
+      "modulesPerCabinet": 18,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_mild_steel_backdoor_1280x1280",
+      "displayType": "outdoor",
+      "materialCode": "mild_steel",
+      "materialLabel": "Mild Steel",
+      "variantCode": "backdoor",
+      "variantLabel": "Backdoor",
+      "sizeKey": "1280x1280",
+      "label": "1280mm x 1280mm",
+      "widthMm": 1280,
+      "heightMm": 1280,
+      "modulesPerCabinet": 32,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_magnesium_640x480",
+      "displayType": "outdoor",
+      "materialCode": "magnesium",
+      "materialLabel": "Magnesium",
+      "variantCode": "",
+      "variantLabel": "",
+      "sizeKey": "640x480",
+      "label": "640mm x 480mm",
+      "widthMm": 640,
+      "heightMm": 480,
+      "modulesPerCabinet": 6,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_magnesium_640x640",
+      "displayType": "outdoor",
+      "materialCode": "magnesium",
+      "materialLabel": "Magnesium",
+      "variantCode": "",
+      "variantLabel": "",
+      "sizeKey": "640x640",
+      "label": "640mm x 640mm",
+      "widthMm": 640,
+      "heightMm": 640,
+      "modulesPerCabinet": 8,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_magnesium_960x960",
+      "displayType": "outdoor",
+      "materialCode": "magnesium",
+      "materialLabel": "Magnesium",
+      "variantCode": "",
+      "variantLabel": "",
+      "sizeKey": "960x960",
+      "label": "960mm x 960mm",
+      "widthMm": 960,
+      "heightMm": 960,
+      "modulesPerCabinet": 18,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_magnesium_1280x1280",
+      "displayType": "outdoor",
+      "materialCode": "magnesium",
+      "materialLabel": "Magnesium",
+      "variantCode": "",
+      "variantLabel": "",
+      "sizeKey": "1280x1280",
+      "label": "1280mm x 1280mm",
+      "widthMm": 1280,
+      "heightMm": 1280,
+      "modulesPerCabinet": 32,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_aluminium_640x480",
+      "displayType": "outdoor",
+      "materialCode": "aluminium",
+      "materialLabel": "Aluminium",
+      "variantCode": "",
+      "variantLabel": "",
+      "sizeKey": "640x480",
+      "label": "640mm x 480mm",
+      "widthMm": 640,
+      "heightMm": 480,
+      "modulesPerCabinet": 6,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_aluminium_640x640",
+      "displayType": "outdoor",
+      "materialCode": "aluminium",
+      "materialLabel": "Aluminium",
+      "variantCode": "",
+      "variantLabel": "",
+      "sizeKey": "640x640",
+      "label": "640mm x 640mm",
+      "widthMm": 640,
+      "heightMm": 640,
+      "modulesPerCabinet": 8,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_aluminium_960x960",
+      "displayType": "outdoor",
+      "materialCode": "aluminium",
+      "materialLabel": "Aluminium",
+      "variantCode": "",
+      "variantLabel": "",
+      "sizeKey": "960x960",
+      "label": "960mm x 960mm",
+      "widthMm": 960,
+      "heightMm": 960,
+      "modulesPerCabinet": 18,
+      "price": 8000
+    },
+    {
+      "id": "cabinet_outdoor_aluminium_1280x1280",
+      "displayType": "outdoor",
+      "materialCode": "aluminium",
+      "materialLabel": "Aluminium",
+      "variantCode": "",
+      "variantLabel": "",
+      "sizeKey": "1280x1280",
+      "label": "1280mm x 1280mm",
+      "widthMm": 1280,
+      "heightMm": 1280,
+      "modulesPerCabinet": 32,
+      "price": 8000
+    }
+  ],
+  "cabinetSizes": [
+    {
+      "id": "cabinet_640x480",
+      "label": "640mm x 480mm",
+      "widthMm": 640,
+      "heightMm": 480,
+      "modulesPerCabinet": 6
+    },
+    {
+      "id": "cabinet_640x640",
+      "label": "640mm x 640mm",
+      "widthMm": 640,
+      "heightMm": 640,
+      "modulesPerCabinet": 8
+    }
+  ],
   "physical": {
     "ft320": 1.0499,
     "ft160": 0.5249,
@@ -559,16 +911,16 @@
       "3.076": 16
     },
     "outdoor": {
-      "3": 20,
+      "3": 12,
       "4": 20,
       "5": 24,
-      "6": 36,
+      "6": 30,
       "8": 40,
       "10": 40,
       "2.5": 10,
       "3.076": 16,
       "3.91": 20,
-      "6.67": 30
+      "6.67": 36
     }
   },
   "rcCapacityNovastar": {
@@ -623,48 +975,6 @@
       "6.67": 6,
       "6.7": 6
     }
-  },
-  "ctrlCap": {
-    "indoor": [
-      {
-        "id": "VP210H",
-        "max": 150000
-      },
-      {
-        "id": "VP410H",
-        "max": 2500000
-      },
-      {
-        "id": "VP630",
-        "max": 3750000
-      },
-      {
-        "id": "VP830",
-        "max": 5050000
-      },
-      {
-        "id": "VP1240A",
-        "max": 7550000
-      },
-      {
-        "id": "VP1640A",
-        "max": 9940000
-      }
-    ],
-    "outdoor": [
-      {
-        "id": "A3L",
-        "max": 550000
-      },
-      {
-        "id": "A5L",
-        "max": 1150000
-      },
-      {
-        "id": "A6L",
-        "max": 2500000
-      }
-    ]
   },
   "psuModelLabel": "N200V5-A (5V40A)"
 }

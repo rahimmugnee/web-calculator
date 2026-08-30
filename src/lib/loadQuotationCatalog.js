@@ -1,4 +1,4 @@
-import { defaultQuotationCatalog } from "../data/defaultQuotationCatalog.js";
+import { componentPrice } from "../data/componentPrice.js";
 import { deepMerge } from "./deepMerge.js";
 
 const CATALOG_URL = process.env.REACT_APP_QUOTATION_CATALOG_URL || "/quotation-catalog.json";
@@ -18,7 +18,7 @@ export async function loadQuotationCatalog() {
     remote = null;
   }
   if (!remote || typeof remote !== "object") {
-    return { catalog: defaultQuotationCatalog, fromRemote: false };
+    return { catalog: componentPrice, fromRemote: false };
   }
-  return { catalog: deepMerge(defaultQuotationCatalog, remote), fromRemote: true };
+  return { catalog: deepMerge(componentPrice, remote), fromRemote: true };
 }
