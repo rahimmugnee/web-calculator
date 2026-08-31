@@ -7,7 +7,7 @@
           "id": "smd-in-p1_25",
           "name": "P1.25",
           "prices": {
-            "default": 9600
+            "default": 9300
           }
         },
         {
@@ -164,7 +164,7 @@
           "id": "cob-in-p1_25",
           "name": "P1.25",
           "prices": {
-            "default": 12500
+            "default": 13000
           }
         },
         {
@@ -353,7 +353,7 @@
         "default": 3500
       },
       "smd-in-p1_25": {
-        "default": 9600
+        "default": 9300
       },
       "smd-in-p1_53": {
         "default": 6082
@@ -386,7 +386,7 @@
         "default": 4600
       },
       "cob-in-p1_25": {
-        "default": 12500
+        "default": 13000
       },
       "gob-in-p1_86": {
         "default": 4350

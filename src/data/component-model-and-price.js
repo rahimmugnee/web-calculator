@@ -7,7 +7,7 @@ export const componentModelAndPrice = {
   "modelGroups": {
     "smd": {
       "indoor": [
-        { "id": "smd-in-p1_25", "name": "P1.25", "prices": { "default": 9600 } },
+        { "id": "smd-in-p1_25", "name": "P1.25", "prices": { "default": 9300 } },
         { "id": "smd-in-p1_53", "name": "P1.53", "prices": { "default": 6082 } },
         { "id": "smd-in-p1_86", "name": "P1.8", "prices": { "default": 4020 } },
         { "id": "smd-in-p2", "name": "P2", "prices": { "default": 3000 } },
@@ -38,7 +38,7 @@ export const componentModelAndPrice = {
     },
     "cob": {
       "indoor": [
-        { "id": "cob-in-p1_25", "name": "P1.25", "prices": { "default": 12500 } },
+        { "id": "cob-in-p1_25", "name": "P1.25", "prices": { "default": 13000 } },
         { "id": "cob-in-p1_53", "name": "P1.53", "prices": { "default": 8700 } },
         { "id": "cob-in-p1_86", "name": "P1.8", "prices": { "default": 5800 } }
       ]
@@ -104,7 +104,7 @@ export const componentModelAndPrice = {
       "smd-out-p2_5": { "default": 6500 },
       "smd-out-p3": { "default": 2618 },
       "smd-out-p3.91": { "default": 3500 },
-      "smd-in-p1_25": { "default": 9600 },
+      "smd-in-p1_25": { "default": 9300 },
       "smd-in-p1_53": { "default": 6082 },
       "smd-in-p1_86": { "default": 4020 },
       "smd-out-p4": { "default": 2850 },
@@ -115,7 +115,7 @@ export const componentModelAndPrice = {
       "smd-out-p10": { "default": 1677 },
       "gob-in-p1_25": { "default": 5800 },
       "gob-in-p1_53": { "default": 4600 },
-      "cob-in-p1_25": { "default": 12500 },
+      "cob-in-p1_25": { "default": 13000 },
       "gob-in-p1_86": { "default": 4350 },
       "gob-in-p2": { "default": 3618 },
       "gob-in-p2.5": { "default": 2950 },
