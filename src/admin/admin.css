@@ -13,6 +13,7 @@
 .admin-notification-button{position:relative}.admin-notification-badge{position:absolute;right:-7px;top:-8px;min-width:22px;height:22px;padding:0 5px;box-sizing:border-box;border:2px solid #fff;border-radius:12px;background:#e02d2d;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:800;line-height:1}
 .quotation-permanent-delete-button{height:32px;padding:0 13px;border:1px solid #efaaa4;border-radius:6px;background:#fff4f3;color:#b42318;font-size:10px;font-weight:700;white-space:nowrap;cursor:pointer}.quotation-permanent-delete-button:hover{background:#b42318;border-color:#b42318;color:#fff}
 .quotation-restore-button{height:32px;padding:0 14px;border:1px solid #9bd9bd;border-radius:6px;background:#edf9f4;color:#087a55;font-size:11px;font-weight:700;cursor:pointer}.quotation-restore-button:hover{background:#087a55;border-color:#087a55;color:#fff}.recycle-status{display:inline-flex;padding:5px 8px;border-radius:5px;background:#eef0f3;color:#505b6c;font-size:10px;font-weight:700;text-transform:capitalize}.recycle-bin-table .admin-empty{min-height:220px;display:flex;flex-direction:column;justify-content:center}
+.recycle-confirm.restore .quotation-delete-icon{background:#e7f8ef;color:#087a55}.recycle-confirm.restore .quotation-delete-confirm-button{border-color:#087a55;background:#087a55}.recycle-confirm.restore .quotation-delete-confirm-button:hover{background:#066747}
 .quotation-row-actions{display:flex;align-items:center;gap:8px}.quotation-delete-button{height:32px;padding:0 12px;border:1px solid #f1b8b3;border-radius:6px;background:#fff7f6;color:#c9362b;font-size:11px;font-weight:700;cursor:pointer}.quotation-delete-button:hover{background:#c9362b;border-color:#c9362b;color:#fff}
 .quotation-list td select{width:auto;min-width:82px;border:1px solid transparent;border-radius:5px;padding:5px 24px 5px 8px;font-size:10px;font-weight:700;text-transform:capitalize;cursor:pointer}.quotation-list td select:has(option:nth-child(1):checked){background:#eef0f3;color:#505b6c;border-color:#dfe3e8}.quotation-list td select:has(option:nth-child(2):checked),.quotation-list td select:has(option:nth-child(4):checked){background:#e3f8eb;color:#078647;border-color:#bcebcf}.quotation-list td select:has(option:nth-child(3):checked){background:#e5f0ff;color:#1769d2;border-color:#c5ddff}.quotation-list td select:has(option:nth-child(5):checked){background:#ffe9e7;color:#c9362b;border-color:#f5c5c0}.quotation-list td select:has(option:nth-child(6):checked){background:#fff4d8;color:#9a6500;border-color:#f1d48a}
 .admin-topbar>.admin-icon-button:first-child,.admin-topbar>.admin-company-select,.admin-topbar>.admin-company-select select{height:38px;box-sizing:border-box}.admin-topbar>.admin-icon-button:first-child{width:38px;flex:0 0 38px}.admin-topbar>.admin-company-select{display:flex;align-items:center;margin:0}.admin-topbar>.admin-company-select select{margin:0;padding-top:0;padding-bottom:0}
@@ -36,8 +37,9 @@
 
 /* Keep the month filter on one line despite the calculator's global label styles. */
 .dashboard-page .admin-page-actions{align-items:center}
-.dashboard-page .dashboard-date-range{width:240px;height:42px;box-sizing:border-box;margin:0!important;padding:0 12px;display:grid!important;grid-template-columns:17px minmax(0,1fr) 14px;align-items:center;gap:9px;line-height:1}
-.dashboard-page .dashboard-date-range select{width:100%;min-width:0;height:40px;margin:0;padding:0;border:0;outline:0;appearance:none;background:transparent;color:inherit;font:inherit;line-height:40px;text-align:left;cursor:pointer}
+.dashboard-page .dashboard-date-range{width:252px;height:48px;box-sizing:border-box;margin:0!important;padding:0 16px;display:grid!important;grid-template-columns:17px minmax(0,1fr) 14px;align-items:center;gap:10px;line-height:1}
+.dashboard-page .dashboard-date-range select{width:100%;min-width:0;height:46px;margin:0;padding:0 4px;border:0;outline:0;appearance:none;background:transparent;color:inherit;font:inherit;line-height:46px;text-align:left;cursor:pointer}
+.dashboard-page .dashboard-date-range option{padding:10px 14px}
 .dashboard-date-icon,.dashboard-date-chevron{display:block;width:100%;height:auto;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
 .dashboard-date-icon{color:#50647e}.dashboard-date-chevron{color:#75849a}
 @media(max-width:760px){.dashboard-page .dashboard-date-range{width:100%}}
@@ -121,3 +123,8 @@
   .admin-sidebar-user-copy,.admin-sidebar-user-chevron,.admin-sidebar-settings{display:none!important}
   .admin-sidebar-user,.sidebar-collapsed .admin-sidebar-user{justify-content:center;padding:4px}
 }
+
+/* Keep every admin page aligned to the full-width catalog and quotation layout. */
+.admin-content{max-width:none;margin:0;padding-left:12px;padding-right:12px}
+.dashboard-page,.customers-page,.company-branding-page{width:100%;max-width:none;margin-left:0;margin-right:0}
+.admin-content:has(.dashboard-page){padding-left:12px;padding-right:12px}

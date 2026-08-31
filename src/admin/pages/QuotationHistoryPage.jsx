@@ -119,14 +119,15 @@ export default function QuotationHistoryPage() {
         </div>
         <div className="admin-table-wrap admin-panel quotation-list">
           <table className="admin-table">
-            <thead><tr><th>Ref No.</th><th>Date</th><th>Client</th><th>Organization</th><th>Amount (BDT)</th><th>Created By</th><th>Status</th><th>Actions</th><th>Delete</th></tr></thead>
-            <tbody>{rows.map((row) => {
+            <thead><tr><th>SL No.</th><th>Ref No.</th><th>Date</th><th>Client</th><th>Organization</th><th>Amount (BDT)</th><th>Created By</th><th>Status</th><th>Actions</th><th>Delete</th></tr></thead>
+            <tbody>{rows.map((row, index) => {
               const client = row.client_information || {};
               const isOpen = selected?.id === row.id;
               const isLoading = loadingRowId === row.id;
               const detailsId = `quotation-details-${row.id}`;
 
               return <tr key={row.id} className={isOpen ? "selected-row" : ""}>
+                <td>{index + 1}</td>
                 <td><b>{row.quotation_number}</b></td>
                 <td>{date(row.created_at)}</td>
                 <td>{text(row.client_name)}</td>
@@ -150,7 +151,7 @@ export default function QuotationHistoryPage() {
   </>;
 }
 
-function QuotationDetails({ titleId, row, onClose }) {
+export function QuotationDetails({ titleId, row, onClose }) {
   const client = row.client_information || {};
   const form = row.snapshot_data?.form || {};
   const quality = form.tier?.label || form.tier?.id;
@@ -160,7 +161,7 @@ function QuotationDetails({ titleId, row, onClose }) {
     <header><div><h2 id={titleId}>Quotation Details</h2><span className="quotation-status">{row.status}</span></div><button onClick={onClose} title="Close quotation details" aria-label="Close quotation details">×</button></header>
     <div className="quotation-ref"><div><small>Ref No.</small><strong>{row.quotation_number}</strong></div><div><small>Date</small><strong>{date(row.created_at)}</strong></div></div>
     <DetailSection title="Client Information" badge={quality ? `Quality: ${quality}` : null}><dl className="quotation-client-grid"><div><dt>Name:</dt><dd>{text(client.name)}</dd></div><div><dt>Designation:</dt><dd>{text(client.position || client.designation)}</dd></div><div><dt>Organization:</dt><dd>{text(client.company || client.organization)}</dd></div><div><dt>Mobile Number:</dt><dd>{text(client.mobile || client.phone)}</dd></div>{client.email ? <div><dt>Email:</dt><dd>{client.email}</dd></div> : null}<div><dt>Address:</dt><dd>{text(client.address)}</dd></div></dl></DetailSection>
-    <section className="quotation-detail-section quotation-items-section"><h3 className="quotation-proposal-title">{proposalTitle}</h3><div className="quotation-items-wrap"><table><thead><tr><th>SL.</th><th>Item Name</th><th>Brand</th><th>Model</th><th>Unit</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>{row.items?.map((item) => <tr key={item.id}><td>{item.line_number}</td><td>{item.item_description}</td><td>{text(item.snapshot_data?.brand)}</td><td>{text(item.model_description)}</td><td>{item.unit}</td><td>{Number(item.quantity)}</td><td>{money(item.unit_price)}</td><td>{money(item.total_price)}</td></tr>)}</tbody><tfoot><tr><td colSpan="7">Grand Total</td><td>{money(row.grand_total)}</td></tr></tfoot></table></div></section>
+    <section className="quotation-detail-section quotation-items-section"><h3 className="quotation-proposal-title">{proposalTitle}</h3><div className="quotation-items-wrap"><table><thead><tr><th>SL No.</th><th>Item Name</th><th>Brand</th><th>Model</th><th>Unit</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>{row.items?.map((item) => <tr key={item.id}><td>{item.line_number}</td><td>{item.item_description}</td><td>{text(item.snapshot_data?.brand)}</td><td>{text(item.model_description)}</td><td>{item.unit}</td><td>{Number(item.quantity)}</td><td>{money(item.unit_price)}</td><td>{money(item.total_price)}</td></tr>)}</tbody><tfoot><tr><td colSpan="7">Grand Total</td><td>{money(row.grand_total)}</td></tr></tfoot></table></div></section>
     <footer><span>Created By<br /><b>{row.created_by_name || row.created_by || "Unknown user"}</b>{row.created_by_email ? <small>{row.created_by_email}</small> : null}</span><span>Created At<br /><b>{new Date(row.created_at).toLocaleString()}</b></span><span>Last Updated<br /><b>{new Date(row.updated_at).toLocaleString()}</b></span></footer>
   </section>;
 }

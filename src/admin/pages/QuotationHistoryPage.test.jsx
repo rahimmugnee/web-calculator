@@ -36,6 +36,17 @@ beforeEach(() => {
   remove.mockResolvedValue(null);
 });
 
+test("shows the serial number as the first quotation table column", async () => {
+  render(<QuotationHistoryPage />);
+  const serialHeader = await screen.findByRole("columnheader", { name: "SL No." });
+  const table = serialHeader.closest("table");
+  const quotationCell = await screen.findByText(quotation.quotation_number);
+  const quotationRow = quotationCell.closest("tr");
+
+  expect(within(table).getAllByRole("columnheader")[0]).toBe(serialHeader);
+  expect(within(quotationRow).getAllByRole("cell")[0]).toHaveTextContent("1");
+});
+
 test("uses a centered confirmation modal before deleting a quotation", async () => {
   render(<QuotationHistoryPage />);
   const deleteButton = await screen.findByRole("button", { name: "Delete" });

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { get, post } from "../api";
-import { CustomersPage, UsersPage } from "./ManagementPages";
+import { CustomersPage, SettingsPage, UsersPage } from "./ManagementPages";
 
 jest.mock("../api", () => ({ get: jest.fn(), post: jest.fn(), put: jest.fn() }));
 jest.mock("../contexts", () => ({ useCompany: () => ({ companyId: "1", company: { name: "Mugnee Multiple Limited" } }) }));
@@ -57,4 +57,12 @@ test("opens a centered password reset modal with confirmation", async () => {
   fireEvent.change(confirmation, { target: { value: "secret1" } });
   fireEvent.click(screen.getByRole("button", { name: "Reset Password" }));
   await waitFor(() => expect(post).toHaveBeenCalledWith("/admin/users/1/reset-password", { password: "secret1" }));
+});
+
+test("removes the JSON editor panel from the terms page", async () => {
+  render(<SettingsPage type="terms" />);
+
+  expect(await screen.findByRole("heading", { name: "Terms & Conditions" })).toBeInTheDocument();
+  expect(screen.queryByText("Configuration JSON")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Save Terms" })).not.toBeInTheDocument();
 });
