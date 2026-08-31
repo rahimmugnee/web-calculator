@@ -6,7 +6,7 @@ export async function requireAuth(req, res, next) {
   if (!cookies[SESSION_COOKIE]) return res.status(401).json({ error: "Authentication required." });
   const result = await getPool().query(
     `SELECT s.id session_id,s.csrf_token_hash,s.expires_at,u.id,u.email,u.display_name,u.is_active,
-       r.code role,r.name role_name,COALESCE(array_agg(p.code) FILTER (WHERE p.code IS NOT NULL),'{}') permissions
+       r.code AS "role",r.name role_name,COALESCE(array_agg(p.code) FILTER (WHERE p.code IS NOT NULL),'{}') permissions
      FROM auth_sessions s JOIN users u ON u.id=s.user_id JOIN roles r ON r.id=u.role_id
      LEFT JOIN role_permissions rp ON rp.role_id=r.id LEFT JOIN permissions p ON p.id=rp.permission_id
      WHERE s.token_hash=$1 AND s.expires_at>now() GROUP BY s.id,u.id,r.id`, [sha256(cookies[SESSION_COOKIE])]
