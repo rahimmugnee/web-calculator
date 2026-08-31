@@ -53,8 +53,13 @@ export function quotationHistoryPayload({ company, quotationRef, snapshot, calc 
 
 export async function saveQuotationHistory(data) {
   const apiBase = process.env.REACT_APP_ADMIN_API_URL || "/api";
+  const csrfToken = document.cookie.split(";").map((part) => part.trim())
+    .find((part) => part.startsWith("calculator_admin_csrf="))?.slice("calculator_admin_csrf=".length) || "";
   const response = await fetch(`${apiBase}/public/quotations`, {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json", "X-CSRF-Token": decodeURIComponent(csrfToken) },
+    body: JSON.stringify(data),
   });
   if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || "Quotation history could not be saved.");
   const saved = await response.json();

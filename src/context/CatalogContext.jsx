@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { componentModelAndPrice } from "../data/component-model-and-price.js";
+import { applyLedPriceRows } from "../lib/apply-led-price-rows.js";
+import { loadQuotationCatalog } from "../lib/load-quotation-catalog.js";
 
 const CatalogContext = createContext(null);
 const SELECTED_COMPANY_KEY = "calculatorSelectedCompanyId";
@@ -10,18 +12,22 @@ export function CatalogProvider({ children }) {
   const [selectedCompanyId, setSelectedCompanyIdState] = useState(() => window.localStorage.getItem(SELECTED_COMPANY_KEY) || "");
   const [catalog, setCatalog] = useState(componentModelAndPrice);
   const catalogRequestId = useRef(0);
-  const loadCompany = useCallback(() => {
+  const loadCompany = useCallback(async () => {
     const requestId = ++catalogRequestId.current;
     const apiBase = process.env.REACT_APP_ADMIN_API_URL || "/api";
-    return fetch(`${apiBase}/public/companies`, { cache: "no-store" })
-      .then((response) => response.ok ? response.json() : Promise.reject(new Error("Company list unavailable")))
-      .then((companyRows) => {
-        setCompanies(companyRows);
-        return companyRows.find((item) => String(item.id) === String(selectedCompanyId))
-          || companyRows.find((item) => item.is_default)
-          || companyRows[0];
-      })
-      .then((profile) => {
+    try {
+      const [{ catalog: fallbackCatalog }, companyResponse] = await Promise.all([
+        loadQuotationCatalog(),
+        fetch(`${apiBase}/public/companies`, { cache: "no-store" }),
+      ]);
+      if (requestId !== catalogRequestId.current) return;
+      setCatalog(fallbackCatalog);
+      if (!companyResponse.ok) throw new Error("Company list unavailable");
+      const companyRows = await companyResponse.json();
+      setCompanies(companyRows);
+      const profile = companyRows.find((item) => String(item.id) === String(selectedCompanyId))
+        || companyRows.find((item) => item.is_default)
+        || companyRows[0];
       if (!profile) throw new Error("Company branding unavailable");
       const apiOrigin = new URL(apiBase, window.location.origin).origin;
       const assets = Object.fromEntries(Object.entries(profile.assets || {}).map(([key, path]) => [key, `${apiOrigin}${path}?v=${Date.now()}`]));
@@ -29,50 +35,15 @@ export function CatalogProvider({ children }) {
       setCompany({ ...profile, assets });
       const favicon = document.querySelector("link[rel='icon']");
       if (favicon && assets.site_logo) favicon.href = assets.site_logo;
-      return Promise.all([
+      const [rows, brandRows] = await Promise.all([
         fetch(`${apiBase}/public/company/${profile.id}/led-prices`, { cache: "no-store" }).then((response)=>response.ok?response.json():[]),
         fetch(`${apiBase}/public/catalog/led-module/brands`, { cache: "no-store" }).then((response)=>response.ok?response.json():[]),
-      ]).then(([rows,brandRows])=>{
-        if (requestId !== catalogRequestId.current) return;
-        const moduleBrandPrices={...componentModelAndPrice.moduleBrandPrices};
-        const controllers=(componentModelAndPrice.controllers||[]).map((item)=>({...item}));
-        const novastarControllers=(componentModelAndPrice.novastarControllers||[]).map((item)=>({...item}));
-        const receivingCards=Object.fromEntries(Object.entries(componentModelAndPrice.receivingCards||{}).map(([id,item])=>[id,{...item}]));
-        const cabinetOptions=(componentModelAndPrice.cabinetOptions||[]).map((item)=>({...item}));
-        let powerSupplyPrice=componentModelAndPrice.powerSupplyPrice;
-        const powerSupplyPrices=Object.fromEntries((componentModelAndPrice.powerSupplyBrands||[]).map((brand)=>[typeof brand==="string"?brand:brand.value,componentModelAndPrice.powerSupplyPrice]));
-        rows.forEach((row)=>{
-          const id=row.technical_metadata?.id||row.source_key?.split(":").pop();
-          const price=Number(row.unit_price);
-          if(!Number.isFinite(price))return;
-          if(row.component_type==="module"){
-            const brand=row.brand_name;
-            if(!id||!brand||!row.price_tier)return;
-            moduleBrandPrices[brand]={...(moduleBrandPrices[brand]||{}),[id]:{...(moduleBrandPrices[brand]?.[id]||{}),[row.price_tier]:price}};
-          }else if(row.component_type==="controller"&&(row.price_tier==="default"||row.price_tier==="gold")){
-            const controller=[...controllers,...novastarControllers].find((item)=>String(item.id)===String(id)||String(item.id)===String(row.model));
-            if(controller)controller.price=price;
-          }else if(row.component_type==="receiving-card"){
-            const card=receivingCards[id]||receivingCards[row.model];
-            if(card){if(row.price_tier==="cob")card.cobUnitPrice=price;else if(row.price_tier==="default"||row.price_tier==="gold")card.unitPrice=price;}
-          }else if(row.component_type==="cabinet"&&(row.price_tier==="default"||row.price_tier==="gold")){
-            const cabinet=cabinetOptions.find((item)=>String(item.id)===String(id)||String(item.id)===String(row.model));
-            if(cabinet)cabinet.price=price;
-          }else if(row.component_type==="power-supply"&&(row.price_tier==="default"||row.price_tier==="gold")){
-            if(row.brand_name)powerSupplyPrices[row.brand_name]=price;
-            if(!row.brand_name||row.brand_name===(componentModelAndPrice.powerSupplyBrands||[])[0])powerSupplyPrice=price;
-          }
-        });
-        const grouped=new Map();
-        brandRows.forEach((row)=>{if(!grouped.has(row.id))grouped.set(row.id,{value:row.name,label:row.name,modelIds:[]});const modelId=row.technical_metadata?.id||row.source_key?.split(":").pop();if(modelId)grouped.get(row.id).modelIds.push(modelId);});
-        const databaseBrands=[...grouped.values()];
-        const moduleBrands=databaseBrands.length?databaseBrands.map(({value,label})=>({value,label})):componentModelAndPrice.moduleBrands;
-        const moduleBrandModelIds=databaseBrands.length?Object.fromEntries(databaseBrands.map((brand)=>[brand.value,[...new Set(brand.modelIds)]])):undefined;
-        setCatalog({...componentModelAndPrice,moduleBrandPrices,moduleBrands,moduleBrandModelIds,controllers,novastarControllers,receivingCards,cabinetOptions,powerSupplyPrice,powerSupplyPrices});
-      });
-    }).catch(() => {
+      ]);
+      if (requestId !== catalogRequestId.current) return;
+      setCatalog(applyLedPriceRows(fallbackCatalog, rows, brandRows));
+    } catch {
       if (requestId === catalogRequestId.current) setCompany(null);
-    });
+    }
   }, [selectedCompanyId]);
   useEffect(() => { loadCompany(); }, [loadCompany]);
   useEffect(() => {

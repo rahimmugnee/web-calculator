@@ -1,4 +1,4 @@
-import { getCataloguePaths } from "./PDFButton";
+import { getCataloguePaths, normalizePdfText } from "./PDFButton";
 
 const cabinetCataloguePath = "Mugnee Product data sheet/Cabinet 640 X 480.pdf";
 const structureCataloguePath =
@@ -65,3 +65,8 @@ test.each(["Mean well", "Mean Well", "Mean-Well", "mean_well"])(
     );
   }
 );
+
+test("normalizes quotation text for the editable native PDF layer", () => {
+  expect(normalizePdfText("Grand Total ৳1,500 — Size 8 × 4 ft"))
+    .toBe("Grand Total ৳1,500 - Size 8 x 4 ft");
+});

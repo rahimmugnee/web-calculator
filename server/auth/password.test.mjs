@@ -12,5 +12,5 @@ test("scrypt password hashes verify without containing the password", async () =
 });
 
 test("rejects short passwords", async () => {
-  await assert.rejects(() => hashPassword("short"), /at least 10/);
+  await assert.rejects(() => hashPassword("12345"), /at least 6/);
 });

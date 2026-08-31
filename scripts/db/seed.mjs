@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { databaseConfig } from "./config.mjs";
 import { hashPassword } from "../../server/auth/password.mjs";
+import { syncCatalogFallback } from "../../server/services/catalogFallback.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const catalogPath = join(root, "database", "generated", "mugnee-static-catalog.json");
@@ -158,39 +159,37 @@ try {
     WHERE name LIKE '{"value":%'
       AND NOT EXISTS (SELECT 1 FROM products WHERE products.brand_id=brands.id)`);
 
-  // Give each additional calculator company its own editable LED Display prices.
-  // Existing rows are preserved so later model-wise admin edits are never overwritten.
-  for (const [companyCode, markup] of [["renex", 200], ["sasha", 300]]) {
-    await client.query(
-      `INSERT INTO company_product_prices
-        (company_id,product_id,price_tier,unit_price,currency,pricing_metadata,is_active)
-       SELECT destination.id,mugnee_price.product_id,mugnee_price.price_tier,
-         mugnee_price.unit_price+$2,mugnee_price.currency,
-         jsonb_build_object('source','mugnee-initial-markup','markup',$2),true
-       FROM companies mugnee
-       JOIN company_product_prices mugnee_price ON mugnee_price.company_id=mugnee.id AND mugnee_price.is_active
-       JOIN products product ON product.id=mugnee_price.product_id AND product.is_active
-       JOIN categories category ON category.id=product.category_id AND category.system_type='led-display'
-       CROSS JOIN companies destination
-       WHERE mugnee.code='mugnee' AND destination.code=$1
-       ON CONFLICT(company_id,product_id,price_tier) DO NOTHING`,
-      [companyCode, markup]
-    );
-  }
+  // All calculator companies use Mugnee as their single editable price source.
+  // Renex and Sasha multipliers are applied dynamically by the API.
+  await client.query(`UPDATE companies AS target
+    SET pricing_source_company_id=source.id,
+        pricing_multiplier=CASE target.code
+          WHEN 'renex' THEN 1.0500
+          WHEN 'sasha' THEN 1.0800
+          ELSE 1.0000
+        END
+    FROM companies AS source
+    WHERE source.code='mugnee'
+      AND target.code IN ('mugnee-multiple','renex','sasha')`);
+  await client.query(`DELETE FROM company_product_prices
+    WHERE company_id IN (
+      SELECT id FROM companies WHERE code IN ('mugnee-multiple','renex','sasha')
+    )`);
 
   const adminPassword = String(process.env.ADMIN_SEED_PASSWORD || "").trim();
-  if (adminPassword.length < 10) {
-    throw new Error("ADMIN_SEED_PASSWORD must be set to at least 10 characters before seeding.");
+  if (adminPassword.length < 6) {
+    throw new Error("ADMIN_SEED_PASSWORD must be set to at least 6 characters before seeding.");
   }
   const adminHash = await hashPassword(adminPassword);
   await client.query(
-    `INSERT INTO users (username,display_name,password_hash,role_id,is_active)
-     SELECT 'admin','Administrator',$1,id,true FROM roles WHERE code='super-admin'
-     ON CONFLICT (lower(username)) DO UPDATE SET display_name=EXCLUDED.display_name,role_id=EXCLUDED.role_id,is_active=true`,
+    `INSERT INTO users (username,email,display_name,password_hash,role_id,is_active)
+     SELECT 'rahim.mugnee@gmail.com','rahim.mugnee@gmail.com','Administrator',$1,id,true FROM roles WHERE code='super-admin'
+     ON CONFLICT (lower(email)) DO UPDATE SET display_name=EXCLUDED.display_name,role_id=EXCLUDED.role_id,is_active=true`,
     [adminHash]
   );
+  await syncCatalogFallback(client);
   await client.query("COMMIT");
-  console.log(`Seeded ${catalog.products.length} shared products, category/brand mappings, and initial company-specific LED prices.`);
+  console.log(`Seeded ${catalog.products.length} shared products, category/brand mappings, and Mugnee-based derived company pricing.`);
 } catch (error) {
   await client.query("ROLLBACK");
   throw error;

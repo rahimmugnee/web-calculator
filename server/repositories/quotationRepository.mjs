@@ -20,12 +20,12 @@ export class QuotationRepository {
       await client.query("BEGIN");
       const quotation = await client.query(
         `INSERT INTO quotations (quotation_number, company_id, client_name, client_information, calculator_type,
-          currency, subtotal, vat_amount, discount_amount, grand_total, status, created_by, snapshot_data)
-         VALUES ($1,$2,$3,$4::jsonb,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb) RETURNING *`,
+          currency, subtotal, vat_amount, discount_amount, grand_total, status, created_by_user_id, created_by, snapshot_data)
+         VALUES ($1,$2,$3,$4::jsonb,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb) RETURNING *`,
         [input.quotationNumber, input.companyId, input.clientName || null, JSON.stringify(input.clientInformation || {}),
           input.calculatorType, input.currency || "BDT", nonNegative(input.subtotal, "subtotal"),
           nonNegative(input.vatAmount, "vatAmount"), nonNegative(input.discountAmount, "discountAmount"),
-          nonNegative(input.grandTotal, "grandTotal"), input.status || "draft", input.createdBy || null,
+          nonNegative(input.grandTotal, "grandTotal"), input.status || "draft", input.createdByUserId || null, input.createdBy || null,
           JSON.stringify(input.snapshotData || {})]
       );
       for (const [index, item] of (input.items || []).entries()) {

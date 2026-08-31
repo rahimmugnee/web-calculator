@@ -11,7 +11,8 @@ const systemOrder=["led-display","conference-system","pa-system","rental-led"];
 const PAGE_SIZE=8;
 
 export default function CategoriesPage(){
-  const {companyId}=useCompany();
+  const {companyId,company}=useCompany();
+  const canEditPrices=!company?.pricing_source_company_id||Number(company?.pricing_multiplier||1)===1;
   const [categories,setCategories]=useState([]),[brands,setBrands]=useState([]),[products,setProducts]=useState([]),[selectedId,setSelectedId]=useState(null);
   const [expanded,setExpanded]=useState(()=>new Set()),[expandedComponents,setExpandedComponents]=useState(()=>new Set()),[treeSearch,setTreeSearch]=useState(""),[brandSearch,setBrandSearch]=useState(""),[modelSearch,setModelSearch]=useState("");
   const [brandFilter,setBrandFilter]=useState(""),[technologyFilter,setTechnologyFilter]=useState(""),[statusFilter,setStatusFilter]=useState(""),[locationFilter,setLocationFilter]=useState("indoor"),[page,setPage]=useState(1),[tab,setTab]=useState("models");
@@ -84,7 +85,7 @@ export default function CategoriesPage(){
       const body={name:form.get("name"),model:cleanModelName(form.get("model")),sku:editing?.sku||"",unit:editing?.unit||(moduleCategory?"Module":"Nos."),category_id:selected.id,brand_id:selected.uses_brand?Number(form.get("brand_id")):null,is_active:editing?.is_active!==false,technical_metadata:metadata};
       const saved=editing?.id?await put(`/admin/products/${editing.id}`,body):await post("/admin/products",body);
       const price=Number(form.get("price")??form.get("price_gold")),tier=priceTierForCategory(selected);
-      if(Number.isFinite(price)&&price>=0)await put(`/admin/prices/${saved.id}`,{company_id:Number(companyId),prices:{[tier]:price}});
+      if(canEditPrices&&Number.isFinite(price)&&price>=0)await put(`/admin/prices/${saved.id}`,{company_id:Number(companyId),prices:{[tier]:price}});
       setModal(null);await refresh(editing?"Model updated.":"Model added.");
     }catch(e){setError(e.message);}
   };
@@ -134,7 +135,7 @@ export default function CategoriesPage(){
 
     </div>
     {modal?.type==="brand"?<BrandModal category={selected} onClose={()=>setModal(null)} onSave={saveBrand}/>:null}
-    {modal?.type==="product"?<ProductModal category={selected} brands={assignedBrands} product={modal.product} onClose={()=>setModal(null)} onSave={saveProduct}/>:null}
+    {modal?.type==="product"?<ProductModal category={selected} brands={assignedBrands} product={modal.product} priceReadOnly={!canEditPrices} onClose={()=>setModal(null)} onSave={saveProduct}/>:null}
     {modal?.type==="category"?<CategoryModal category={modal.category} onClose={()=>setModal(null)} onSave={saveCategory}/>:null}
   </div>;
 }
@@ -148,14 +149,14 @@ function ModelsSection({selected,products,total,allCount,modelSearch,setModelSea
 }
 
 function BrandModal({category,onClose,onSave}){return <Modal title="Add Brand" subtitle={`Add a new brand to ${category.name}.`} onClose={onClose}><form onSubmit={onSave}><label>Brand Name<input name="name" required maxLength="255" autoFocus placeholder="Enter brand name"/></label><ModalActions onClose={onClose} label="Add Brand"/></form></Modal>;}
-function ProductModal({category,brands,product,onClose,onSave}){const metadata=product?.technical_metadata||{};return <Modal title={product?.id?"Edit Model":"Add Model"} subtitle={`${systemLabels[category.system_type]} · ${category.name}`} onClose={onClose} wide><form onSubmit={onSave}><div className="admin-form-grid"><label>Label<input name="name" required defaultValue={product?.name||""}/></label><label>Model<input name="model" required defaultValue={cleanModelName(product?.model||"")} placeholder="Example: P1.53"/></label>{category.uses_brand?<label>Brand<select name="brand_id" required defaultValue={product?.brand_id||""}><option value="">Select brand</option>{brands.map((brand)=><option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></label>:null}<label>Technology<select name="technology" required defaultValue={String(metadata.technology||"smd").toLowerCase()}><option value="smd">SMD</option><option value="gob">GOB</option><option value="cob">COB</option></select></label><label>Gold Price<input name="price_gold" type="number" min="0" step="0.01" required defaultValue={calculatorTierPrice(product,"gold")??""}/></label></div><ModalActions onClose={onClose} label={product?.id?"Save Changes":"Add Model"}/></form></Modal>;}
+function ProductModal({category,brands,product,priceReadOnly,onClose,onSave}){const metadata=product?.technical_metadata||{};return <Modal title={product?.id?"Edit Model":"Add Model"} subtitle={`${systemLabels[category.system_type]} · ${category.name}`} onClose={onClose} wide><form onSubmit={onSave}><div className="admin-form-grid"><label>Label<input name="name" required defaultValue={product?.name||""}/></label><label>Model<input name="model" required defaultValue={cleanModelName(product?.model||"")} placeholder="Example: P1.53"/></label>{category.uses_brand?<label>Brand<select name="brand_id" required defaultValue={product?.brand_id||""}><option value="">Select brand</option>{brands.map((brand)=><option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></label>:null}<label>Technology<select name="technology" required defaultValue={String(metadata.technology||"smd").toLowerCase()}><option value="smd">SMD</option><option value="gob">GOB</option><option value="cob">COB</option></select></label><label>Default / Gold Price<input name="price_gold" type="number" min="0" step="0.01" required={!priceReadOnly} disabled={priceReadOnly} defaultValue={calculatorTierPrice(product,"default")??""}/>{priceReadOnly?<small>Calculated automatically from Mugnee pricing.</small>:null}</label></div><ModalActions onClose={onClose} label={product?.id?"Save Changes":"Add Model"}/></form></Modal>;}
 function CategoryModal({category,onClose,onSave}){const rental=category.system_type==="rental-led";return <Modal title="Edit Category" subtitle={systemLabels[category.system_type]} onClose={onClose}><form onSubmit={onSave}><label>Category Name<input name="name" required defaultValue={category.name}/></label><label>Slug / Code<input name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" defaultValue={category.slug}/></label><label>Sort Order<input name="sort_order" type="number" defaultValue={category.sort_order||0}/></label><label className="admin-check"><input name="uses_brand" type="checkbox" defaultChecked={category.uses_brand} disabled={rental}/>Uses brands {rental?<small>(disabled for Rental LED)</small>:null}</label><label className="admin-check"><input name="active" type="checkbox" defaultChecked={category.is_active}/>Active</label><ModalActions onClose={onClose} label="Save Category"/></form></Modal>;}
 function Modal({title,subtitle,onClose,wide,children}){return <div className="admin-modal-backdrop"><div className={wide?"admin-modal wide":"admin-modal"} role="dialog" aria-modal="true"><div className="admin-modal-head"><div><h2>{title}</h2><p>{subtitle}</p></div><button type="button" onClick={onClose} aria-label="Close">×</button></div>{children}</div></div>;}
 function ModalActions({onClose,label}){return <div className="admin-modal-actions"><button className="admin-button secondary" type="button" onClick={onClose}>Cancel</button><button className="admin-button primary" type="submit">{label}</button></div>;}
 function JsonPanel({value,label}){return <div className="admin-json-panel"><p>Structured {label} are preserved as JSONB for category-specific calculator data.</p><pre>{JSON.stringify(value||{},null,2)}</pre></div>;}
 function cleanModelName(value){return String(value||"").replace(/\s+(?:COB|GOB|SMD)\b/gi,"").trim();}
-function priceTierForCategory(category){return category?.slug==="led-module"?"gold":"default";}
-function calculatorModulePrice(product){return calculatorTierPrice(product,product?.component_type==="module"?"gold":"default");}
+function priceTierForCategory(){return "default";}
+function calculatorModulePrice(product){return calculatorTierPrice(product,"default");}
 function calculatorTierPrice(product,tier){
   if(!product)return null;
   if(tier==="gold"&&product.component_type!=="module")tier="default";

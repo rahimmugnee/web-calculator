@@ -11,22 +11,12 @@ import { useCatalog } from "./context/CatalogContext.jsx";
 import { quotationHistoryPayload, saveQuotationHistory } from "./lib/quotationHistory.js";
 
 const PREVIEW_PAGE_WIDTH = 794;
-const LOGIN_USERNAME = "mugnee";
-const LOGIN_PASSWORD = "7679";
-const AUTH_SESSION_KEY = "mugneeLoginAuthenticated";
-const REMEMBER_LOGIN_KEY = "mugneeRememberedLogin";
+const API_BASE = process.env.REACT_APP_ADMIN_API_URL || "/api";
+const LEGACY_AUTH_SESSION_KEY = "mugneeLoginAuthenticated";
+const LEGACY_REMEMBER_LOGIN_KEY = "mugneeRememberedLogin";
 
-function getRememberedLogin() {
-  try {
-    const raw = window.localStorage.getItem(REMEMBER_LOGIN_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw);
-    if (typeof parsed?.username !== "string" || typeof parsed?.password !== "string") return null;
-    return { username: parsed.username, password: parsed.password };
-  } catch {
-    return null;
-  }
+function cookie(name) {
+  return document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${name}=`))?.slice(name.length + 1) || "";
 }
 
 export default function App() {
@@ -35,12 +25,13 @@ export default function App() {
   const selectedCompanyCode = String(company?.code || "mugnee").toLowerCase();
   const invoiceFormatCode = selectedCompanyCode === "mugnee-multiple" ? "mugnee" : selectedCompanyCode;
   const invoiceFormatClass = `invoice-format-${invoiceFormatCode}`;
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    () => window.sessionStorage.getItem(AUTH_SESSION_KEY) === "true"
-  );
-  const [loginForm, setLoginForm] = useState(() => getRememberedLogin() || { username: "", password: "" });
-  const [rememberPassword, setRememberPassword] = useState(() => Boolean(getRememberedLogin()));
+  const [authUser, setAuthUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginForm, setLoginForm] = useState({ email: "", password: "" });
+  const [rememberSession, setRememberSession] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
+  const [profileOpen, setProfileOpen] = useState(false);
   const [snapshot, setSnapshot] = useState(null);
   const [calc, setCalc] = useState(null);
   const [quotationRef, setQuotationRef] = useState(null);
@@ -58,6 +49,7 @@ export default function App() {
   const previewStageRef = useRef(null);
   const previewInvoicePageRef = useRef(null);
   const previewTermsPageRef = useRef(null);
+  const profileRef = useRef(null);
 	  const quotationKind =
 	    installationType === "pa" || snapshot?.quotationType === "pa"
 	      ? "pa"
@@ -67,6 +59,34 @@ export default function App() {
 	      ? "rental"
 	      : "fixed";
   const isRentalQuotation = quotationKind === "rental";
+
+  useEffect(() => {
+    window.sessionStorage.removeItem(LEGACY_AUTH_SESSION_KEY);
+    window.localStorage.removeItem(LEGACY_REMEMBER_LOGIN_KEY);
+    let active = true;
+    fetch(`${API_BASE}/auth/me`, { credentials: "include", cache: "no-store" })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("Not authenticated")))
+      .then((data) => { if (active) setAuthUser(data.user || null); })
+      .catch(() => { if (active) setAuthUser(null); })
+      .finally(() => { if (active) setAuthLoading(false); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!profileOpen) return undefined;
+    const closeOnOutsideClick = (event) => {
+      if (!profileRef.current?.contains(event.target)) setProfileOpen(false);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setProfileOpen(false);
+    };
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [profileOpen]);
 
   useEffect(() => {
     if (!calc || !snapshot) {
@@ -116,38 +136,42 @@ export default function App() {
     setLoginForm((prev) => ({ ...prev, [name]: value }));
   }
 
-  function handleRememberPasswordChange(event) {
-    const checked = event.target.checked;
-    setRememberPassword(checked);
-    if (!checked) window.localStorage.removeItem(REMEMBER_LOGIN_KEY);
-  }
-
-  function handleLoginSubmit(event) {
+  async function handleLoginSubmit(event) {
     event.preventDefault();
-
-    const hasValidCredentials =
-      loginForm.username.trim() === LOGIN_USERNAME && loginForm.password === LOGIN_PASSWORD;
-
-    if (hasValidCredentials) {
-      window.sessionStorage.setItem(AUTH_SESSION_KEY, "true");
-      if (rememberPassword) {
-        window.localStorage.setItem(REMEMBER_LOGIN_KEY, JSON.stringify(loginForm));
-      } else {
-        window.localStorage.removeItem(REMEMBER_LOGIN_KEY);
-      }
+    setLoginLoading(true);
+    setLoginMessage("");
+    try {
+      const response = await fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginForm.email.trim(), password: loginForm.password, remember: rememberSession }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Login failed.");
+      setAuthUser(data.user || null);
+      setLoginForm((current) => ({ ...current, password: "" }));
       setLoginMessage("");
-      setIsAuthenticated(true);
-      return;
+    } catch (error) {
+      setLoginMessage(error.message || "Invalid email or password.");
+    } finally {
+      setLoginLoading(false);
     }
-    setLoginMessage("Invalid username or password.");
   }
 
-  function handleLogout() {
-    const rememberedLogin = getRememberedLogin();
-    window.sessionStorage.removeItem(AUTH_SESSION_KEY);
-    setLoginForm(rememberedLogin || { username: "", password: "" });
-    setRememberPassword(Boolean(rememberedLogin));
-    setIsAuthenticated(false);
+  async function handleLogout() {
+    setProfileOpen(false);
+    try {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "X-CSRF-Token": decodeURIComponent(cookie("calculator_admin_csrf")) },
+      });
+    } finally {
+      setAuthUser(null);
+      setLoginForm({ email: "", password: "" });
+      setRememberSession(false);
+    }
   }
 
   // Stable references: PriceForm/RentalPriceForm/PASystemForm depend on
@@ -175,7 +199,11 @@ export default function App() {
     }
   }, [company?.code, calc, snapshot]);
 
-  if (!isAuthenticated) {
+  if (authLoading) {
+    return <main className="login-page"><div className="login-card" role="status">Checking login...</div></main>;
+  }
+
+  if (!authUser) {
     return (
       <main className="login-page">
         <form className="login-card" onSubmit={handleLoginSubmit}>
@@ -185,16 +213,17 @@ export default function App() {
           <h1>Quotation Builder</h1>
           <p className="login-subtitle">Sign in to continue.</p>
 
-          <label htmlFor="login-username">
-            Username
+          <label htmlFor="login-email">
+            Email
             <input
-              id="login-username"
+              id="login-email"
               className="input"
-              name="username"
-              type="text"
+              name="email"
+              type="email"
               autoComplete="username"
-              value={loginForm.username}
+              value={loginForm.email}
               onChange={handleLoginChange}
+              required
             />
           </label>
 
@@ -208,22 +237,23 @@ export default function App() {
               autoComplete="current-password"
               value={loginForm.password}
               onChange={handleLoginChange}
+              required
             />
           </label>
 
           <label className="login-remember">
             <input
               type="checkbox"
-              checked={rememberPassword}
-              onChange={handleRememberPasswordChange}
+              checked={rememberSession}
+              onChange={(event) => setRememberSession(event.target.checked)}
             />
-            <span>Remember password</span>
+            <span>Keep me signed in</span>
           </label>
 
           {loginMessage ? <div className="login-message" role="status">{loginMessage}</div> : null}
 
-          <button className="btn btn-primary login-button" type="submit">
-            Login
+          <button className="btn btn-primary login-button" type="submit" disabled={loginLoading}>
+            {loginLoading ? "Signing in..." : "Login"}
           </button>
         </form>
       </main>
@@ -249,9 +279,23 @@ export default function App() {
       
           <div className="topbar-right">
              <a href="https://www.mugnee.com/product-category/led-display/" className="top-link">LED Display</a>
-             <button className="top-link top-button" type="button" onClick={handleLogout}>
-               Logout
-             </button>
+             <div className="calculator-profile" ref={profileRef}>
+               <button
+                 className="calculator-profile-button"
+                 type="button"
+                 aria-expanded={profileOpen}
+                 aria-haspopup="menu"
+                 onClick={() => setProfileOpen((current) => !current)}
+               >
+                 <span className="calculator-profile-avatar" aria-hidden="true">{authUser.display_name?.[0] || authUser.email?.[0] || "U"}</span>
+                 <span className="calculator-profile-name"><b>{authUser.display_name || authUser.email}</b><small>{authUser.role_name || authUser.role}</small></span>
+                 <span className="calculator-profile-arrow" aria-hidden="true">⌄</span>
+               </button>
+               {profileOpen ? <div className="calculator-profile-menu" role="menu">
+                 <div className="calculator-profile-identity"><b>{authUser.email}</b><small>{authUser.role_name || authUser.role}</small></div>
+                 <button type="button" role="menuitem" onClick={handleLogout}>Logout</button>
+               </div> : null}
+             </div>
           </div>
         </div>
 
@@ -375,7 +419,7 @@ export default function App() {
                   top: 0,
                   width: "794px", // ✅ IMPORTANT: match A4 width (same as invoice-wrap)
                   pointerEvents: "none",
-                  opacity: 1, // keep renderable for html2canvas
+                  opacity: 1, // keep the hidden native-PDF source measurable
                 }}
               >
                 {/* Page-1 (Invoice) */}

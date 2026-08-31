@@ -4,6 +4,13 @@ export const textValue = (value, field, { required = true, max = 255 } = {}) => 
   if (text.length > max) throw Object.assign(new Error(`${field} is too long.`), { status: 400 });
   return text || null;
 };
+export const emailValue = (value, field = "Email") => {
+  const email = textValue(value, field, { max: 254 }).toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw Object.assign(new Error(`${field} is invalid.`), { status: 400 });
+  }
+  return email;
+};
 export const slugValue = (value, field = "Code") => {
   const text = textValue(value, field, { max: 80 });
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(text)) throw Object.assign(new Error(`${field} must use lowercase letters, numbers, and hyphens.`), { status: 400 });

@@ -19,7 +19,7 @@ test("renders the Calculator admin login and toggles password visibility", async
 test("renders protected dashboard navigation for an authenticated administrator", async () => {
   window.history.replaceState({}, "", "/admin/dashboard");
   global.fetch = jest.fn(async (url) => {
-    if (String(url).includes("/auth/me")) return { ok: true, status: 200, json: async () => ({ user: { id: 1, username: "admin", display_name: "Administrator", role_name: "Super Admin", permissions: [] } }) };
+    if (String(url).includes("/auth/me")) return { ok: true, status: 200, json: async () => ({ user: { id: 1, email: "rahim.mugnee@gmail.com", display_name: "Administrator", role_name: "Super Admin", permissions: [] } }) };
     if (String(url).includes("/admin/companies")) return { ok: true, status: 200, json: async () => ([{ id: 1, name: "Mugnee Multiple Limited", code: "mugnee", is_default: true }]) };
     return { ok: true, status: 200, json: async () => ({ products: 244, quotations: 0, invoices: 0, customers: 0 }) };
   });

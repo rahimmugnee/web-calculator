@@ -17,7 +17,7 @@ export async function loadQuotationCatalog() {
   } catch {
     remote = null;
   }
-  if (!remote || typeof remote !== "object") {
+  if (!remote || typeof remote !== "object" || Array.isArray(remote) || !remote.modelGroups) {
     return { catalog: componentModelAndPrice, fromRemote: false };
   }
   return { catalog: deepMerge(componentModelAndPrice, remote), fromRemote: true };

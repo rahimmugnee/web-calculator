@@ -254,6 +254,115 @@ body{
   font:inherit;
   cursor:pointer;
 }
+.calculator-profile{
+  position:relative;
+}
+.calculator-profile-button{
+  min-height:38px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:3px 9px 3px 4px;
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:999px;
+  background:rgba(255,255,255,.1);
+  color:#fff;
+  font:inherit;
+  text-align:left;
+  cursor:pointer;
+  transition:.15s;
+}
+.calculator-profile-button:hover,
+.calculator-profile-button[aria-expanded="true"]{
+  background:rgba(255,255,255,.2);
+  border-color:rgba(255,255,255,.45);
+}
+.calculator-profile-avatar{
+  width:30px;
+  height:30px;
+  flex:0 0 30px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#e9efff;
+  color:#2563eb;
+  font-size:13px;
+  font-weight:800;
+  text-transform:uppercase;
+}
+.calculator-profile-name{
+  display:flex;
+  flex-direction:column;
+  max-width:150px;
+  line-height:1.15;
+}
+.calculator-profile-name b{
+  overflow:hidden;
+  color:#fff;
+  font-size:12px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.calculator-profile-name small{
+  margin-top:2px;
+  color:rgba(255,255,255,.68);
+  font-size:10px;
+  white-space:nowrap;
+}
+.calculator-profile-arrow{
+  color:rgba(255,255,255,.75);
+  font-size:13px;
+}
+.calculator-profile-menu{
+  position:absolute;
+  top:calc(100% + 8px);
+  right:0;
+  z-index:80;
+  width:220px;
+  padding:9px;
+  border:1px solid #dfe4eb;
+  border-radius:9px;
+  background:#fff;
+  box-shadow:0 14px 35px rgba(15,23,42,.2);
+  color:#172033;
+}
+.calculator-profile-identity{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  padding:7px 8px 10px;
+  border-bottom:1px solid #edf0f4;
+}
+.calculator-profile-identity b{
+  overflow-wrap:anywhere;
+  font-size:12px;
+}
+.calculator-profile-identity small{
+  color:#667085;
+  font-size:10px;
+}
+.calculator-profile-menu>button{
+  width:100%;
+  margin-top:7px;
+  padding:9px 10px;
+  border:0;
+  border-radius:6px;
+  background:#fff4f3;
+  color:#c9362b;
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  text-align:left;
+  cursor:pointer;
+}
+.calculator-profile-menu>button:hover{
+  background:#ffe8e5;
+}
+@media(max-width:760px){
+  .calculator-profile-name{display:none}
+  .calculator-profile-button{padding-right:6px}
+  .calculator-profile-arrow{display:none}
+}
 
 /* ======================== 04) SECTION HEADERS ======================= */
 .card h3{ font-weight:700; margin:12px 0 10px; }
@@ -1440,7 +1549,22 @@ section h3{
 /* PDF scale mode */
 .invoice--pdf-scale .invoice-inner{
   transform:none !important;
-  padding:180px 42px 100px 42px !important;
+  padding:150px 34px 128px 34px !important;
+}
+.invoice-wrap.invoice--pdf-scale > .invoice-inner{
+  height:1123px !important;
+  min-height:1123px !important;
+  box-sizing:border-box !important;
+}
+.invoice--pdf-scale .signatures:not(.pa-signatures){
+  position:static !important;
+  margin-top:10px !important;
+}
+.invoice--pdf-scale .signatures:not(.pa-signatures) .sig-title{
+  margin-top:18px !important;
+}
+.invoice--pdf-scale .signatures:not(.pa-signatures) .sign-img{
+  margin-top:8px !important;
 }
 .invoice--pdf-scale .invoice-pad-bg{
   opacity:1 !important;
@@ -1460,9 +1584,10 @@ section h3{
 .invoice--pdf-scale .row-accent td{
   background:transparent !important;
 }
-.invoice--pdf-scale #invoice-root{
+.invoice-wrap.invoice--pdf-scale{
   width:794px !important;
   height:1123px !important;
+  min-height:1123px !important;
   overflow:hidden !important;
 }
 @media print{

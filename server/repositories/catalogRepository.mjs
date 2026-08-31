@@ -18,7 +18,7 @@ export class CatalogRepository {
   async getCatalog(companyIdOrCode = "mugnee", { category, includeUnpriced = false } = {}) {
     const company = await this.getCompany(companyIdOrCode);
     if (!company) return null;
-    const params = [company.pricing_source_company_id || company.id];
+    const params = [company.pricing_source_company_id || company.id, Number(company.pricing_multiplier) || 1];
     let categoryFilter = "";
     if (category) {
       params.push(category);
@@ -26,7 +26,7 @@ export class CatalogRepository {
     }
     const join = includeUnpriced ? "LEFT JOIN" : "JOIN";
     const result = await this.pool.query(
-      `SELECT p.*, COALESCE(jsonb_object_agg(cpp.price_tier, cpp.unit_price)
+      `SELECT p.*, COALESCE(jsonb_object_agg(cpp.price_tier, round(cpp.unit_price * $2::numeric, 4))
          FILTER (WHERE cpp.id IS NOT NULL), '{}'::jsonb) AS prices
        FROM products p
        ${join} company_product_prices cpp ON cpp.product_id = p.id AND cpp.company_id = $1 AND cpp.is_active
@@ -40,9 +40,9 @@ export class CatalogRepository {
     const company = await this.getCompany(companyIdOrCode);
     if (!company) return null;
     const result = await this.pool.query(
-      `SELECT unit_price, cost_price, currency, price_tier, pricing_metadata
+      `SELECT round(unit_price * $4::numeric, 4) unit_price, cost_price, currency, price_tier, pricing_metadata
        FROM company_product_prices WHERE company_id=$1 AND product_id=$2 AND price_tier=$3 AND is_active`,
-      [company.pricing_source_company_id || company.id, productId, priceTier]
+      [company.pricing_source_company_id || company.id, productId, priceTier, Number(company.pricing_multiplier) || 1]
     );
     return result.rows[0] || null;
   }

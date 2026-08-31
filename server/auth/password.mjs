@@ -6,7 +6,7 @@ const KEY_LENGTH = 64;
 const COST = 16384;
 
 export async function hashPassword(password) {
-  if (typeof password !== "string" || password.length < 10) throw new TypeError("Password must be at least 10 characters");
+  if (typeof password !== "string" || password.length < 6) throw new TypeError("Password must be at least 6 characters");
   const salt = randomBytes(16).toString("hex");
   const derived = await scrypt(password, salt, KEY_LENGTH, { N: COST, r: 8, p: 1 });
   return `scrypt$${COST}$8$1$${salt}$${Buffer.from(derived).toString("hex")}`;

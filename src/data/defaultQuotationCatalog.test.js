@@ -33,3 +33,14 @@ test("cabinet footprint uses selected option dimensions", () => {
   expect(footprint.w).toBeCloseTo(960 / 304.8);
   expect(footprint.h).toBeCloseTo(960 / 304.8);
 });
+
+test("LED modules store only one default price", () => {
+  const modulePrices = Object.values(defaultQuotationCatalog.modelGroups).flatMap((locations) =>
+    Object.values(locations).flatMap((models) => models.map((model) => model.prices))
+  );
+  const brandedPrices = Object.values(defaultQuotationCatalog.moduleBrandPrices).flatMap((models) => Object.values(models));
+
+  expect([...modulePrices, ...brandedPrices].every((prices) =>
+    Object.keys(prices).length === 1 && Number.isFinite(Number(prices.default))
+  )).toBe(true);
+});

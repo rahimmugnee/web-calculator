@@ -15,11 +15,14 @@ export function mapStaticCatalog({ ledCatalog, paProducts, conferenceProducts })
         ]);
         for (const brand of brands) {
           const goldAdjustment = ledCatalog.moduleBrandGoldAdjustments?.[brand];
+          const explicitPrices = ledCatalog.moduleBrandPrices?.[brand]?.[module.id];
+          const explicitBasePrice = explicitPrices?.default ?? explicitPrices?.gold;
+          const moduleBasePrice = Number(module.prices?.default ?? module.prices?.gold ?? 0);
           const prices = brand === "Lampro"
-            ? module.prices
-            : goldAdjustment !== undefined
-              ? { gold: Number(module.prices?.gold || 0) + Number(goldAdjustment) }
-              : ledCatalog.moduleBrandPrices?.[brand]?.[module.id];
+            ? { default: moduleBasePrice }
+            : explicitBasePrice !== undefined ? { default: Number(explicitBasePrice) } : (goldAdjustment !== undefined
+              ? { default: moduleBasePrice + Number(goldAdjustment) }
+              : undefined);
           if (!prices) continue;
           rows.push(product({
             sourceKey: `led:module:${brand.toLowerCase()}:${module.id}`,

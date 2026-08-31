@@ -1,10 +1,295 @@
 // src/components/PDFButton.jsx
 import html2canvas from "html2canvas";
-import { PDFDocument } from "pdf-lib";
+import bengaliRegularFontUrl from "@fontsource/noto-sans-bengali/files/noto-sans-bengali-bengali-400-normal.woff";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 const A4 = { w: 595.28, h: 841.89 };
 const EXPORT_PX = { w: 2480, h: 3508 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+export function normalizePdfText(value = "") {
+  return String(value)
+    .replace(/[–—−]/g, "-")
+    .replace(/×/g, "x")
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/…/g, "...")
+    .replace(/[^\x20-\x7E\xA0-\xFF\u09F3]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+function parseCssColor(value) {
+  if (!value || value === "transparent") return null;
+  const match = String(value).match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:\s*[,/]\s*([\d.]+))?\s*\)/i);
+  if (!match) return null;
+  const opacity = match[4] === undefined ? 1 : Math.min(1, Math.max(0, Number(match[4])));
+  if (opacity === 0) return null;
+  return {
+    color: rgb(Number(match[1]) / 255, Number(match[2]) / 255, Number(match[3]) / 255),
+    opacity,
+  };
+}
+
+function isVisible(style, rect) {
+  return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity) !== 0 && rect.width > 0 && rect.height > 0;
+}
+
+function toRoman(value) {
+  const numerals = [
+    [1000, "m"], [900, "cm"], [500, "d"], [400, "cd"], [100, "c"], [90, "xc"],
+    [50, "l"], [40, "xl"], [10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"],
+  ];
+  let number = Math.max(1, Number(value) || 1);
+  let result = "";
+  numerals.forEach(([amount, token]) => {
+    while (number >= amount) {
+      result += token;
+      number -= amount;
+    }
+  });
+  return result;
+}
+
+function listMarkerFor(item) {
+  const list = item.parentElement;
+  if (!list || list.tagName !== "OL") return list?.tagName === "UL" ? "-" : "";
+  const siblings = Array.from(list.children).filter((child) => child.tagName === "LI");
+  const value = (Number(list.getAttribute("start")) || 1) + Math.max(0, siblings.indexOf(item));
+  const typeAttribute = list.getAttribute("type");
+  const type = (typeAttribute || window.getComputedStyle(list).listStyleType || "decimal").toLowerCase();
+  if (typeAttribute === "I" || type.includes("upper-roman")) return `${toRoman(value).toUpperCase()}.`;
+  if (type === "i" || type.includes("lower-roman")) return `${toRoman(value)}.`;
+  if (typeAttribute === "A" || type.includes("upper-alpha")) return `${String.fromCharCode(64 + value)}.`;
+  if (type === "a" || type.includes("lower-alpha")) return `${String.fromCharCode(96 + value)}.`;
+  return `${value}.`;
+}
+
+function collectEditableTextRuns(el) {
+  const rootRect = el.getBoundingClientRect();
+  const pageWidth = rootRect.width || el.clientWidth || 794;
+  const pageHeight = rootRect.height || el.clientHeight || 1123;
+  const walker = document.createTreeWalker(el, window.NodeFilter.SHOW_TEXT);
+  const runs = [];
+  let node = walker.nextNode();
+
+  while (node) {
+    const parent = node.parentElement;
+    const raw = node.nodeValue || "";
+    if (parent?.closest(".price-title-left")) {
+      node = walker.nextNode();
+      continue;
+    }
+    if (parent && raw.trim()) {
+      const style = window.getComputedStyle(parent);
+      if (isVisible(style, parent.getBoundingClientRect())) {
+        const tableCell = parent.closest("td, th");
+        const alignmentContainer = tableCell || parent;
+        const alignmentStyle = window.getComputedStyle(alignmentContainer);
+        const alignmentRect = alignmentContainer.getBoundingClientRect();
+        let lineRun = null;
+        for (const match of raw.matchAll(/\S+\s*/g)) {
+          const text = normalizePdfText(match[0]);
+          if (!text.trim()) continue;
+          const range = document.createRange();
+          range.setStart(node, match.index);
+          range.setEnd(node, match.index + match[0].length);
+          const rect = range.getBoundingClientRect();
+          range.detach?.();
+          if (!rect.width || !rect.height) continue;
+          if (rect.bottom <= rootRect.top || rect.top >= rootRect.bottom) continue;
+          const nextRun = {
+            text,
+            x: rect.left - rootRect.left,
+            y: rect.top - rootRect.top,
+            width: rect.width,
+            height: rect.height,
+            fontSize: Number.parseFloat(style.fontSize) || 12,
+            bold: style.fontWeight === "bold" || Number.parseInt(style.fontWeight, 10) >= 600,
+            italic: style.fontStyle === "italic" || style.fontStyle === "oblique",
+            color: parseCssColor(style.color),
+            textAlign: alignmentStyle.textAlign,
+            containerX: alignmentRect.left - rootRect.left,
+            containerWidth: alignmentRect.width,
+            paddingLeft: Number.parseFloat(alignmentStyle.paddingLeft) || 0,
+            paddingRight: Number.parseFloat(alignmentStyle.paddingRight) || 0,
+            alignWithinContainer: Boolean(tableCell),
+            container: alignmentContainer,
+          };
+          if (lineRun && Math.abs(lineRun.y - nextRun.y) < 1.5) {
+            lineRun.text += nextRun.text;
+            lineRun.width = Math.max(lineRun.width, (nextRun.x + nextRun.width) - lineRun.x);
+          } else {
+            lineRun = nextRun;
+            runs.push(lineRun);
+          }
+        }
+      }
+    }
+    node = walker.nextNode();
+  }
+
+  el.querySelectorAll(".price-title-left").forEach((title) => {
+    const style = window.getComputedStyle(title);
+    const rect = title.getBoundingClientRect();
+    const text = normalizePdfText(title.textContent || "").trim();
+    if (!text || !isVisible(style, rect)) return;
+    runs.push({
+      text,
+      x: rect.left - rootRect.left,
+      y: rect.top - rootRect.top,
+      width: rect.width,
+      height: rect.height,
+      fontSize: Number.parseFloat(style.fontSize) || 12,
+      bold: true,
+      italic: false,
+      color: parseCssColor(style.color),
+      textAlign: "center",
+      containerX: rect.left - rootRect.left,
+      containerWidth: rect.width,
+      paddingLeft: Number.parseFloat(style.paddingLeft) || 0,
+      paddingRight: Number.parseFloat(style.paddingRight) || 0,
+      alignWithinContainer: true,
+    });
+  });
+
+  el.querySelectorAll("li").forEach((item) => {
+    const marker = listMarkerFor(item);
+    if (!marker) return;
+    const style = window.getComputedStyle(item);
+    const rect = item.getBoundingClientRect();
+    if (!isVisible(style, rect)) return;
+    runs.push({
+      text: marker,
+      x: Math.max(0, rect.left - rootRect.left - 18),
+      y: rect.top - rootRect.top,
+      width: 16,
+      height: Number.parseFloat(style.lineHeight) || rect.height,
+      fontSize: Number.parseFloat(style.fontSize) || 12,
+      bold: false,
+      italic: false,
+      color: parseCssColor(style.color),
+    });
+  });
+
+  const mergedRuns = [];
+  runs.forEach((run) => {
+    const previous = mergedRuns[mergedRuns.length - 1];
+    const sameAlignedLine = previous
+      && run.alignWithinContainer
+      && previous.container === run.container
+      && Math.abs(previous.y - run.y) < 1.5
+      && previous.bold === run.bold
+      && previous.italic === run.italic
+      && Math.abs(previous.fontSize - run.fontSize) < 0.1;
+
+    if (sameAlignedLine) {
+      previous.text += run.text;
+      const right = Math.max(previous.x + previous.width, run.x + run.width);
+      previous.x = Math.min(previous.x, run.x);
+      previous.width = right - previous.x;
+    } else {
+      mergedRuns.push(run);
+    }
+  });
+
+  return { runs: mergedRuns, pageWidth, pageHeight, rootRect };
+}
+
+// Kept temporarily for backwards compatibility with older generated-PDF tests.
+// eslint-disable-next-line no-unused-vars
+async function embedTextLayerFonts(pdf) {
+  await import("regenerator-runtime/runtime");
+  const fontkitModule = await import("@pdf-lib/fontkit");
+  const fontkit = fontkitModule.default || fontkitModule;
+  pdf.registerFontkit(fontkit);
+  const bengaliFontBytes = await fetch(bengaliRegularFontUrl).then((response) => {
+    if (!response.ok) throw new Error("Unable to load the PDF currency font.");
+    return response.arrayBuffer();
+  });
+  const [regular, bold, italic, boldItalic, currency] = await Promise.all([
+    pdf.embedFont(StandardFonts.Helvetica),
+    pdf.embedFont(StandardFonts.HelveticaBold),
+    pdf.embedFont(StandardFonts.HelveticaOblique),
+    pdf.embedFont(StandardFonts.HelveticaBoldOblique),
+    pdf.embedFont(bengaliFontBytes, { subset: true }),
+  ]);
+  return { regular, bold, italic, boldItalic, currency };
+}
+
+function splitCurrencyText(text, font, currencyFont, size) {
+  return text.split(/(৳)/).filter(Boolean).map((value) => {
+    const segmentFont = value === "৳" ? currencyFont : font;
+    return { value, font: segmentFont, width: segmentFont.widthOfTextAtSize(value, size) };
+  });
+}
+
+// Kept temporarily for backwards compatibility with older generated-PDF tests.
+// eslint-disable-next-line no-unused-vars
+function drawEditableText(page, el, fonts) {
+  const { runs, pageWidth, pageHeight } = collectEditableTextRuns(el);
+  const scaleX = A4.w / pageWidth;
+  const scaleY = A4.h / pageHeight;
+
+  for (const run of runs) {
+    const font = run.bold && run.italic ? fonts.boldItalic : run.bold ? fonts.bold : run.italic ? fonts.italic : fonts.regular;
+    try {
+      const text = run.text.trimEnd();
+      const fontSize = Math.max(4, run.fontSize * scaleY);
+      const segments = splitCurrencyText(text, font, fonts.currency, fontSize);
+      const measuredWidth = segments.reduce((total, segment) => total + segment.width, 0);
+      const contentLeft = ((run.containerX ?? run.x) + (run.paddingLeft || 0)) * scaleX;
+      const contentRight = ((run.containerX ?? run.x) + (run.containerWidth ?? run.width) - (run.paddingRight || 0)) * scaleX;
+      let x = Math.max(0, run.x * scaleX);
+      if (run.alignWithinContainer && (run.textAlign === "right" || run.textAlign === "end")) {
+        x = Math.max(contentLeft, contentRight - measuredWidth);
+      } else if (run.alignWithinContainer && run.textAlign === "center") {
+        x = Math.max(contentLeft, contentLeft + ((contentRight - contentLeft - measuredWidth) / 2));
+      }
+      const y = Math.max(0, A4.h - ((run.y + run.height * 0.82) * scaleY));
+      let cursorX = x;
+      segments.forEach((segment) => {
+        page.drawText(segment.value, {
+          x: cursorX,
+          y,
+          size: fontSize,
+          font: segment.font,
+          color: run.color?.color || rgb(0, 0, 0),
+          opacity: run.color?.opacity ?? 1,
+        });
+        cursorX += segment.width;
+      });
+    } catch (error) {
+      console.warn("Skipped unsupported PDF text:", run.text, error);
+    }
+  }
+}
+
+async function renderDomSnapshot(el) {
+  const rootRect = el.getBoundingClientRect();
+  const width = Math.round(rootRect.width || el.clientWidth || 794);
+  const height = Math.round(rootRect.height || el.clientHeight || 1123);
+  const scale = Math.max(1, EXPORT_PX.w / width);
+  const canvas = await html2canvas(el, {
+    scale,
+    width,
+    height,
+    backgroundColor: null,
+    useCORS: true,
+    allowTaint: true,
+    logging: false,
+    windowWidth: width,
+    windowHeight: height,
+  });
+  return new Uint8Array(await (await fetch(canvas.toDataURL("image/png"))).arrayBuffer());
+}
+
+async function renderDomPage(pdf, el) {
+  const page = pdf.addPage([A4.w, A4.h]);
+  const snapshotBytes = await renderDomSnapshot(el);
+  const snapshot = await pdf.embedPng(snapshotBytes);
+  page.drawImage(snapshot, { x: 0, y: 0, width: A4.w, height: A4.h });
+  return page;
+}
 
 function encodePublicPath(path) {
   return path
@@ -262,33 +547,41 @@ export default function PDFButton({
   exportData = null,
   onBeforeDownload = null,
 }) {
+  const fitPdfContent = (el) => {
+    const inner = el.querySelector(":scope > .invoice-inner");
+    const panel = inner?.querySelector(":scope > .invoice-panel:not(.terms-panel)");
+    if (!inner || !panel) return;
+
+    panel.style.removeProperty("transform");
+    panel.style.removeProperty("transform-origin");
+    panel.style.removeProperty("width");
+
+    const innerStyle = window.getComputedStyle(inner);
+    const availableHeight = inner.clientHeight
+      - (Number.parseFloat(innerStyle.paddingTop) || 0)
+      - (Number.parseFloat(innerStyle.paddingBottom) || 0);
+    const contentHeight = panel.scrollHeight;
+    const scale = Math.min(1, availableHeight / Math.max(1, contentHeight));
+
+    if (scale < 0.999) {
+      panel.style.setProperty("transform", `scale(${scale})`, "important");
+      panel.style.setProperty("transform-origin", "top left", "important");
+      panel.style.setProperty("width", `${100 / scale}%`, "important");
+    }
+  };
+
   const applyPdfClasses = (el) => {
     el.classList.add("invoice--pdf-scale");
     el.classList.remove("preview-mode");
   };
 
   const revertPdfClasses = (el) => {
+    const panel = el.querySelector(":scope > .invoice-inner > .invoice-panel:not(.terms-panel)");
+    panel?.style.removeProperty("transform");
+    panel?.style.removeProperty("transform-origin");
+    panel?.style.removeProperty("width");
     el.classList.remove("invoice--pdf-scale");
     el.classList.add("preview-mode");
-  };
-
-  const renderElementToPngBytes = async (el) => {
-    const baseW = el.scrollWidth || el.clientWidth || 794;
-    const targetScale = Math.max(1, EXPORT_PX.w / baseW);
-
-    const canvas = await html2canvas(el, {
-      scale: targetScale,
-      backgroundColor: null,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      windowWidth: el.scrollWidth,
-      windowHeight: el.scrollHeight,
-    });
-
-    const png = canvas.toDataURL("image/png");
-    const bytes = await (await fetch(png)).arrayBuffer();
-    return bytes;
   };
 
   const handleDownload = async () => {
@@ -299,15 +592,14 @@ export default function PDFButton({
 
     els.forEach(applyPdfClasses);
     await sleep(60);
+    els.forEach(fitPdfContent);
+    await sleep(60);
 
     try {
       const pdf = await PDFDocument.create();
 
       for (const el of els) {
-        const bytes = await renderElementToPngBytes(el);
-        const page = pdf.addPage([A4.w, A4.h]);
-        const img = await pdf.embedPng(bytes);
-        page.drawImage(img, { x: 0, y: 0, width: A4.w, height: A4.h });
+        await renderDomPage(pdf, el);
       }
 
       const cataloguePaths = getCataloguePaths(exportData);

@@ -457,7 +457,7 @@ export default function PriceForm({
   const [modelId, setModelId] = useState(modelsForType[0]?.id || "");
 
   const model = useMemo(() => {
-    if (!modelsForType.length) return { id: "", name: "P1.25", prices: { gold: 0, platinum: 0, diamond: 0 } };
+    if (!modelsForType.length) return { id: "", name: "P1.25", prices: { default: 0 } };
     return modelsForType.find((m) => m.id === modelId) ?? modelsForType[0];
   }, [modelId, modelsForType]);
 
@@ -585,7 +585,7 @@ export default function PriceForm({
   // âœ… AUTO module price by tier
   const moduleUnitPriceAuto = useMemo(() => {
     const p = catalog.moduleBrandPrices?.[moduleBrand]?.[model?.id] || model?.prices || {};
-    return getTierPriceFromGold(p.gold, tierId);
+    return getTierPriceFromGold(p.default ?? p.gold, tierId);
   }, [catalog.moduleBrandPrices, model, tierId, moduleBrand]);
 
   // âœ… reset module override on model/tier/tech/type change
