@@ -30,7 +30,20 @@ test('renders the email login page first', async () => {
   renderApp();
   expect(await screen.findByRole('heading', { name: /quotation builder/i })).toBeInTheDocument();
   expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /show password/i })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
+});
+
+test('toggles password visibility from the eye icon', async () => {
+  renderApp();
+  const password = await screen.findByLabelText(/^password$/i);
+  expect(password).toHaveAttribute('type', 'password');
+
+  userEvent.click(screen.getByRole('button', { name: /show password/i }));
+  expect(password).toHaveAttribute('type', 'text');
+
+  userEvent.click(screen.getByRole('button', { name: /hide password/i }));
+  expect(password).toHaveAttribute('type', 'password');
 });
 
 test('shows the API error after invalid login', async () => {
@@ -47,7 +60,7 @@ test('shows the API error after invalid login', async () => {
 
   const loginButton = await screen.findByRole('button', { name: /login/i });
   userEvent.type(screen.getByLabelText(/email/i), 'wrong@example.com');
-  userEvent.type(screen.getByLabelText(/password/i), 'wrong-password');
+  userEvent.type(screen.getByLabelText(/^password$/i), 'wrong-password');
 
   userEvent.click(loginButton);
 
@@ -67,7 +80,7 @@ test('uses the database email login and never sends the legacy credentials', asy
   });
   renderApp();
   userEvent.type(await screen.findByLabelText(/email/i), 'rahim.mugnee@gmail.com');
-  userEvent.type(screen.getByLabelText(/password/i), 'secret-6');
+  userEvent.type(screen.getByLabelText(/^password$/i), 'secret-6');
   userEvent.click(screen.getByRole('button', { name: /login/i }));
 
   await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(

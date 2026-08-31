@@ -19,6 +19,16 @@ function cookie(name) {
   return document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${name}=`))?.slice(name.length + 1) || "";
 }
 
+function PasswordVisibilityIcon({ hidden = false }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+      <circle cx="12" cy="12" r="2.75" />
+      {hidden ? <path d="m4 4 16 16" /> : null}
+    </svg>
+  );
+}
+
 export default function App() {
   const { company, companies, selectedCompanyId, setSelectedCompanyId } = useCatalog();
   const branding = company?.assets || {};
@@ -29,6 +39,7 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [rememberSession, setRememberSession] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
   const [profileOpen, setProfileOpen] = useState(false);
@@ -151,6 +162,7 @@ export default function App() {
       if (!response.ok) throw new Error(data.error || "Login failed.");
       setAuthUser(data.user || null);
       setLoginForm((current) => ({ ...current, password: "" }));
+      setShowLoginPassword(false);
       setLoginMessage("");
     } catch (error) {
       setLoginMessage(error.message || "Invalid email or password.");
@@ -170,6 +182,7 @@ export default function App() {
     } finally {
       setAuthUser(null);
       setLoginForm({ email: "", password: "" });
+      setShowLoginPassword(false);
       setRememberSession(false);
     }
   }
@@ -229,16 +242,28 @@ export default function App() {
 
           <label htmlFor="login-password">
             Password
-            <input
-              id="login-password"
-              className="input"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              value={loginForm.password}
-              onChange={handleLoginChange}
-              required
-            />
+            <span className="login-password-field">
+              <input
+                id="login-password"
+                className="input"
+                name="password"
+                type={showLoginPassword ? "text" : "password"}
+                autoComplete="current-password"
+                value={loginForm.password}
+                onChange={handleLoginChange}
+                required
+              />
+              <button
+                type="button"
+                className="login-password-toggle"
+                onClick={() => setShowLoginPassword((visible) => !visible)}
+                aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                aria-pressed={showLoginPassword}
+                title={showLoginPassword ? "Hide password" : "Show password"}
+              >
+                <PasswordVisibilityIcon hidden={showLoginPassword} />
+              </button>
+            </span>
           </label>
 
           <label className="login-remember">
