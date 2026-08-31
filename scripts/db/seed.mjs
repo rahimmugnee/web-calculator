@@ -135,8 +135,25 @@ try {
       [item.sourceKey, item.sku, item.category, item.componentType, item.name, item.brand || null, item.model || null, item.unit || "Nos.", item.currency || "BDT", JSON.stringify(item.metadata || {})]
     );
     await client.query("UPDATE products SET category_id=$1, brand_id=$2 WHERE id=$3", [categoryResult.rows[0].id, brandId, saved.rows[0].id]);
-    for (const [tier, rawPrice] of Object.entries(item.prices || {})) {
-      if (item.category === "led-module" && tier !== "gold") continue;
+    if (item.category === "led-module") {
+      // Preserve admin edits, and promote a legacy-only gold value before using
+      // the static catalog default. Fresh databases receive only the canonical
+      // default tier.
+      await client.query(
+        `INSERT INTO company_product_prices
+           (company_id,product_id,price_tier,unit_price,cost_price,currency,pricing_metadata,is_active)
+         SELECT company_id,product_id,'default',unit_price,cost_price,currency,
+           pricing_metadata || jsonb_build_object('copied_from_tier','gold'),is_active
+         FROM company_product_prices
+         WHERE company_id=$1 AND product_id=$2 AND price_tier='gold'
+         ON CONFLICT(company_id,product_id,price_tier) DO NOTHING`,
+        [companyId, saved.rows[0].id]
+      );
+    }
+    const priceEntries = item.category === "led-module"
+      ? [["default", item.prices?.default ?? item.prices?.gold]]
+      : Object.entries(item.prices || {});
+    for (const [tier, rawPrice] of priceEntries) {
       if (rawPrice === null || rawPrice === undefined || Number.isNaN(Number(rawPrice))) continue;
       await client.query(
         `INSERT INTO company_product_prices (company_id, product_id, price_tier, unit_price, currency, pricing_metadata, is_active)

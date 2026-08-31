@@ -1,5 +1,27 @@
 const cloneCatalog = (catalog) => JSON.parse(JSON.stringify(catalog || {}));
 const brandValue = (brand) => typeof brand === "string" ? brand : brand?.value;
+const basePriceComponents = new Set(["module", "controller", "cabinet", "power-supply"]);
+const basePriceTiers = new Set(["default", "gold"]);
+
+const basePriceIdentity = (row) => [
+  row.component_type,
+  row.brand_name || "",
+  row.source_key || row.technical_metadata?.id || row.model || "",
+].map(String).join("\u0000");
+
+function preferredBasePriceRows(rows) {
+  const preferred = new Map();
+  for (const row of rows) {
+    if (!basePriceComponents.has(row.component_type) || !basePriceTiers.has(row.price_tier)) continue;
+    if (!Number.isFinite(Number(row.unit_price))) continue;
+    const identity = basePriceIdentity(row);
+    const current = preferred.get(identity);
+    if (!current || (current.price_tier === "gold" && row.price_tier === "default")) {
+      preferred.set(identity, row);
+    }
+  }
+  return preferred;
+}
 
 export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
   const catalog = cloneCatalog(baseCatalog);
@@ -28,11 +50,14 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
     (catalog.powerSupplyBrands || []).map((brand) => [brandValue(brand), Number(catalog.powerSupplyPrice) || 0])
   );
   let powerSupplyPrice = Number(catalog.powerSupplyPrice) || 0;
+  const preferredBaseRows = preferredBasePriceRows(rows);
 
   for (const row of rows) {
     const id = row.technical_metadata?.id || row.source_key?.split(":").pop();
     const price = Number(row.unit_price);
     if (!Number.isFinite(price)) continue;
+    if (basePriceComponents.has(row.component_type) && basePriceTiers.has(row.price_tier)
+      && preferredBaseRows.get(basePriceIdentity(row)) !== row) continue;
 
     if (row.component_type === "module") {
       const brand = row.brand_name;
