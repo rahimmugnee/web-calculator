@@ -42,7 +42,7 @@ function readableCatalogJson(value, depth = 0) {
 }
 
 function orderCatalogSections(catalog) {
-  const powerSupplyKeys = ["powerSupplyPrice", "powerSupplyPrices", "powerSupplyBrands", "psuModelLabel"];
+  const powerSupplyKeys = ["powerSupplyPrice", "powerSupplyPrices", "powerSupplyBrands", "powerSupplyModels", "psuModelLabel"];
   const ordered = {};
   for (const [key, value] of Object.entries(catalog)) {
     if (powerSupplyKeys.includes(key)) continue;

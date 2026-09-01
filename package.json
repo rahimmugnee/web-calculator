@@ -10,8 +10,6 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
     "express": "^5.1.0",
-    "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.3",
     "pdf-lib": "^1.17.1",
     "pg": "^8.16.3",
     "react": "^19.2.0",

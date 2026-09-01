@@ -9,7 +9,7 @@ export const componentModelAndPrice = {
       "indoor": [
         { "id": "smd-in-p1_25", "name": "P1.25", "prices": { "default": 9300 } },
         { "id": "smd-in-p1_53", "name": "P1.53", "prices": { "default": 6082 } },
-        { "id": "smd-in-p1_86", "name": "P1.8", "prices": { "default": 4020 } },
+        { "id": "smd-in-p1_86", "name": "P1.86", "prices": { "default": 4020 } },
         { "id": "smd-in-p2", "name": "P2", "prices": { "default": 3000 } },
         { "id": "smd-in-p2_5", "name": "P2.5", "prices": { "default": 2350 } },
         { "id": "smd-in-p3", "name": "P3", "prices": { "default": 2850 } }
@@ -30,7 +30,7 @@ export const componentModelAndPrice = {
       "indoor": [
         { "id": "gob-in-p1_25", "name": "P1.25", "prices": { "default": 5800 } },
         { "id": "gob-in-p1_53", "name": "P1.53", "prices": { "default": 4600 } },
-        { "id": "gob-in-p1_86", "name": "P1.8", "prices": { "default": 4350 } },
+        { "id": "gob-in-p1_86", "name": "P1.86", "prices": { "default": 4350 } },
         { "id": "gob-in-p2", "name": "P2", "prices": { "default": 3618 } },
         { "id": "gob-in-p2.5", "name": "P2.5", "prices": { "default": 2950 } },
         { "id": "gob-in-p3", "name": "P3", "prices": { "default": 4000 } }
@@ -40,7 +40,7 @@ export const componentModelAndPrice = {
       "indoor": [
         { "id": "cob-in-p1_25", "name": "P1.25", "prices": { "default": 13000 } },
         { "id": "cob-in-p1_53", "name": "P1.53", "prices": { "default": 8700 } },
-        { "id": "cob-in-p1_86", "name": "P1.8", "prices": { "default": 5800 } }
+        { "id": "cob-in-p1_86", "name": "P1.86", "prices": { "default": 5800 } }
       ]
     }
   },
@@ -122,6 +122,34 @@ export const componentModelAndPrice = {
       "gob-in-p3": { "default": 4000 },
       "cob-in-p1_53": { "default": 8700 },
       "cob-in-p1_86": { "default": 5800 }
+    }
+  },
+  "moduleBrandModelNames": {
+    "Lampro": {
+      "smd-in-p1_25": "LC1.25P",
+      "smd-in-p1_53": "LC1.53P",
+      "smd-in-p1_86": "LC1.86P",
+      "smd-in-p2": "LC2P",
+      "smd-in-p2_5": "LC2.5P",
+      "smd-in-p3": "LC3P",
+      "smd-out-p2_5": "LC2.5PO",
+      "smd-out-p3": "LC3.076PO",
+      "smd-out-p3.91": "LR3.91O",
+      "smd-out-p4": "LC4PO",
+      "smd-out-p5": "LC5PO",
+      "smd-out-p6": "LC6PO",
+      "smd-out-p6_67": "LC6.667PO",
+      "smd-out-p8": "LC8PO",
+      "smd-out-p10": "LC10PO",
+      "gob-in-p1_25": "LC1.25P GOB",
+      "gob-in-p1_53": "LC1.53P GOB",
+      "gob-in-p1_86": "LC1.86P GOB",
+      "gob-in-p2": "LC2P GOB",
+      "gob-in-p2.5": "LC2.5P GOB",
+      "gob-in-p3": "LC3P GOB",
+      "cob-in-p1_25": "LC COB 1.25",
+      "cob-in-p1_53": "LC COB 1.53",
+      "cob-in-p1_86": "LC COB 1.86"
     }
   },
   "moduleBrandGoldAdjustments": {
@@ -246,7 +274,12 @@ export const componentModelAndPrice = {
     { "value": "G-Energy", "label": "G-Energy" },
     { "value": "Mean well", "label": "Mean well" }
   ],
-  "psuModelLabel": "N200V5-A (5V40A)",
+  "powerSupplyModels": {
+    "Lampro": "LD-200",
+    "G-Energy": "N200V5-A",
+    "Mean well": "LRS-200"
+  },
+  "psuModelLabel": "LD-200",
   "cabinetCasePrice": 8000,
   "modulesPerCabinet": 6,
   "cabinetOptions": [
@@ -449,29 +482,29 @@ export const componentModelAndPrice = {
     ],
     "Lampro": [
       "cob-in-p1_25",
+      "cob-in-p1_53",
+      "cob-in-p1_86",
       "gob-in-p1_25",
       "smd-in-p1_25",
-      "cob-in-p1_53",
       "gob-in-p1_53",
       "smd-in-p1_53",
-      "cob-in-p1_86",
       "gob-in-p1_86",
       "smd-in-p1_86",
       "smd-out-p10",
-      "gob-in-p2",
-      "smd-in-p2",
       "gob-in-p2.5",
       "smd-in-p2_5",
       "smd-out-p2_5",
+      "gob-in-p2",
+      "smd-in-p2",
+      "smd-out-p3",
       "gob-in-p3",
       "smd-in-p3",
-      "smd-out-p3",
-      "smd-out-p3.91",
       "smd-out-p4",
       "smd-out-p5",
-      "smd-out-p6",
       "smd-out-p6_67",
-      "smd-out-p8"
+      "smd-out-p6",
+      "smd-out-p8",
+      "smd-out-p3.91"
     ],
     "Leyard": [
       "cob-in-p1_25",

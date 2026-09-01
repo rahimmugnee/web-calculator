@@ -46,6 +46,7 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
   const novastarControllers = [...(catalog.novastarControllers || [])];
   const receivingCards = { ...(catalog.receivingCards || {}) };
   const cabinetOptions = [...(catalog.cabinetOptions || [])];
+  const powerSupplyModels = { ...(catalog.powerSupplyModels || {}) };
   const powerSupplyPrices = Object.fromEntries(
     (catalog.powerSupplyBrands || []).map((brand) => [brandValue(brand), Number(catalog.powerSupplyPrice) || 0])
   );
@@ -100,6 +101,7 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
 
     if (row.component_type === "power-supply" && (row.price_tier === "default" || row.price_tier === "gold")) {
       if (row.brand_name) powerSupplyPrices[row.brand_name] = price;
+      if (row.brand_name && row.model) powerSupplyModels[row.brand_name] = row.model;
       const firstBrand = brandValue((catalog.powerSupplyBrands || [])[0]);
       if (!row.brand_name || row.brand_name === firstBrand) powerSupplyPrice = price;
     }
@@ -130,5 +132,6 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
     cabinetOptions,
     powerSupplyPrice,
     powerSupplyPrices,
+    powerSupplyModels,
   };
 }

@@ -1,10 +1,8 @@
 // src/components/PDFButton.jsx
-import html2canvas from "html2canvas";
 import bengaliRegularFontUrl from "@fontsource/noto-sans-bengali/files/noto-sans-bengali-bengali-400-normal.woff";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 const A4 = { w: 595.28, h: 841.89 };
-const EXPORT_PX = { w: 2480, h: 3508 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export function normalizePdfText(value = "") {
@@ -32,6 +30,23 @@ function parseCssColor(value) {
 
 function isVisible(style, rect) {
   return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity) !== 0 && rect.width > 0 && rect.height > 0;
+}
+
+function cumulativeScale(element, root) {
+  let scale = 1;
+  let current = element;
+  while (current && current !== root) {
+    const transform = window.getComputedStyle(current).transform;
+    if (transform && transform !== "none") {
+      const match = transform.match(/^matrix\(([^)]+)\)$/);
+      if (match) {
+        const values = match[1].split(",").map(Number);
+        scale *= Math.hypot(values[0] || 1, values[1] || 0);
+      }
+    }
+    current = current.parentElement;
+  }
+  return scale;
 }
 
 function toRoman(value) {
@@ -104,6 +119,7 @@ function collectEditableTextRuns(el) {
             width: rect.width,
             height: rect.height,
             fontSize: Number.parseFloat(style.fontSize) || 12,
+            domScale: cumulativeScale(parent, el),
             bold: style.fontWeight === "bold" || Number.parseInt(style.fontWeight, 10) >= 600,
             italic: style.fontStyle === "italic" || style.fontStyle === "oblique",
             color: parseCssColor(style.color),
@@ -140,6 +156,7 @@ function collectEditableTextRuns(el) {
       width: rect.width,
       height: rect.height,
       fontSize: Number.parseFloat(style.fontSize) || 12,
+      domScale: cumulativeScale(title, el),
       bold: true,
       italic: false,
       color: parseCssColor(style.color),
@@ -165,6 +182,7 @@ function collectEditableTextRuns(el) {
       width: 16,
       height: Number.parseFloat(style.lineHeight) || rect.height,
       fontSize: Number.parseFloat(style.fontSize) || 12,
+      domScale: cumulativeScale(item, el),
       bold: false,
       italic: false,
       color: parseCssColor(style.color),
@@ -195,8 +213,6 @@ function collectEditableTextRuns(el) {
   return { runs: mergedRuns, pageWidth, pageHeight, rootRect };
 }
 
-// Kept temporarily for backwards compatibility with older generated-PDF tests.
-// eslint-disable-next-line no-unused-vars
 async function embedTextLayerFonts(pdf) {
   await import("regenerator-runtime/runtime");
   const fontkitModule = await import("@pdf-lib/fontkit");
@@ -223,8 +239,6 @@ function splitCurrencyText(text, font, currencyFont, size) {
   });
 }
 
-// Kept temporarily for backwards compatibility with older generated-PDF tests.
-// eslint-disable-next-line no-unused-vars
 function drawEditableText(page, el, fonts) {
   const { runs, pageWidth, pageHeight } = collectEditableTextRuns(el);
   const scaleX = A4.w / pageWidth;
@@ -234,7 +248,7 @@ function drawEditableText(page, el, fonts) {
     const font = run.bold && run.italic ? fonts.boldItalic : run.bold ? fonts.bold : run.italic ? fonts.italic : fonts.regular;
     try {
       const text = run.text.trimEnd();
-      const fontSize = Math.max(4, run.fontSize * scaleY);
+      const fontSize = Math.max(4, run.fontSize * (run.domScale || 1) * scaleY);
       const segments = splitCurrencyText(text, font, fonts.currency, fontSize);
       const measuredWidth = segments.reduce((total, segment) => total + segment.width, 0);
       const contentLeft = ((run.containerX ?? run.x) + (run.paddingLeft || 0)) * scaleX;
@@ -264,30 +278,133 @@ function drawEditableText(page, el, fonts) {
   }
 }
 
-async function renderDomSnapshot(el) {
-  const rootRect = el.getBoundingClientRect();
-  const width = Math.round(rootRect.width || el.clientWidth || 794);
-  const height = Math.round(rootRect.height || el.clientHeight || 1123);
-  const scale = Math.max(1, EXPORT_PX.w / width);
-  const canvas = await html2canvas(el, {
-    scale,
-    width,
-    height,
-    backgroundColor: null,
-    useCORS: true,
-    allowTaint: true,
-    logging: false,
-    windowWidth: width,
-    windowHeight: height,
-  });
-  return new Uint8Array(await (await fetch(canvas.toDataURL("image/png"))).arrayBuffer());
+function pdfBox(rect, rootRect, scaleX, scaleY) {
+  const left = Math.max(0, rect.left - rootRect.left);
+  const top = Math.max(0, rect.top - rootRect.top);
+  const right = Math.min(rootRect.width, rect.right - rootRect.left);
+  const bottom = Math.min(rootRect.height, rect.bottom - rootRect.top);
+  if (right <= left || bottom <= top) return null;
+  return {
+    x: left * scaleX,
+    y: A4.h - (bottom * scaleY),
+    width: (right - left) * scaleX,
+    height: (bottom - top) * scaleY,
+    top: A4.h - (top * scaleY),
+    right: right * scaleX,
+  };
 }
 
-async function renderDomPage(pdf, el) {
+function drawElementDecorations(page, element, rootRect, scaleX, scaleY) {
+  const style = window.getComputedStyle(element);
+  const rect = element.getBoundingClientRect();
+  if (!isVisible(style, rect)) return;
+  const box = pdfBox(rect, rootRect, scaleX, scaleY);
+  if (!box) return;
+
+  const elementOpacity = Math.min(1, Math.max(0, Number(style.opacity) || 0));
+  const background = parseCssColor(style.backgroundColor);
+  if (background) {
+    page.drawRectangle({
+      x: box.x,
+      y: box.y,
+      width: box.width,
+      height: box.height,
+      color: background.color,
+      opacity: background.opacity * elementOpacity,
+    });
+  }
+
+  const sides = [
+    ["Top", box.x, box.top, box.right, box.top, scaleY],
+    ["Right", box.right, box.top, box.right, box.y, scaleX],
+    ["Bottom", box.x, box.y, box.right, box.y, scaleY],
+    ["Left", box.x, box.top, box.x, box.y, scaleX],
+  ];
+  sides.forEach(([side, startX, startY, endX, endY, sideScale]) => {
+    const borderStyle = style[`border${side}Style`];
+    const width = Number.parseFloat(style[`border${side}Width`]) || 0;
+    const border = parseCssColor(style[`border${side}Color`]);
+    if (!border || !width || borderStyle === "none" || borderStyle === "hidden") return;
+    page.drawLine({
+      start: { x: startX, y: startY },
+      end: { x: endX, y: endY },
+      thickness: Math.max(0.35, width * sideScale),
+      color: border.color,
+      opacity: border.opacity * elementOpacity,
+    });
+  });
+}
+
+async function imageBytesForPdf(image) {
+  const source = image.currentSrc || image.src;
+  const response = await fetch(source);
+  if (!response.ok) throw new Error(`Unable to load PDF image: ${source}`);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  const contentType = (response.headers.get("content-type") || "").toLowerCase();
+  const png = contentType.includes("png") || (bytes[0] === 0x89 && bytes[1] === 0x50);
+  const jpeg = contentType.includes("jpeg") || contentType.includes("jpg") || (bytes[0] === 0xff && bytes[1] === 0xd8);
+  if (png || jpeg) return { bytes, type: png ? "png" : "jpeg" };
+
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth || Math.max(1, Math.round(image.getBoundingClientRect().width));
+  canvas.height = image.naturalHeight || Math.max(1, Math.round(image.getBoundingClientRect().height));
+  canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+  const converted = await fetch(canvas.toDataURL("image/png"));
+  return { bytes: new Uint8Array(await converted.arrayBuffer()), type: "png" };
+}
+
+async function drawImageElement(pdf, page, image, rootRect, scaleX, scaleY) {
+  const style = window.getComputedStyle(image);
+  const rect = image.getBoundingClientRect();
+  if (!isVisible(style, rect)) return;
+  const box = pdfBox(rect, rootRect, scaleX, scaleY);
+  if (!box) return;
+
+  try {
+    const source = await imageBytesForPdf(image);
+    const embedded = source.type === "png" ? await pdf.embedPng(source.bytes) : await pdf.embedJpg(source.bytes);
+    const naturalWidth = image.naturalWidth || embedded.width;
+    const naturalHeight = image.naturalHeight || embedded.height;
+    const objectFit = style.objectFit || "fill";
+    let width = box.width;
+    let height = box.height;
+    if (objectFit === "contain") {
+      const ratio = Math.min(box.width / naturalWidth, box.height / naturalHeight);
+      width = naturalWidth * ratio;
+      height = naturalHeight * ratio;
+    }
+    page.drawImage(embedded, {
+      x: box.x + ((box.width - width) / 2),
+      y: box.y + ((box.height - height) / 2),
+      width,
+      height,
+      opacity: Math.min(1, Math.max(0, Number(style.opacity) || 0)),
+    });
+  } catch (error) {
+    console.warn("Skipped unsupported PDF image:", image.src, error);
+  }
+}
+
+async function renderDomPage(pdf, el, textFonts) {
   const page = pdf.addPage([A4.w, A4.h]);
-  const snapshotBytes = await renderDomSnapshot(el);
-  const snapshot = await pdf.embedPng(snapshotBytes);
-  page.drawImage(snapshot, { x: 0, y: 0, width: A4.w, height: A4.h });
+  const rootRect = el.getBoundingClientRect();
+  const pageWidth = rootRect.width || el.clientWidth || 794;
+  const pageHeight = rootRect.height || el.clientHeight || 1175;
+  const scaleX = A4.w / pageWidth;
+  const scaleY = A4.h / pageHeight;
+  const allElements = [el, ...el.querySelectorAll("*")];
+  const padImages = allElements.filter((element) => element.matches?.("img.invoice-pad-bg"));
+  const contentImages = allElements.filter((element) => element.tagName === "IMG" && !element.matches(".invoice-pad-bg"));
+
+  drawElementDecorations(page, el, rootRect, scaleX, scaleY);
+  for (const image of padImages) await drawImageElement(pdf, page, image, rootRect, scaleX, scaleY);
+  allElements.forEach((element) => {
+    if (element !== el && element.tagName !== "IMG") {
+      drawElementDecorations(page, element, rootRect, scaleX, scaleY);
+    }
+  });
+  for (const image of contentImages) await drawImageElement(pdf, page, image, rootRect, scaleX, scaleY);
+  drawEditableText(page, el, textFonts);
   return page;
 }
 
@@ -549,7 +666,7 @@ export default function PDFButton({
 }) {
   const fitPdfContent = (el) => {
     const inner = el.querySelector(":scope > .invoice-inner");
-    const panel = inner?.querySelector(":scope > .invoice-panel:not(.terms-panel)");
+    const panel = inner?.querySelector(":scope > .invoice-panel");
     if (!inner || !panel) return;
 
     panel.style.removeProperty("transform");
@@ -597,9 +714,10 @@ export default function PDFButton({
 
     try {
       const pdf = await PDFDocument.create();
+      const textFonts = await embedTextLayerFonts(pdf);
 
       for (const el of els) {
-        await renderDomPage(pdf, el);
+        await renderDomPage(pdf, el, textFonts);
       }
 
       const cataloguePaths = getCataloguePaths(exportData);

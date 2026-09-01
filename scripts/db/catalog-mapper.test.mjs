@@ -39,3 +39,35 @@ test("creates every adjusted-brand module with one adjusted base price", () => {
   assert.equal(products.find((item) => item.sourceKey === "led:module:absen:p1").prices.default, 1150);
   assert.equal(products.find((item) => item.sourceKey === "led:module:absen:p2").prices.default, 2150);
 });
+
+test("uses brand-specific module model names", () => {
+  const products = mapStaticCatalog({
+    ledCatalog: {
+      modelGroups: { smd: { indoor: [{ id: "smd-in-p2", name: "P2", prices: { default: 3000 } }] } },
+      moduleBrandPrices: {}, moduleBrandModelNames: { Lampro: { "smd-in-p2": "LC2P" } },
+      controllers: [], novastarControllers: [], receivingCards: {}, cabinetOptions: [], powerSupplyPrice: 0,
+    },
+    paProducts: [], conferenceProducts: [],
+  });
+
+  const lampro = products.find((item) => item.sourceKey === "led:module:lampro:smd-in-p2");
+  assert.equal(lampro.model, "LC2P");
+  assert.match(lampro.name, /^LC2P SMD indoor LED Module$/);
+});
+
+test("uses the configured model for each power supply brand", () => {
+  const products = mapStaticCatalog({
+    ledCatalog: {
+      modelGroups: {}, controllers: [], novastarControllers: [], receivingCards: {}, cabinetOptions: [],
+      powerSupplyPrice: 1600,
+      powerSupplyPrices: { Lampro: 1600, "Mean well": 1700, "G-Energy": 1800 },
+      powerSupplyBrands: ["Lampro", "Mean well", "G-Energy"],
+      powerSupplyModels: { Lampro: "LD-200", "Mean well": "LRS-200", "G-Energy": "N200V5-A" },
+    },
+    paProducts: [], conferenceProducts: [],
+  });
+
+  assert.equal(products.find((item) => item.brand === "Lampro").model, "LD-200");
+  assert.equal(products.find((item) => item.brand === "Mean well").model, "LRS-200");
+  assert.equal(products.find((item) => item.brand === "G-Energy").model, "N200V5-A");
+});

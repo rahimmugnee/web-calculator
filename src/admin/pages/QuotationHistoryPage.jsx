@@ -2,10 +2,27 @@ import { useCallback, useEffect, useState } from "react";
 import { get, patch, post, remove } from "../api";
 import { EmptyState, Notice, PageHeader } from "../AdminLayout";
 import { useCompany } from "../contexts";
+import { componentModelAndPrice } from "../../data/component-model-and-price.js";
 
 const money = (value) => `৳${Number(value || 0).toLocaleString("en-US")}`;
 const date = (value) => value ? new Date(value).toLocaleDateString("en-GB") : "—";
-const text = (value) => value || "—";
+const text = (value) => {
+  const normalized = String(value ?? "").trim();
+  return normalized && !/^(?:null|undefined)$/i.test(normalized) ? normalized : "—";
+};
+
+const componentModelName = (value = "") => text(String(value)
+  .replace(/^(?:Controller|Receiving Card|Video Processor)\s*:\s*/i, "")
+  .trim());
+const quotationItemModelName = (item = {}) => {
+  if (!/^Power Supply$/i.test(String(item.item_description || "").trim())) {
+    return componentModelName(item.model_description);
+  }
+  const selectedBrand = String(item.snapshot_data?.brand || "").trim().toLowerCase();
+  const model = Object.entries(componentModelAndPrice.powerSupplyModels || {})
+    .find(([brand]) => brand.toLowerCase() === selectedBrand)?.[1];
+  return text(model || item.model_description);
+};
 
 export default function QuotationHistoryPage() {
   const { companyId } = useCompany();
@@ -156,14 +173,57 @@ export function QuotationDetails({ titleId, row, onClose }) {
   const form = row.snapshot_data?.form || {};
   const quality = form.tier?.label || form.tier?.id;
   const proposalTitle = quotationProposalTitle(form, row);
+  const summary = quotationSummary(row);
 
   return <section className="quotation-details">
     <header><div><h2 id={titleId}>Quotation Details</h2><span className="quotation-status">{row.status}</span></div><button onClick={onClose} title="Close quotation details" aria-label="Close quotation details">×</button></header>
     <div className="quotation-ref"><div><small>Ref No.</small><strong>{row.quotation_number}</strong></div><div><small>Date</small><strong>{date(row.created_at)}</strong></div></div>
     <DetailSection title="Client Information" badge={quality ? `Quality: ${quality}` : null}><dl className="quotation-client-grid"><div><dt>Name:</dt><dd>{text(client.name)}</dd></div><div><dt>Designation:</dt><dd>{text(client.position || client.designation)}</dd></div><div><dt>Organization:</dt><dd>{text(client.company || client.organization)}</dd></div><div><dt>Mobile Number:</dt><dd>{text(client.mobile || client.phone)}</dd></div>{client.email ? <div><dt>Email:</dt><dd>{client.email}</dd></div> : null}<div><dt>Address:</dt><dd>{text(client.address)}</dd></div></dl></DetailSection>
-    <section className="quotation-detail-section quotation-items-section"><h3 className="quotation-proposal-title">{proposalTitle}</h3><div className="quotation-items-wrap"><table><thead><tr><th>SL No.</th><th>Item Name</th><th>Brand</th><th>Model</th><th>Unit</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>{row.items?.map((item) => <tr key={item.id}><td>{item.line_number}</td><td>{item.item_description}</td><td>{text(item.snapshot_data?.brand)}</td><td>{text(item.model_description)}</td><td>{item.unit}</td><td>{Number(item.quantity)}</td><td>{money(item.unit_price)}</td><td>{money(item.total_price)}</td></tr>)}</tbody><tfoot><tr><td colSpan="7">Grand Total</td><td>{money(row.grand_total)}</td></tr></tfoot></table></div></section>
+    <section className="quotation-detail-section quotation-items-section">
+      <h3 className="quotation-proposal-title">{proposalTitle}</h3>
+      <div className="quotation-items-wrap">
+        <table className="quotation-items-table">
+          <colgroup>
+            <col className="quotation-col-sl" />
+            <col className="quotation-col-item" />
+            <col className="quotation-col-brand" />
+            <col className="quotation-col-model" />
+            <col className="quotation-col-unit" />
+            <col className="quotation-col-qty" />
+            <col className="quotation-col-price" />
+            <col className="quotation-col-total" />
+          </colgroup>
+          <thead><tr><th>SL No.</th><th>Item Name</th><th>Brand</th><th>Model</th><th>Unit</th><th>Qty</th><th>Unit Price ৳</th><th>Total Price ৳</th></tr></thead>
+          <tbody>{row.items?.map((item) => <tr key={item.id}><td>{item.line_number}</td><td className="quotation-item-name">{item.item_description}</td><td>{text(item.snapshot_data?.brand)}</td><td>{quotationItemModelName(item)}</td><td>{item.unit}</td><td>{Number(item.quantity)}</td><td>{money(item.unit_price)}</td><td>{money(item.total_price)}</td></tr>)}</tbody>
+          <tfoot>{summary.vatEnabled ? <><SummaryRow label="Subtotal" amount={summary.totalBeforeVat} /><SummaryRow label={`VAT (${summary.vatPercent}%)`} amount={summary.vatAmount} /><SummaryRow label="Grand Total" amount={summary.grandTotal} /></> : <SummaryRow label="Grand Total" amount={summary.grandTotal} />}{summary.discountAmount > 0 ? <><SummaryRow label="Special Discount" amount={summary.discountAmount} /><SummaryRow label="Payable" amount={summary.payable} /></> : null}</tfoot>
+        </table>
+      </div>
+    </section>
     <footer><span>Created By<br /><b>{row.created_by_name || row.created_by || "Unknown user"}</b>{row.created_by_email ? <small>{row.created_by_email}</small> : null}</span><span>Created At<br /><b>{new Date(row.created_at).toLocaleString()}</b></span><span>Last Updated<br /><b>{new Date(row.updated_at).toLocaleString()}</b></span></footer>
   </section>;
+}
+
+function SummaryRow({ label, amount }) {
+  return <tr className="quotation-summary-row"><td colSpan="7">{label}</td><td>{money(amount)}</td></tr>;
+}
+
+function quotationSummary(row) {
+  const totals = row.snapshot_data?.calculation?.totals || {};
+  const totalBeforeVat = Number(totals.totalBeforeVat ?? row.subtotal ?? 0) || 0;
+  const vatAmount = Number(row.vat_amount ?? totals.vatAmount ?? 0) || 0;
+  const vatRate = Number(totals.vatRate) || (totalBeforeVat > 0 ? vatAmount / totalBeforeVat : 0.1);
+  const discountAmount = Number(row.discount_amount ?? totals.discount ?? 0) || 0;
+  const calculatedGrandTotal = Number(totals.grandTotal) || totalBeforeVat + vatAmount;
+  const payable = Number(row.grand_total ?? totals.payable ?? calculatedGrandTotal) || 0;
+  return {
+    totalBeforeVat,
+    vatAmount,
+    vatPercent: Math.round(vatRate * 100),
+    vatEnabled: vatAmount > 0 || totals.vatEnabled === true,
+    grandTotal: calculatedGrandTotal || payable,
+    discountAmount,
+    payable,
+  };
 }
 
 function DetailSection({ title, badge, children }) {

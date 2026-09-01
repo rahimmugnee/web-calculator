@@ -14,6 +14,7 @@ export function mapStaticCatalog({ ledCatalog, paProducts, conferenceProducts })
           ...Object.keys(ledCatalog.moduleBrandGoldAdjustments || {}),
         ]);
         for (const brand of brands) {
+          const brandModelName = ledCatalog.moduleBrandModelNames?.[brand]?.[module.id] || module.name;
           const goldAdjustment = ledCatalog.moduleBrandGoldAdjustments?.[brand];
           const explicitPrices = ledCatalog.moduleBrandPrices?.[brand]?.[module.id];
           const explicitBasePrice = explicitPrices?.default ?? explicitPrices?.gold;
@@ -26,8 +27,8 @@ export function mapStaticCatalog({ ledCatalog, paProducts, conferenceProducts })
           if (!prices) continue;
           rows.push(product({
             sourceKey: `led:module:${brand.toLowerCase()}:${module.id}`,
-            category: "led-module", componentType: "module", name: `${module.name} ${technology.toUpperCase()} ${location} LED Module`,
-            brand, model: module.name, unit: "Module", metadata: { ...module, prices: undefined, technology, location }, prices,
+            category: "led-module", componentType: "module", name: `${brandModelName} ${technology.toUpperCase()} ${location} LED Module`,
+            brand, model: brandModelName, unit: "Module", metadata: { ...module, prices: undefined, technology, location }, prices,
           }));
         }
       }
@@ -50,7 +51,8 @@ export function mapStaticCatalog({ ledCatalog, paProducts, conferenceProducts })
   for (const [index, brandOption] of (ledCatalog.powerSupplyBrands || ["Lampro"]).entries()) {
     const brand = typeof brandOption === "string" ? brandOption : brandOption.value;
     const sourceKey = index === 0 ? "led:power-supply:default" : `led:power-supply:${String(brand).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-    rows.push(product({ sourceKey, category: "power-supply", componentType: "power-supply", name: ledCatalog.psuModelLabel || "LED Power Supply", brand, model: ledCatalog.psuModelLabel, metadata: { brand }, prices: { default: ledCatalog.powerSupplyPrice } }));
+    const model = ledCatalog.powerSupplyModels?.[brand] || ledCatalog.psuModelLabel || "LED Power Supply";
+    rows.push(product({ sourceKey, category: "power-supply", componentType: "power-supply", name: model, brand, model, metadata: { brand, model }, prices: { default: ledCatalog.powerSupplyPrices?.[brand] ?? ledCatalog.powerSupplyPrice } }));
   }
 
   for (const item of paProducts || []) {

@@ -3,17 +3,19 @@ function fixedRows(snapshot, calc) {
   const totals = calc?.totals || {};
   const unit = calc?.unitPrices || {};
   const rows = [];
+  const moduleModelName = model.code || model.name;
+  const cobModuleModelName = model.code || "P1.25 COB";
   const add = (name, brand, modelName, itemUnit, qty, unitPrice, total) => rows.push({
     name, brand: brand || "", model: modelName || "", unit: itemUnit, qty: Number(qty) || 0,
     unitPrice: Number(unitPrice) || 0, total: Number(total) || 0,
   });
   const cob = items.cobP125SftPricing === true;
-  add(cob ? "P1.25 COB LED Display with Cabinet" : "LED Display Module", items.brands?.module, model.name,
+  add(cob ? `${cobModuleModelName} LED Display with Cabinet` : "LED Display Module", items.brands?.module, moduleModelName,
     cob ? "Sft" : "Pcs", cob ? display.sft : items.modulesQty, unit.unitModule, totals.totalModules);
   if (items.controllerQty > 0) add("Controller", items.brands?.controller, items.controllerLabel || items.controllerId, "Pcs", items.controllerQty, unit.unitCtrl, totals.controllerTotal);
   if (!cob) {
     add("Receiving Card", items.brands?.receiving, items.receivingPicked?.label, "Pcs", items.rcQty, unit.unitRC, totals.totalRC);
-    add("Power Supply", items.brands?.psu, items.psuPicked?.label, "Pcs", items.psQty, unit.unitPS, totals.totalPS);
+    add("Power Supply", items.brands?.psu, items.psuPicked?.label || items.psuPicked?.model, "Pcs", items.psQty, unit.unitPS, totals.totalPS);
   }
   if (items.cabinetEnabled) add("Cabinet", "", items.cabinet?.invoiceLabel, "Pcs", items.cabinetQty, unit.unitCabinet, totals.totalCabinet);
   (items.customItems || []).forEach((item, index) => add(item.name || "Custom Item", "", "", "Pcs", 1, unit.customItems?.[index] ?? item.price, unit.customItems?.[index] ?? item.price));
@@ -42,7 +44,7 @@ export function quotationHistoryPayload({ company, quotationRef, snapshot, calc 
     company_id: Number(company?.id), quotation_number: quotationRef,
     calculator_type: snapshot?.quotationType || "fixed",
     client: customer,
-    subtotal: Number(totals.subTotal ?? totals.subtotal ?? totals.totalBeforeVat ?? totals.grandTotal) || 0,
+    subtotal: Number(totals.totalBeforeVat ?? totals.subTotal ?? totals.subtotal ?? totals.grandTotal) || 0,
     vat_amount: Number(totals.vatAmount) || 0,
     discount_amount: Number(totals.discount) || 0,
     grand_total: Number(totals.payable ?? totals.grandTotal ?? calc?.grandTotal) || 0,

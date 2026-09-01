@@ -53,8 +53,7 @@ export function CatalogProvider({ children }) {
     const storageRefresh = (event) => { if (event.key === "calculatorLiveUpdate") refresh(); };
     window.addEventListener("storage", storageRefresh);
     window.addEventListener("calculator-admin-change", refresh);
-    window.addEventListener("focus", refresh);
-    return () => { channel?.close(); window.removeEventListener("storage", storageRefresh); window.removeEventListener("calculator-admin-change", refresh); window.removeEventListener("focus", refresh); };
+    return () => { channel?.close(); window.removeEventListener("storage", storageRefresh); window.removeEventListener("calculator-admin-change", refresh); };
   }, [loadCompany]);
   const setSelectedCompanyId = useCallback((companyId) => {
     const value = String(companyId || "");

@@ -39,6 +39,12 @@ function zeroRestoreOnBlur(value, setter, disabled = false) {
   if (value === "" || value === null || typeof value === "undefined") setter(0);
 }
 
+function componentModelName(value) {
+  return String(value || "")
+    .replace(/^(?:Controller|Receiving Card|Video Processor)\s*:\s*/i, "")
+    .trim();
+}
+
 function buildStepSeries(step, max) {
   const values = [];
   for (let current = step; current <= max + 0.001; current += step) {
@@ -321,20 +327,21 @@ function buildTotalsForCalc({
 }
 
 export default function PriceForm({
+  installationType = "fixed",
+  displayType = "indoor",
+  technology = "smd",
   onChange,
   onCalculated,
   sizePick,
   onSizeSelectionChange,
   rentalSizePick,
   onRentalSizeSelectionChange,
-  onInstallationTypeChange,
 }) {
   const { catalog } = useCatalog();
   const loading = false;
   const error = null;
   const reload = () => {};
-  const [installationType, setInstallationType] = useState("fixed");
-  const [dispType, setDispType] = useState("indoor");
+  const dispType = displayType;
   const [cabinetMaterial, setCabinetMaterial] = useState("aluminium");
   const [cabinetVariant, setCabinetVariant] = useState("");
   const [cabinetSizeId, setCabinetSizeId] = useState("cabinet_indoor_aluminium_640x480");
@@ -426,7 +433,6 @@ export default function PriceForm({
   const [discountTk, setDiscountTk] = useState(0);
 
   // âœ… Technology (default SMD)
-  const [technology, setTechnology] = useState("smd"); // smd | gob | cob
   const [moduleBrand, setModuleBrand] = useState("Lampro");
   const [customModuleBrandName, setCustomModuleBrandName] = useState("");
 
@@ -435,26 +441,25 @@ export default function PriceForm({
   const [deliveryDays, setDeliveryDays] = useState(45);
 
   // âœ… Outdoor à¦¹à¦²à§‡ force SMD
-  useEffect(() => {
-    if (dispType === "outdoor" && technology !== "smd") {
-      setTechnology("smd");
-    }
-  }, [dispType, technology]);
 
   // âœ… Technology list: Outdoor => only SMD
-  const techOptions = useMemo(() => {
-    if (dispType === "outdoor") return catalog.technologiesAll.filter((t) => t.id === "smd");
-    return catalog.technologiesAll;
-  }, [dispType, catalog.technologiesAll]);
 
   // âœ… models list depends on technology + display type
   const modelsForType = useMemo(() => {
     const techBlock = catalog.modelGroups[technology] || catalog.modelGroups.smd;
     const models=techBlock?.[dispType] || [],allowed=catalog.moduleBrandModelIds?.[moduleBrand];
-    return Array.isArray(allowed)?models.filter((item)=>allowed.includes(item.id)):models;
-  }, [technology, dispType, moduleBrand, catalog.modelGroups, catalog.moduleBrandModelIds]);
+    const availableModels=Array.isArray(allowed)?models.filter((item)=>allowed.includes(item.id)):models;
+    const brandModelNames=catalog.moduleBrandModelNames?.[moduleBrand] || {};
+    return availableModels.map((item) => ({
+      ...item,
+      pitchName: item.name,
+      name: item.name,
+      code: brandModelNames[item.id] || item.code || item.name,
+    }));
+  }, [technology, dispType, moduleBrand, catalog.modelGroups, catalog.moduleBrandModelIds, catalog.moduleBrandModelNames]);
 
   const [modelId, setModelId] = useState(modelsForType[0]?.id || "");
+  const modelSelectionManualRef = useRef(false);
 
   const model = useMemo(() => {
     if (!modelsForType.length) return { id: "", name: "P1.25", prices: { default: 0 } };
@@ -464,6 +469,7 @@ export default function PriceForm({
   const [ctrlSystemBrand, setCtrlSystemBrand] = useState("Novastar"); // Huidu | Novastar
 
   const [controllerId, setControllerId] = useState(catalog.controllers[0]?.id || "");
+  const controllerSelectionManualRef = useRef(false);
   const [controllerQty, setControllerQty] = useState(1);
 
   const [customer, setCustomer] = useState({ name: "", company: "", address: "", mobile: "", position: "" });
@@ -473,6 +479,7 @@ export default function PriceForm({
 
   const [rcQty, setRcQty] = useState(10);
   const [receivingCardId, setReceivingCardId] = useState("");
+  const receivingCardSelectionManualRef = useRef(false);
   const [psQty, setPsQty] = useState(17);
   const [psuBrand, setPsuBrand] = useState("Lampro");
 
@@ -525,10 +532,14 @@ export default function PriceForm({
     [onSizeSelectionChange]
   );
 
-  // display type / technology / brand change -> reset model
+  // Keep a valid manual model selection when fresh catalog data arrives.
   useEffect(() => {
     const first = modelsForType[0];
-    setModelId(first?.id || "");
+    setModelId((current) => {
+      if (modelSelectionManualRef.current && modelsForType.some((item) => item.id === current)) return current;
+      modelSelectionManualRef.current = false;
+      return first?.id || "";
+    });
   }, [modelsForType]);
 
   // âœ… area auto from width/height, but area input can also back-calculate 16:9 size
@@ -661,14 +672,26 @@ export default function PriceForm({
         ? pickNovastarControllerByPixels(dispType, controllerSelectionPixels, catalog.novastarCtrlCap)
         : pickControllerByPixels(dispType, controllerSelectionPixels, catalog.ctrlCap);
 
+    const validManualSelection = controllerSelectionManualRef.current && (
+      controllerId === "" || (
+        ctrlSystemBrand === "Novastar"
+          ? getNovastarControllersForDisplayType(dispType, catalog.novastarControllers, catalog.novastarCtrlCap)
+              .some((item) => item.id === controllerId)
+          : catalog.controllers.some((item) => item.kind !== "receiving" && item.id === controllerId)
+      )
+    );
+    if (validManualSelection) return;
+
     if (!autoLocal) {
+      controllerSelectionManualRef.current = false;
       setControllerId("");
       setControllerQty(0);
       return;
     }
+    controllerSelectionManualRef.current = false;
     setControllerId(autoLocal.id);
     setControllerQty(1);
-  }, [ctrlSystemBrand, dispType, controllerSelectionPixels, catalog.novastarCtrlCap, catalog.ctrlCap]);
+  }, [ctrlSystemBrand, dispType, controllerSelectionPixels, controllerId, catalog.novastarControllers, catalog.novastarCtrlCap, catalog.controllers, catalog.ctrlCap]);
 
   const autoRcPicked = useMemo(
     () => pickReceivingCard(dispType, model?.id || model?.name || "", ctrlSystemBrand, technology, catalog.receivingCards),
@@ -688,14 +711,18 @@ export default function PriceForm({
         const pinLabel = card.pin ? ` (${card.pin} pin)` : "";
         return {
           value: id,
-          label: `${card.label || id}${pinLabel}`,
+          label: `${componentModelName(card.label || id)}${pinLabel}`,
         };
       })
       .filter(Boolean);
   }, [ctrlSystemBrand, catalog.receivingCards]);
 
   useEffect(() => {
-    setReceivingCardId(autoRcPicked?.id || receivingCardOptions[0]?.value || "");
+    setReceivingCardId((current) => {
+      if (receivingCardSelectionManualRef.current && receivingCardOptions.some((option) => option.value === current)) return current;
+      receivingCardSelectionManualRef.current = false;
+      return autoRcPicked?.id || receivingCardOptions[0]?.value || "";
+    });
   }, [autoRcPicked?.id, receivingCardOptions]);
 
   const rcPicked = useMemo(() => {
@@ -794,7 +821,8 @@ export default function PriceForm({
     }
   }, [moduleBrand, moduleBrandOptions]);
 
-  const psuPicked = useMemo(() => pickPSUModel(catalog.psuModelLabel), [catalog.psuModelLabel]);
+  const psuModelLabel = catalog.powerSupplyModels?.[psuBrand] || catalog.psuModelLabel;
+  const psuPicked = useMemo(() => pickPSUModel(psuModelLabel), [psuModelLabel]);
 
   // âœ… PSU unit price (auto + manual) â€” NEW
   const psUnitPriceAuto = useMemo(() => Number(catalog.powerSupplyPrices?.[psuBrand] ?? catalog.powerSupplyPrice ?? 0), [catalog.powerSupplyPrices, catalog.powerSupplyPrice, psuBrand]);
@@ -872,6 +900,7 @@ export default function PriceForm({
 	      quotationType: "fixed",
 	      model: {
 	        ...model,
+        code: model.code || model.name,
         name: `${model.name} ${dispType === "indoor" ? "Indoor" : "Outdoor"}`,
       },
 	      customer,
@@ -1038,10 +1067,6 @@ export default function PriceForm({
 	  );
 
   useEffect(() => {
-    onInstallationTypeChange?.(installationType);
-  }, [installationType, onInstallationTypeChange]);
-
-  useEffect(() => {
     if (installationType !== "fixed") return;
     onChange?.(snapshot);
   }, [installationType, snapshot, onChange]);
@@ -1195,20 +1220,11 @@ export default function PriceForm({
     });
   }, [isCobP125, setCabinetSizeByKey, sizePick, updateSizeSelection]);
 
-  const showTechnologyControl = dispType === "indoor";
 	  const displayControlsClassName = `form-row${
 	    dispType === "outdoor" && cabinetEnabled ? " form-row-cabinet-outdoor" : ""
 	  }`;
 
-	  const changeInstallationType = useCallback(
-	    (nextType) => {
-	      setInstallationType(nextType);
-	      onInstallationTypeChange?.(nextType);
-	    },
-	    [onInstallationTypeChange]
-	  );
-
-  const cabinetControls = cabinetEnabled ? (
+	  const cabinetControls = cabinetEnabled ? (
     <>
       {dispType === "outdoor" ? (
         <label>
@@ -1262,48 +1278,6 @@ export default function PriceForm({
         </div>
 	      ) : null}
 
-	      <section>
-	        <h3>Calculator Category</h3>
-	        <div className="inline" style={{ gap: 18 }}>
-	          <label className="inline">
-	            <input
-		              className="radio"
-		              type="radio"
-		              checked={installationType === "fixed"}
-		              onChange={() => changeInstallationType("fixed")}
-		            />
-	            <span>Fixed Installation</span>
-	          </label>
-	          <label className="inline">
-	            <input
-		              className="radio"
-		              type="radio"
-		              checked={installationType === "rental"}
-		              onChange={() => changeInstallationType("rental")}
-		            />
-	            <span>Rental</span>
-	          </label>
-		          <label className="inline">
-		            <input
-		              className="radio"
-		              type="radio"
-		              checked={installationType === "pa"}
-		              onChange={() => changeInstallationType("pa")}
-		            />
-		            <span>PA System</span>
-		          </label>
-		          <label className="inline">
-		            <input
-		              className="radio"
-		              type="radio"
-		              checked={installationType === "conference"}
-		              onChange={() => changeInstallationType("conference")}
-		            />
-		            <span>Conference System</span>
-		          </label>
-		        </div>
-		      </section>
-
 	      {installationType === "rental" ? (
 	        <RentalPriceForm
 	          onChange={onChange}
@@ -1317,80 +1291,63 @@ export default function PriceForm({
 		        <ConferenceSystemForm onChange={onChange} onCalculated={onCalculated} />
 		      ) : (
 	        <>
-	      {/* === Display Type === */}
 	      <section>
-        <h3>Display Type</h3>
-
-        <div className="inline" style={{ flexWrap: "wrap", gap: 18 }}>
-          <label className="inline">
-            <input
-              className="radio"
-              type="radio"
-              checked={dispType === "indoor"}
-              onChange={() => {
-                setDispType("indoor");
-                setCabinetMaterial("aluminium");
-                setCabinetVariant("");
-              }}
-            />
-            <span>Indoor</span>
-          </label>
-
-          <label className="inline">
-            <input
-              className="radio"
-              type="radio"
-              checked={dispType === "outdoor"}
-              onChange={() => {
-                setDispType("outdoor");
-                setCabinetMaterial("mild_steel");
-                setCabinetVariant("open");
-              }}
-            />
-            <span>Outdoor</span>
-          </label>
-
+        <div className="form-row display-structure-row">
           {/* âœ… Cabinet options */}
-          <label className="inline" style={{ marginLeft: 50 }}>
-            <input className="radio" type="radio" checked={!cabinetEnabled} onChange={() => setCabinetEnabled(false)} />
-            <span>Without Cabinet</span>
+          <label>
+            Display Structure
+            <CustomSelect
+              ariaLabel="Display Structure"
+              value={cabinetEnabled ? "with" : "without"}
+              options={[
+                { value: "without", label: "Without Cabinet" },
+                { value: "with", label: "With Cabinet" },
+              ]}
+              onChange={(value) => setCabinetEnabled(value === "with")}
+            />
           </label>
 
-	          <label className="inline">
-	            <input className="radio" type="radio" checked={cabinetEnabled} onChange={() => setCabinetEnabled(true)} />
-	            <span>With Cabinet</span>
+	          <label>
+	            Quotation Mode
+	            <CustomSelect
+	              ariaLabel="Quotation Mode"
+	              value={quotationMode}
+	              options={[
+	                { value: "regular", label: "Regular" },
+	                { value: "irregular", label: "Irregular" },
+	              ]}
+	              onChange={setQuotationMode}
+	            />
 	          </label>
 
-	          <label className="inline" style={{ marginLeft: 50 }}>
-	            <input className="radio" type="radio" checked={quotationMode === "regular"} onChange={() => setQuotationMode("regular")} />
-	            <span>Regular</span>
-	          </label>
+          <label>
+            Quality
+            <CustomSelect
+              ariaLabel="Quality"
+              value={tierId}
+              options={catalog.priceTiers.map((tier) => ({
+                value: tier.id,
+                label: tier.note ? `${tier.label} - ${tier.note}` : tier.label,
+              }))}
+              onChange={setTierId}
+            />
+          </label>
 
-	          <label className="inline">
-	            <input className="radio" type="radio" checked={quotationMode === "irregular"} onChange={() => setQuotationMode("irregular")} />
-	            <span>Irregular</span>
-	          </label>
+          <label>
+            Custom Warranty
+            <input
+              className="input"
+              placeholder={`Default: ${defaultWarrantyYears} Year(s)`}
+              value={customWarranty}
+              onChange={(e) => setCustomWarranty(e.target.value)}
+            />
+          </label>
+
 	        </div>
 
         {/* âœ… Technology dropdown show/hide */}
-        {showTechnologyControl || cabinetEnabled ? (
+        {cabinetEnabled ? (
           <div className={displayControlsClassName} style={{ marginTop: 12 }}>
-            {showTechnologyControl ? (
-              <label>
-                Technology
-                {techOptions.length > 1 ? (
-                  <CustomSelect
-                    ariaLabel="Technology"
-                    value={technology}
-                    options={techOptions.map((t) => ({ value: t.id, label: t.label }))}
-                    onChange={setTechnology}
-                  />
-                ) : (
-                  <input className="input" value={techOptions[0]?.label || "SMD"} readOnly />
-                )}
-              </label>
-            ) : null}
-
             {cabinetControls}
           </div>
         ) : null}
@@ -1426,14 +1383,17 @@ export default function PriceForm({
 	      <section>
         <h3>Product Model</h3>
 
-        <div className="form-row">
+        <div className="form-row product-model-main-row">
           <label>
-            Select Model (Pixel Pitch)
+            Pixel Pitch
             <CustomSelect
-              ariaLabel="Select Model"
+              ariaLabel="Pixel Pitch"
               value={modelId}
               options={modelsForType.map((m) => ({ value: m.id, label: m.name }))}
-              onChange={setModelId}
+              onChange={(value) => {
+                modelSelectionManualRef.current = true;
+                setModelId(value);
+              }}
             />
           </label>
 
@@ -1447,21 +1407,6 @@ export default function PriceForm({
             />
           </label>
 
-          {isCustomModuleBrand ? (
-            <label>
-              Brand Name
-              <input
-                className="input"
-                type="text"
-                value={customModuleBrandName}
-                onChange={(e) => setCustomModuleBrandName(e.target.value)}
-                placeholder="e.g. Your Brand"
-              />
-            </label>
-          ) : null}
-        </div>
-
-        <div className="form-row">
           <label>
             Width (ft)
             <input
@@ -1588,46 +1533,76 @@ export default function PriceForm({
           </label>
         </div>
 
-        <div className="tier-row" style={{ marginTop: 12 }}>
-          {catalog.priceTiers.map((t) => (
-            <button
-              type="button"
-              key={t.id}
-              className={`tier-chip ${tierId === t.id ? "active" : ""}`}
-              onClick={() => setTierId(t.id)}
-              aria-pressed={tierId === t.id}
-            >
-              <div className="tier-title">{t.label}</div>
-              <div className="tier-note">{t.note}</div>
-            </button>
-          ))}
-        </div>
+        {isCustomModuleBrand ? (
+          <div className="form-row" style={{ marginTop: 10 }}>
+            <label>
+              Brand Name
+              <input
+                className="input"
+                type="text"
+                value={customModuleBrandName}
+                onChange={(e) => setCustomModuleBrandName(e.target.value)}
+                placeholder="e.g. Your Brand"
+              />
+            </label>
+          </div>
+        ) : null}
 
-        <div className="form-row" style={{ marginTop: 10 }}>
+        <div className="form-row" style={{ marginTop: 18 }}>
           <label>
-            Custom Warranty (optional)
-            <input
-              className="input"
-              placeholder={`Default: ${defaultWarrantyYears} Year(s)`}
-              value={customWarranty}
-              onChange={(e) => setCustomWarranty(e.target.value)}
+            Controller & RC Brand
+            <CustomSelect
+              ariaLabel="Controller and Receiving Card Brand"
+              value={ctrlSystemBrand}
+              options={(catalog.controllerSystemBrands || []).map((b) => ({ value: b.value, label: b.label || b.value }))}
+              onChange={setCtrlSystemBrand}
+            />
+          </label>
+
+          <label>
+            Controller Model
+            <CustomSelect
+              ariaLabel="Controller Model"
+              value={controllerId}
+              options={[
+                { value: "", label: "-- No controller (pixel over) --" },
+                ...(ctrlSystemBrand === "Novastar"
+                  ? novastarControllerOptions.map((c) => ({
+                      value: c.id,
+                      label: componentModelName(c.label),
+                    }))
+                  : catalog.controllers
+                      .filter((c) => c.kind !== "receiving")
+                      .map((c) => ({
+                        value: c.id,
+                        label: componentModelName(c.label),
+                      }))),
+              ]}
+              onChange={(value) => {
+                controllerSelectionManualRef.current = true;
+                setControllerId(value);
+              }}
+            />
+          </label>
+
+          <label>
+            Receiving Card
+            <CustomSelect
+              ariaLabel="Receiving Card"
+              value={receivingCardId}
+              options={receivingCardOptions}
+              onChange={(value) => {
+                receivingCardSelectionManualRef.current = true;
+                setReceivingCardId(value);
+              }}
             />
           </label>
         </div>
 
-        <div className="form-row form-3" style={{ marginTop: 10, gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
+        <h3 className="component-price-title">Component Unit Price (Tk)</h3>
+        <div className="form-row component-price-row">
           <label>
-            {isCobP125 ? "Area (sft)" : "Modules (auto)"}
-            <input className="input" value={isCobP125 ? display.sft || 0 : autoModulesQty || 0} readOnly />
-            {!isCobP125 && cabinetEnabled ? (
-              <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
-                Cabinet: {cabinetQty || 0} pcs - {cabinetModulesPerCabinet} modules/cabinet
-              </div>
-            ) : null}
-          </label>
-
-          <label>
-            Module Unit Price (Tk)
+            Module Price
             <input
               className="input"
               type="number"
@@ -1658,101 +1633,7 @@ export default function PriceForm({
           </label>
 
           <label>
-            {isCobP125 ? "Total Panel Pixels" : "Total Module Pixels"}
-	            <input className="input pixel-value-input" value={pixelFormatter.format(displayTotalModulePixels)} readOnly />
-          </label>
-
-        </div>
-
-      </section>
-
-      {/* Controller */}
-      <section>
-        <h3>Controller and Receiving Card Brand</h3>
-
-        <div className="form-row">
-          <label>
-            Controller & RC Brand
-            <CustomSelect
-              ariaLabel="Controller and Receiving Card Brand"
-              value={ctrlSystemBrand}
-              options={(catalog.controllerSystemBrands || []).map((b) => ({ value: b.value, label: b.label || b.value }))}
-              onChange={setCtrlSystemBrand}
-            />
-          </label>
-
-          <label>
-            Controller Model
-            <CustomSelect
-              ariaLabel="Controller Model"
-              value={controllerId}
-              options={[
-                { value: "", label: "-- No controller (pixel over) --" },
-                ...(ctrlSystemBrand === "Novastar"
-                  ? novastarControllerOptions.map((c) => ({
-                      value: c.id,
-                      label: `${c.label} - Tk ${Math.round(c.price).toLocaleString("en-BD")}`,
-                    }))
-                  : catalog.controllers
-                      .filter((c) => c.kind !== "receiving")
-                      .map((c) => ({
-                        value: c.id,
-                        label: `${c.label} - Tk ${Math.round(c.price).toLocaleString("en-BD")}`,
-                      }))),
-              ]}
-              onChange={setControllerId}
-            />
-          </label>
-
-          <label>
-            Controller Pixel Capacity
-            <input
-              className="input pixel-value-input"
-              value={controllerPixelCapacity ? pixelFormatter.format(controllerPixelCapacity) : ""}
-              placeholder="-"
-              readOnly
-            />
-          </label>
-        </div>
-
-        <div className="form-row" style={{ marginTop: 10 }}>
-          <label>
-            Receiving Card
-            <CustomSelect
-              ariaLabel="Receiving Card"
-              value={receivingCardId}
-              options={receivingCardOptions}
-              onChange={setReceivingCardId}
-            />
-          </label>
-
-          <label>
-            Receiving Card Unit Price (Tk)
-            <input
-              className="input"
-              type="number"
-              value={rcPriceOverrideEnabled ? rcPriceOverrideStr : rcUnitPriceAuto ? String(Math.round(rcUnitPriceAuto)) : ""}
-              onFocus={() => {
-                setRcPriceOverrideEnabled(true);
-                setRcPriceOverrideStr((prev) => (prev !== "" ? prev : String(Math.round(rcUnitPriceAuto || 0))));
-              }}
-              onChange={(e) => {
-                setRcPriceOverrideEnabled(true);
-                setRcPriceOverrideStr(e.target.value);
-              }}
-              onBlur={() => {
-                const v = parseFloat(rcPriceOverrideStr);
-                if (!rcPriceOverrideStr || isNaN(v) || v <= 0) {
-                  setRcPriceOverrideEnabled(false);
-                  setRcPriceOverrideStr(rcUnitPriceAuto ? String(Math.round(rcUnitPriceAuto)) : "");
-                }
-              }}
-              placeholder={rcUnitPriceAuto ? String(Math.round(rcUnitPriceAuto)) : "-"}
-            />
-          </label>
-
-          <label>
-            Controller Price (Tk)
+            Controller Price
             <input
               className="input"
               type="number"
@@ -1782,13 +1663,81 @@ export default function PriceForm({
               disabled={!controllerId}
             />
           </label>
+
+          <label>
+            Receiving Card Price
+            <input
+              className="input"
+              type="number"
+              value={rcPriceOverrideEnabled ? rcPriceOverrideStr : rcUnitPriceAuto ? String(Math.round(rcUnitPriceAuto)) : ""}
+              onFocus={() => {
+                setRcPriceOverrideEnabled(true);
+                setRcPriceOverrideStr((prev) => (prev !== "" ? prev : String(Math.round(rcUnitPriceAuto || 0))));
+              }}
+              onChange={(e) => {
+                setRcPriceOverrideEnabled(true);
+                setRcPriceOverrideStr(e.target.value);
+              }}
+              onBlur={() => {
+                const v = parseFloat(rcPriceOverrideStr);
+                if (!rcPriceOverrideStr || isNaN(v) || v <= 0) {
+                  setRcPriceOverrideEnabled(false);
+                  setRcPriceOverrideStr(rcUnitPriceAuto ? String(Math.round(rcUnitPriceAuto)) : "");
+                }
+              }}
+              placeholder={rcUnitPriceAuto ? String(Math.round(rcUnitPriceAuto)) : "-"}
+            />
+          </label>
+
+          <label>
+            Power Supply Price
+            <input
+              className="input"
+              type="number"
+              value={psPriceOverrideEnabled ? psPriceOverrideStr : psUnitPriceAuto ? String(Math.round(psUnitPriceAuto)) : ""}
+              onFocus={() => {
+                setPsPriceOverrideEnabled(true);
+                setPsPriceOverrideStr((prev) => (prev !== "" ? prev : String(Math.round(psUnitPriceAuto || 0))));
+              }}
+              onChange={(e) => {
+                setPsPriceOverrideEnabled(true);
+                setPsPriceOverrideStr(e.target.value);
+              }}
+              onBlur={() => {
+                const v = parseFloat(psPriceOverrideStr);
+                if (!psPriceOverrideStr || isNaN(v) || v <= 0) {
+                  setPsPriceOverrideEnabled(false);
+                  setPsPriceOverrideStr(psUnitPriceAuto ? String(Math.round(psUnitPriceAuto)) : "");
+                }
+              }}
+              placeholder={psUnitPriceAuto ? String(Math.round(psUnitPriceAuto)) : "-"}
+            />
+          </label>
+
+        </div>
+
+	        <div className="form-row" style={{ marginTop: 10, gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+	          <label>
+	            {isCobP125 ? "Total Panel Pixels" : "Total Module Pixels"}
+	            <input className="input pixel-value-input" value={pixelFormatter.format(displayTotalModulePixels)} readOnly />
+          </label>
+
+          <label>
+            Controller Pixel Capacity
+            <input
+              className="input pixel-value-input"
+              value={controllerPixelCapacity ? pixelFormatter.format(controllerPixelCapacity) : ""}
+              placeholder="-"
+              readOnly
+            />
+          </label>
         </div>
       </section>
       
 
-      {/* Quantities */}
-      <section>
-        <h3>Quantities</h3>
+	      {/* Component Quantity */}
+	      <section>
+	        <h3>Component Quantity</h3>
 
         {cabinetEnabled ? (
           <div className="form-row">
@@ -1856,21 +1805,20 @@ export default function PriceForm({
           </div>
         ) : null}
 
-        <div className="form-row" style={{ marginTop: 10 }}>
-          <label>
-            Receiving Cards (pcs)
-            <span style={{ fontSize: 12, color: "#64748b" }}>
-              {cabinetEnabled
-                ? `auto: ${autoRcQty} (${cabinetRcPsuPerCabinet.rc}/cabinet x ${cabinetQty || 0})`
-                : `auto: ${autoRcQty} (cap: ${getRcCapacity(
-                    dispType,
-                    model?.name || "",
-                    ctrlSystemBrand,
-                    catalog.rcCapacityHuidu,
-                    catalog.rcCapacityNovastar
-                  )} modules/RC)`}
-            </span>
-            <input
+	        <div className="form-row component-quantity-row" style={{ marginTop: 10 }}>
+	          <label>
+	            {isCobP125 ? "LED Module Area (sft)" : "LED Module (pcs)"}
+	            <input className="input" type="number" value={isCobP125 ? display.sft || 0 : autoModulesQty || 0} readOnly />
+	            {!isCobP125 && cabinetEnabled ? (
+	              <span style={{ fontSize: 12, color: "#64748b" }}>
+	                {cabinetQty || 0} cabinet x {cabinetModulesPerCabinet} modules
+	              </span>
+	            ) : null}
+	          </label>
+
+	          <label>
+	            Receiving Card (pcs)
+	            <input
               className="input"
               type="number"
               min="0"
@@ -1880,261 +1828,113 @@ export default function PriceForm({
             />
           </label>
 
-          <label>
-            Power Supply Brand
-            <span style={{ fontSize: 12, color: "#64748b" }}>default: Lampro</span>
-            <CustomSelect
-              ariaLabel="Power Supply Brand"
-              value={psuBrand}
-              options={psuBrandOptions}
-              onChange={setPsuBrand}
-            />
-          </label>
-
-          <label>
-            Power Supplies (pcs)
-            <span style={{ fontSize: 12, color: "#64748b" }}>
-              {cabinetEnabled
-                ? `auto: ${autoPsQty} (${cabinetRcPsuPerCabinet.psu}/cabinet x ${cabinetQty || 0}) - ${psuPicked.model}`
-                : `auto: ${autoPsQty} (cap: ${getPsuCapacity(dispType, model?.name || "", catalog.psuCapacity)} modules/PSU) - ${
-                    psuPicked.model
-                  }`}
-            </span>
-            <input
+	          <label>
+	            Power Supply (pcs)
+	            <input
               className="input"
               type="number"
               min="0"
               step="1"
               value={psQty}
-              onChange={(e) => setPsQty(parseFloat(e.target.value || 0))}
-            />
-          </label>
+	              onChange={(e) => setPsQty(parseFloat(e.target.value || 0))}
+	            />
+	          </label>
 
-          {/* âœ… NEW: Power Supply Unit Price manual override */}
-          <label>
-            Power Supply Unit Price (Tk)
-            <span style={{ fontSize: 12, color: "#64748b" }}>
-              default: Tk {Math.round(psUnitPriceAuto).toLocaleString("en-BD")}
-            </span>
-            <input
-              className="input"
-              type="number"
-              value={psPriceOverrideEnabled ? psPriceOverrideStr : psUnitPriceAuto ? String(Math.round(psUnitPriceAuto)) : ""}
-              onFocus={() => {
-                setPsPriceOverrideEnabled(true);
-                setPsPriceOverrideStr((prev) => (prev !== "" ? prev : String(Math.round(psUnitPriceAuto || 0))));
-              }}
-              onChange={(e) => {
-                setPsPriceOverrideEnabled(true);
-                setPsPriceOverrideStr(e.target.value);
-              }}
-              onBlur={() => {
-                const v = parseFloat(psPriceOverrideStr);
-                if (!psPriceOverrideStr || isNaN(v) || v <= 0) {
-                  setPsPriceOverrideEnabled(false);
-                  setPsPriceOverrideStr(psUnitPriceAuto ? String(Math.round(psUnitPriceAuto)) : "");
-                }
-              }}
-              placeholder={psUnitPriceAuto ? String(Math.round(psUnitPriceAuto)) : "-"}
-            />
-          </label>
-        </div>
+	          <label>
+	            Power Supply Brand
+	            <CustomSelect
+	              ariaLabel="Power Supply Brand"
+	              value={psuBrand}
+	              options={psuBrandOptions}
+	              onChange={setPsuBrand}
+	            />
+	          </label>
+
+	        </div>
       </section>
 
-      {/* Custom Field */}
-      <section>
-        <div className="inline" style={{ justifyContent: "space-between", alignItems: "center" }}>
-          <h3 style={{ margin: 0 }}>Custom Field</h3>
-          {customItemEnabled ? (
-            <button
-              type="button"
-              className="btn secondary"
-              style={{ backgroundColor: "#2563eb", borderColor: "#2563eb", color: "#ffffff" }}
-              onClick={() => setCustomItems((current) => [...current, { id: nextCustomItemId.current++, name: "", price: 0 }])}
-            >
-              + Add Custom Field
-            </button>
-          ) : null}
-        </div>
+      <div className="cost-options-row">
+        {/* Structure & Accessories */}
+        <section>
+          <h3>Structure & Accessories</h3>
 
-        <div className="inline" style={{ gap: 18, marginTop: 10 }}>
-          <label className="inline">
-            <input
-              className="radio"
-              type="radio"
-              checked={!customItemEnabled}
-              onChange={() => {
-                setCustomItemEnabled(false);
-                setCustomItems([{ id: nextCustomItemId.current++, name: "", price: 0 }]);
-              }}
-            />
-            <span>Without Custom Field</span>
-          </label>
+          <CustomSelect
+            ariaLabel="Structure & Accessories Cost Mode"
+            value={accessoriesMode}
+            options={[
+              { value: "auto", label: "Auto" },
+              { value: "manual", label: "Manual" },
+            ]}
+            onChange={setAccessoriesMode}
+          />
 
-          <label className="inline">
-            <input className="radio" type="radio" checked={customItemEnabled} onChange={() => setCustomItemEnabled(true)} />
-            <span>With Custom Field</span>
-          </label>
-        </div>
-
-        {customItemEnabled ? (
-          <div style={{ marginTop: 10 }}>
-            {customItems.map((item, index) => (
-              <div className="form-row" style={{ marginTop: index ? 10 : 0 }} key={item.id}>
-                <label>
-                  Item Name
-                  <input
-                    className="input"
-                    type="text"
-                    aria-label={`Custom item name ${index + 1}`}
-                    value={item.name}
-                    onChange={(e) => setCustomItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, name: e.target.value } : entry))}
-                    placeholder="e.g. Spare Module"
-                  />
-                </label>
-
-                <label>
-                  Price (Tk)
-                  <input
-                    className="input"
-                    type="number"
-                    min="0"
-                    aria-label={`Custom item price ${index + 1}`}
-                    value={item.price}
-                    onChange={(e) => setCustomItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, price: e.target.value } : entry))}
-                    placeholder="e.g. 2500"
-                  />
-                </label>
-
-                {customItems.length > 1 ? (
-                  <button type="button" className="btn secondary" onClick={() => setCustomItems((current) => current.filter((entry) => entry.id !== item.id))}>
-                    Remove
-                  </button>
-                ) : null}
-              </div>
-            ))}
-
-          </div>
-        ) : null}
-      </section>
-
-      {/* Structure & Accessories */}
-      <section>
-        <h3>Structure & Accessories</h3>
-
-        <div className="inline" style={{ marginBottom: 10 }}>
-          <label className="inline">
-            <input className="radio" type="radio" checked={accessoriesMode === "auto"} onChange={() => setAccessoriesMode("auto")} />
-            <span>Auto</span>
-          </label>
-
-          <label className="inline">
-            <input
-              className="radio"
-              type="radio"
-              checked={accessoriesMode === "manual"}
-              onChange={() => setAccessoriesMode("manual")}
-            />
-            <span>Manual</span>
-          </label>
-        </div>
-
-        <div className="install-row">
-          <div className="install-box accessories-auto-box">
-            <div className="install-title">Auto Accessories</div>
-            <div className="install-hint">Auto mode calculates Structure & Accessories from display area. Outdoor displays use the outdoor multiplier.</div>
-          </div>
-
-          <div className={`install-box manual accessories-manual-box ${accessoriesMode === "auto" ? "is-disabled" : ""}`}>
-            <div className="install-title">Manual Override</div>
-
-            <input
-              className="input"
-              style={{ width: 180, marginTop: 10 }}
-              type="number"
-              value={accessoriesValue}
-              onFocus={() => zeroClearOnFocus(accessoriesValue, setAccessoriesValue, accessoriesMode === "auto")}
-              onChange={(e) => setAccessoriesValue(e.target.value)}
-              onBlur={() => zeroRestoreOnBlur(accessoriesValue, setAccessoriesValue, accessoriesMode === "auto")}
-              disabled={accessoriesMode === "auto"}
-              placeholder="e.g. 50000 (Tk)"
-            />
-
-            <div className="install-hint" style={{ marginTop: 6 }}>
-              Works only in Manual mode.
+          {accessoriesMode === "manual" ? (
+            <div className="install-box manual accessories-manual-box">
+              <input
+                className="input"
+                type="number"
+                value={accessoriesValue}
+                onFocus={() => zeroClearOnFocus(accessoriesValue, setAccessoriesValue, false)}
+                onChange={(e) => setAccessoriesValue(e.target.value)}
+                onBlur={() => zeroRestoreOnBlur(accessoriesValue, setAccessoriesValue, false)}
+                placeholder="Structure & Accessories Cost (Tk)"
+                aria-label="Structure & Accessories Cost (Tk)"
+              />
             </div>
-          </div>
-        </div>
-      </section>
+          ) : null}
+        </section>
 
-      {/* Installation */}
-      <section>
-        <h3>Installation Cost</h3>
+        {/* Installation */}
+        <section>
+          <h3>Installation Cost</h3>
 
-        <div className="inline" style={{ marginBottom: 10 }}>
-          <label className="inline">
-            <input className="radio" type="radio" checked={installMode === "auto"} onChange={() => setInstallMode("auto")} />
-            <span>Auto</span>
-          </label>
+          <CustomSelect
+            ariaLabel="Installation Cost Mode"
+            value={installMode}
+            options={[
+              { value: "auto", label: "Auto" },
+              { value: "manual", label: "Manual" },
+            ]}
+            onChange={setInstallMode}
+          />
 
-          <label className="inline">
-            <input className="radio" type="radio" checked={installMode === "manual"} onChange={() => setInstallMode("manual")} />
-            <span>Manual</span>
-          </label>
-        </div>
+          {installMode === "manual" ? (
+            <div className="install-box manual">
+              <input
+                className="input"
+                type="number"
+                value={installValue}
+                onFocus={() => zeroClearOnFocus(installValue, setInstallValue, false)}
+                onChange={(e) => setInstallValue(e.target.value)}
+                onBlur={() => zeroRestoreOnBlur(installValue, setInstallValue, false)}
+                placeholder="Installation Cost (Tk)"
+                aria-label="Installation Cost (Tk)"
+              />
+            </div>
+          ) : null}
+        </section>
 
-        <div className="install-row">
-          <div className="install-box installation-auto-box">
-            <div className="install-title">Auto Installation</div>
-            <div className="install-hint">Auto mode calculates installation cost from display area.</div>
-          </div>
+        <section>
+          <h3>Transport Cost</h3>
 
-          <div className={`install-box manual ${installMode === "auto" ? "is-disabled" : ""}`}>
-            <div className="install-title">Manual Override</div>
-
-            <input
-              className="input"
-              style={{ width: 180, marginTop: 10 }}
-              type="number"
-              value={installValue}
-              onFocus={() => zeroClearOnFocus(installValue, setInstallValue, installMode === "auto")}
-              onChange={(e) => setInstallValue(e.target.value)}
-              onBlur={() => zeroRestoreOnBlur(installValue, setInstallValue, installMode === "auto")}
-              disabled={installMode === "auto"}
-              placeholder="e.g. 80000 (Tk)"
-            />
-
-            <div className="install-hint" style={{ marginTop: 6 }}></div>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <h3>Transport Cost</h3>
-
-        <div className="inline" style={{ gap: 18 }}>
-          <label className="inline">
-            <input
-              className="radio"
-              type="radio"
-              checked={!transportEnabled}
-              onChange={() => {
-                setTransportEnabled(false);
-                setTransportValue(0);
+          <label aria-label="Transport Cost Option">
+            <CustomSelect
+              ariaLabel="Transport Cost Option"
+              value={transportEnabled ? "with" : "without"}
+              options={[
+                { value: "without", label: "Without Transport Cost" },
+                { value: "with", label: "With Transport Cost" },
+              ]}
+              onChange={(value) => {
+                const enabled = value === "with";
+                setTransportEnabled(enabled);
+                if (!enabled) setTransportValue(0);
               }}
             />
-            <span>Without Transport Cost</span>
           </label>
 
-          <label className="inline">
-            <input className="radio" type="radio" checked={transportEnabled} onChange={() => setTransportEnabled(true)} />
-            <span>With Transport Cost</span>
-          </label>
-        </div>
-
-        {transportEnabled ? (
-          <>
-            <div className="form-row" style={{ marginTop: 10 }}>
+          {transportEnabled ? (
+            <>
               <label>
                 Transport Cost (Tk)
                 <input
@@ -2147,63 +1947,109 @@ export default function PriceForm({
                   placeholder="e.g. 15000"
                 />
               </label>
-            </div>
 
-            <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
-              Invoice table-e `Transport Cost` name ar `Lot` unit diye row show hobe, ar amount Grand Total-e jog hobe.
-            </div>
-          </>
-        ) : null}
-      </section>
+              <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
+                Invoice table-e `Transport Cost` name ar `Lot` unit diye row show hobe, ar amount Grand Total-e jog hobe.
+              </div>
+            </>
+          ) : null}
+        </section>
+      </div>
 
       {/* âœ… VAT option */}
-      <section>
-        <h3>VAT</h3>
+      <div className="optional-options-row">
+        {/* Custom Field */}
+        <section>
+          <div className="inline" style={{ justifyContent: "space-between", alignItems: "center" }}>
+            <h3 style={{ margin: 0 }}>Custom Field</h3>
+            {customItemEnabled ? (
+              <button
+                type="button"
+                className="btn secondary"
+                style={{ backgroundColor: "#2563eb", borderColor: "#2563eb", color: "#ffffff" }}
+                onClick={() => setCustomItems((current) => [...current, { id: nextCustomItemId.current++, name: "", price: 0 }])}
+              >
+                + Add Custom Field
+              </button>
+            ) : null}
+          </div>
 
-        <div className="inline" style={{ gap: 18 }}>
-          <label className="inline">
-            <input className="radio" type="radio" checked={!vatEnabled} onChange={() => setVatEnabled(false)} />
-            <span>Without VAT</span>
-          </label>
+          <CustomSelect
+            ariaLabel="Custom Field Option"
+            value={customItemEnabled ? "with" : "without"}
+            options={[
+              { value: "without", label: "Without Custom Field" },
+              { value: "with", label: "With Custom Field" },
+            ]}
+            onChange={(value) => {
+              const enabled = value === "with";
+              setCustomItemEnabled(enabled);
+              if (!enabled) {
+                setCustomItems([{ id: nextCustomItemId.current++, name: "", price: 0 }]);
+              }
+            }}
+          />
 
-          <label className="inline">
-            <input className="radio" type="radio" checked={vatEnabled} onChange={() => setVatEnabled(true)} />
-            <span>With VAT (10%)</span>
-          </label>
-        </div>
+          {customItemEnabled ? (
+            <div style={{ marginTop: 10 }}>
+              {customItems.map((item, index) => (
+                <div className="form-row" style={{ marginTop: index ? 10 : 0 }} key={item.id}>
+                  <label>
+                    Item Name
+                    <input
+                      className="input"
+                      type="text"
+                      aria-label={`Custom item name ${index + 1}`}
+                      value={item.name}
+                      onChange={(e) => setCustomItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, name: e.target.value } : entry))}
+                      placeholder="e.g. Spare Module"
+                    />
+                  </label>
 
-        <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
-          When VAT is enabled, each item unit price includes 5% tax, then 10% VAT is added on the total.
-        </div>
-      </section>
+                  <label>
+                    Price (Tk)
+                    <input
+                      className="input"
+                      type="number"
+                      min="0"
+                      aria-label={`Custom item price ${index + 1}`}
+                      value={item.price}
+                      onChange={(e) => setCustomItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, price: e.target.value } : entry))}
+                      placeholder="e.g. 2500"
+                    />
+                  </label>
 
-      {/* âœ… Discount toggle */}
-      <section>
-        <h3>Discount</h3>
+                  {customItems.length > 1 ? (
+                    <button type="button" className="btn secondary" onClick={() => setCustomItems((current) => current.filter((entry) => entry.id !== item.id))}>
+                      Remove
+                    </button>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </section>
 
-        <div className="inline" style={{ gap: 18 }}>
-          <label className="inline">
-            <input
-              className="radio"
-              type="radio"
-              checked={!discountEnabled}
-              onChange={() => {
-                setDiscountEnabled(false);
-                setDiscountTk(0);
-              }}
-            />
-            <span>Without Discount</span>
-          </label>
+        {/* Discount */}
+        <section>
+          <h3>Discount</h3>
 
-          <label className="inline">
-            <input className="radio" type="radio" checked={discountEnabled} onChange={() => setDiscountEnabled(true)} />
-            <span>With Discount</span>
-          </label>
-        </div>
+          <CustomSelect
+            ariaLabel="Discount Option"
+            value={discountEnabled ? "with" : "without"}
+            options={[
+              { value: "without", label: "Without Discount" },
+              { value: "with", label: "With Discount" },
+            ]}
+            onChange={(value) => {
+              const enabled = value === "with";
+              setDiscountEnabled(enabled);
+              if (!enabled) setDiscountTk(0);
+            }}
+          />
 
-        {discountEnabled ? (
-          <>
-            <div className="form-row" style={{ marginTop: 10 }}>
+          {discountEnabled ? (
+            <div style={{ marginTop: 10 }}>
               <label>
                 Special Discount (Tk)
                 <input
@@ -2216,45 +2062,58 @@ export default function PriceForm({
                   placeholder="e.g. 5000"
                 />
               </label>
-            </div>
 
-            <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
-              This discount is deducted from the VAT-inclusive Grand Total to calculate the payable amount.
+              <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
+                This discount is deducted from the VAT-inclusive Grand Total to calculate the payable amount.
+              </div>
             </div>
-          </>
-        ) : null}
+          ) : null}
+        </section>
+      </div>
+
+      <div className="vat-terms-group">
+        <h3 className="vat-terms-title">VAT, Payment Terms &amp; Delivery Time</h3>
+        <div className="vat-terms-row">
+      <section>
+        <h3>VAT</h3>
+
+        <CustomSelect
+          ariaLabel="VAT Option"
+          value={vatEnabled ? "with" : "without"}
+          options={[
+            { value: "without", label: "Without VAT" },
+            { value: "with", label: "With VAT (10%)" },
+          ]}
+          onChange={(value) => setVatEnabled(value === "with")}
+        />
       </section>
 
+      {/* âœ… Discount toggle */}
       {/* âœ… Payment Terms selection */}
       <section>
         <h3>Payment Terms (For T&amp;C)</h3>
 
-        <div className="inline" style={{ gap: 18, flexWrap: "wrap" }}>
-          {catalog.paymentTerms.map((p) => (
-            <label key={p.id} className="inline" style={{ minWidth: 260 }}>
-              <input className="radio" type="radio" checked={paymentTermId === p.id} onChange={() => setPaymentTermId(p.id)} />
-              <span>{p.label}</span>
-            </label>
-          ))}
-        </div>
-
-        <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
-          Terms &amp; Conditions Payment Terms section will update automatically based on this selection.
-        </div>
-
-        <div className="form-row" style={{ marginTop: 12 }}>
-          <label>
-            Delivery Time (days)
-            <input
-              className="input"
-              type="number"
-              value={deliveryDays}
-              onChange={(e) => setDeliveryDays(e.target.value)}
-              placeholder="e.g. 45"
-            />
-          </label>
-        </div>
+        <CustomSelect
+          ariaLabel="Payment Terms"
+          value={paymentTermId}
+          options={catalog.paymentTerms.map((term) => ({ value: term.id, label: term.label }))}
+          onChange={setPaymentTermId}
+        />
       </section>
+
+      <section>
+        <h3>Delivery Time (days)</h3>
+        <input
+          className="input"
+          aria-label="Delivery Time (days)"
+          type="number"
+          value={deliveryDays}
+          onChange={(e) => setDeliveryDays(e.target.value)}
+          placeholder="e.g. 45"
+        />
+      </section>
+      </div>
+      </div>
 
       {/* Customer */}
 	      <section>

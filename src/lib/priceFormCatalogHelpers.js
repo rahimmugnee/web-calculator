@@ -131,7 +131,8 @@ export function getCabinetRcPsuPerCabinet(modelName = "", cabinet = {}) {
 }
 
 export function pickPSUModel(psuModelLabel) {
-  return { model: psuModelLabel || "N200V5-A (5V40A)" };
+  const model = psuModelLabel || "LD-200";
+  return { model, label: model };
 }
 
 export function gridAndPixels(modelName, widthFt, heightFt, moduleRes, physical) {

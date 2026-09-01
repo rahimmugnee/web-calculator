@@ -70,7 +70,7 @@ const RenexInvoice = forwardRef(function RenexInvoice({
 
         {totals?.vatEnabled ? (
           <div className="renex-totals renex-totals-multi">
-            <div><b>Total =</b><strong>{toBDT(totals.totalBeforeVat)}</strong></div>
+            <div><b>Subtotal =</b><strong>{toBDT(totals.totalBeforeVat)}</strong></div>
             <div><b>VAT ({Math.round((totals.vatRate || 0.1) * 100)}%) =</b><strong>{toBDT(totals.vatAmount)}</strong></div>
             <div><b>Grand Total =</b><strong>{toBDT(totals.grandTotal)}</strong></div>
             {showDiscountBlock ? <><div><b>Special Discount =</b><strong>{toBDT(totals.discount || 0)}</strong></div><div><b>Payable =</b><strong>{toBDT(grandTotal)}</strong></div></> : null}

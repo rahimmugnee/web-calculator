@@ -112,9 +112,64 @@ test("renders COB P1.25 as an Sft display and omits receiving card and power sup
     </CatalogProvider>
   );
 
-  const displayRow = screen.getByText("P1.25 COB LED Display with Cabinet").closest("tr");
+  const displayRow = screen.getByText("LED Display Module with Cabinet").closest("tr");
+  expect(within(displayRow).getByText("P1.25 COB")).toBeInTheDocument();
   expect(within(displayRow).getByText("Sft")).toBeInTheDocument();
   expect(within(displayRow).getByText("12")).toBeInTheDocument();
   expect(screen.queryByText("Receiving Card: NV3210")).not.toBeInTheDocument();
   expect(screen.queryByText("Power Supply")).not.toBeInTheDocument();
+});
+
+test("renders Mugnee item, brand and model in separate table columns", () => {
+  const snapshot = buildSnapshot({ enabled: false, name: "", price: 0 });
+  snapshot.model = { id: "smd-in-p1_25", name: "P1.25 Indoor", code: "LC1.25P" };
+  snapshot.items.brands = { module: "Lampro" };
+  const calc = calcAll({
+    modulesQty: 1,
+    unitModule: 9300,
+    accessoriesMode: "manual",
+    accessoriesValue: 0,
+    installMode: "manual",
+    installValue: 0,
+  });
+
+  render(
+    <CatalogProvider>
+      <Invoice calc={calc} snapshot={snapshot} quotationRef="TEST-COLUMNS" />
+    </CatalogProvider>
+  );
+
+  const table = screen.getByRole("table");
+  expect(within(table).getByRole("columnheader", { name: "Brand" })).toBeInTheDocument();
+  expect(within(table).getByRole("columnheader", { name: "Model" })).toBeInTheDocument();
+  const moduleRow = within(table).getByText("LED Display Module").closest("tr");
+  const cells = within(moduleRow).getAllByRole("cell");
+  expect(cells[1]).toHaveTextContent("LED Display Module");
+  expect(cells[1]).not.toHaveTextContent("LC1.25P");
+  expect(cells[2]).toHaveTextContent("Lampro");
+  expect(cells[3]).toHaveTextContent("LC1.25P");
+  expect(screen.getByText(/Proposal for P1\.25 Indoor/)).toBeInTheDocument();
+  expect(screen.queryByText(/Proposal for LC1\.25P/)).not.toBeInTheDocument();
+});
+
+test("labels the pre-VAT invoice amount as Subtotal", () => {
+  const snapshot = buildSnapshot({ enabled: false, name: "", price: 0 });
+  const calc = calcAll({
+    modulesQty: 1,
+    unitModule: 1000,
+    vatEnabled: true,
+    accessoriesMode: "manual",
+    accessoriesValue: 0,
+    installMode: "manual",
+    installValue: 0,
+  });
+
+  render(
+    <CatalogProvider>
+      <Invoice calc={calc} snapshot={snapshot} quotationRef="TEST-VAT-SUBTOTAL" />
+    </CatalogProvider>
+  );
+
+  expect(screen.getByText("Subtotal =")).toBeInTheDocument();
+  expect(screen.queryByText(/^Total =$/)).not.toBeInTheDocument();
 });

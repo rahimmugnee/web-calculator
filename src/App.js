@@ -6,17 +6,27 @@ import TermsPage from "./components/TermsPage";
 import PDFButton from "./components/PDFButton";
 import DisplaySize from "./components/DisplaySize";
 import RentalDisplaySize from "./components/RentalDisplaySize";
-import { toBDT, generateRef, quotationTitlePdfFilename } from "./lib/calc.js";
+import { generateRef, quotationTitlePdfFilename } from "./lib/calc.js";
 import { useCatalog } from "./context/CatalogContext.jsx";
 import { quotationHistoryPayload, saveQuotationHistory } from "./lib/quotationHistory.js";
 
 const PREVIEW_PAGE_WIDTH = 794;
+const PREVIEW_PAGE_HEIGHT = 1175;
 const API_BASE = process.env.REACT_APP_ADMIN_API_URL || "/api";
 const LEGACY_AUTH_SESSION_KEY = "mugneeLoginAuthenticated";
 const LEGACY_REMEMBER_LOGIN_KEY = "mugneeRememberedLogin";
 
 function cookie(name) {
   return document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${name}=`))?.slice(name.length + 1) || "";
+}
+
+function quotationConfigurationKey(snapshot) {
+  if (!snapshot?.display) return null;
+  const model = snapshot.model?.id || snapshot.model?.name || "";
+  const sizes = Array.isArray(snapshot.display.sizes)
+    ? snapshot.display.sizes.map((size) => [size.widthFt || "", size.heightFt || "", size.pairs || 1])
+    : [[snapshot.display.widthFt || "", snapshot.display.heightFt || ""]];
+  return JSON.stringify([snapshot.quotationType || "fixed", model, sizes]);
 }
 
 function PasswordVisibilityIcon({ hidden = false }) {
@@ -29,8 +39,26 @@ function PasswordVisibilityIcon({ hidden = false }) {
   );
 }
 
+function WorkspaceLoadingScreen() {
+  return (
+    <main className="workspace-loading" role="status" aria-live="polite" aria-label="Loading workspace">
+      <div className="workspace-loading-content">
+        <div className="workspace-loading-logo" aria-hidden="true">
+          <span>C</span>
+        </div>
+        <h1>Loading your workspace...</h1>
+        <p>Please wait a moment while we prepare everything for you.</p>
+        <div className="workspace-loading-spinner" aria-hidden="true" />
+        <div className="workspace-loading-track" aria-hidden="true">
+          <span />
+        </div>
+      </div>
+    </main>
+  );
+}
+
 export default function App() {
-  const { company, companies, selectedCompanyId, setSelectedCompanyId } = useCatalog();
+  const { catalog, company, companies, selectedCompanyId, setSelectedCompanyId } = useCatalog();
   const branding = company?.assets || {};
   const selectedCompanyCode = String(company?.code || "mugnee").toLowerCase();
   const invoiceFormatCode = selectedCompanyCode === "mugnee-multiple" ? "mugnee" : selectedCompanyCode;
@@ -48,14 +76,19 @@ export default function App() {
   const [quotationRef, setQuotationRef] = useState(null);
   const [view, setView] = useState("invoice"); // invoice | terms
   const [installationType, setInstallationType] = useState("fixed");
+  const [displayType, setDisplayType] = useState("indoor");
+  const [technology, setTechnology] = useState("smd");
   const [sizePick, setSizePick] = useState(null);
   const [displaySizeActive, setDisplaySizeActive] = useState({});
   const [rentalSizePick, setRentalSizePick] = useState(null);
   const [rentalDisplaySizeActive, setRentalDisplaySizeActive] = useState({});
   const [previewFit, setPreviewFit] = useState({ scale: 1, height: null });
+  const allTechnologyOptions = catalog.technologiesAll?.length ? catalog.technologiesAll : [{ id: "smd", label: "SMD" }];
+  const technologyOptions = displayType === "outdoor" ? allTechnologyOptions.filter((item) => item.id === "smd") : allTechnologyOptions;
 
   const invoiceRef = useRef(null);
   const quotationCompanyCodeRef = useRef(null);
+  const quotationConfigurationRef = useRef(null);
   const termsRef = useRef(null);
   const previewStageRef = useRef(null);
   const previewInvoicePageRef = useRef(null);
@@ -110,14 +143,35 @@ export default function App() {
 
     if (!stage || !page) return undefined;
 
+    const inner = page.querySelector(":scope > .invoice-inner");
+    const panel = inner?.querySelector(":scope > .invoice-panel");
+
     let frameId = 0;
 
     const updateFit = () => {
       window.cancelAnimationFrame(frameId);
       frameId = window.requestAnimationFrame(() => {
+        panel?.style.removeProperty("transform");
+        panel?.style.removeProperty("transform-origin");
+        panel?.style.removeProperty("width");
+
+        if (inner && panel) {
+          const innerStyle = window.getComputedStyle(inner);
+          const availableHeight = inner.clientHeight
+            - (Number.parseFloat(innerStyle.paddingTop) || 0)
+            - (Number.parseFloat(innerStyle.paddingBottom) || 0);
+          const contentScale = Math.min(1, availableHeight / Math.max(1, panel.scrollHeight));
+
+          if (contentScale < 0.999) {
+            panel.style.setProperty("transform", `scale(${contentScale})`, "important");
+            panel.style.setProperty("transform-origin", "top left", "important");
+            panel.style.setProperty("width", `${100 / contentScale}%`, "important");
+          }
+        }
+
         const availableWidth = Math.max(0, stage.clientWidth);
         const scale = Math.min(1, availableWidth / PREVIEW_PAGE_WIDTH);
-        const nextHeight = Math.ceil(page.scrollHeight * scale);
+        const nextHeight = Math.ceil(PREVIEW_PAGE_HEIGHT * scale);
 
         setPreviewFit((prev) => {
           if (Math.abs(prev.scale - scale) < 0.001 && prev.height === nextHeight) {
@@ -133,12 +187,16 @@ export default function App() {
     const resizeObserver = new ResizeObserver(updateFit);
     resizeObserver.observe(stage);
     resizeObserver.observe(page);
+    if (panel) resizeObserver.observe(panel);
     window.addEventListener("resize", updateFit);
 
     return () => {
       window.cancelAnimationFrame(frameId);
       resizeObserver.disconnect();
       window.removeEventListener("resize", updateFit);
+      panel?.style.removeProperty("transform");
+      panel?.style.removeProperty("transform-origin");
+      panel?.style.removeProperty("width");
     };
   }, [calc, snapshot, view, isRentalQuotation]);
 
@@ -194,8 +252,13 @@ export default function App() {
   const handleCalculated = useCallback((result, snap, meta) => {
     setCalc(result);
     setSnapshot(snap);
+    const nextConfiguration = quotationConfigurationKey(snap);
+    const configurationChanged = nextConfiguration !== null
+      && quotationConfigurationRef.current !== null
+      && quotationConfigurationRef.current !== nextConfiguration;
+    if (nextConfiguration !== null) quotationConfigurationRef.current = nextConfiguration;
     setQuotationRef((prev) => {
-      if (meta?.userSubmit) return generateRef(company?.code);
+      if (meta?.userSubmit || configurationChanged) return generateRef(company?.code);
       return prev ?? generateRef(company?.code);
     });
   }, [company?.code]);
@@ -213,7 +276,7 @@ export default function App() {
   }, [company?.code, calc, snapshot]);
 
   if (authLoading) {
-    return <main className="login-page"><div className="login-card" role="status">Checking login...</div></main>;
+    return <WorkspaceLoadingScreen />;
   }
 
   if (!authUser) {
@@ -332,38 +395,57 @@ export default function App() {
         <div className="container-xxl">
           {/* Left: Form */}
 	          <div className="card">
-	            <section className="company-picker" aria-labelledby="company-picker-title">
-	              <h3 id="company-picker-title">Company Name</h3>
-	              <div className="company-picker-options">
-	                {companies.map((item) => {
-	                  const code = String(item.code || item.name).toLowerCase();
-	                  const label = code === "mugnee" ? "Mugnee Multiple Limited" : code === "mugnee-multiple" ? "Mugnee Multiple" : code.includes("renex") ? "Renex" : code.includes("sasha") ? "Sasha" : item.name;
-	                  return <label key={item.id} className={String(selectedCompanyId) === String(item.id) ? "company-option active" : "company-option"}>
-	                    <input className="radio" type="radio" name="calculator-company" value={item.id} checked={String(selectedCompanyId) === String(item.id)} onChange={() => setSelectedCompanyId(item.id)} />
-	                    <span>{label}</span>
-	                  </label>;
-	                })}
-	              </div>
+	            <section className="calculator-context-row" aria-label="Calculator setup">
+	              <label className="calculator-context-field">
+	                <span>Company Name</span>
+	                <select aria-label="Company Name" value={selectedCompanyId} onChange={(event) => setSelectedCompanyId(event.target.value)}>
+	                  {companies.map((item) => {
+	                    const code = String(item.code || item.name).toLowerCase();
+	                    const label = code === "mugnee" ? "Mugnee Multiple Limited" : code === "mugnee-multiple" ? "Mugnee Multiple" : code.includes("renex") ? "Renex" : code.includes("sasha") ? "Sasha" : item.name;
+	                    return <option key={item.id} value={item.id}>{label}</option>;
+	                  })}
+	                </select>
+	              </label>
+	              <label className="calculator-context-field">
+	                <span>Calculator Category</span>
+	                <select aria-label="Calculator Category" value={installationType} onChange={(event) => setInstallationType(event.target.value)}>
+	                  <option value="fixed">LED Display</option>
+	                  <option value="rental">Rental</option>
+	                  <option value="pa">PA System</option>
+	                  <option value="conference">Conference System</option>
+	                </select>
+	              </label>
+	              <label className="calculator-context-field">
+	                <span>Display Type</span>
+	                <select aria-label="Display Type" value={displayType} disabled={installationType !== "fixed"} onChange={(event) => {
+	                  const nextDisplayType = event.target.value;
+	                  setDisplayType(nextDisplayType);
+	                  if (nextDisplayType === "outdoor") setTechnology("smd");
+	                }}>
+	                  <option value="indoor">Indoor</option>
+	                  <option value="outdoor">Outdoor</option>
+	                </select>
+	              </label>
+	              <label className="calculator-context-field">
+	                <span>Technology</span>
+	                <select aria-label="Technology" value={technology} disabled={installationType !== "fixed"} onChange={(event) => setTechnology(event.target.value)}>
+	                  {technologyOptions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+	                </select>
+	              </label>
 	            </section>
 
 	            <PriceForm
+	              installationType={installationType}
+	              displayType={displayType}
+	              technology={technology}
 	              sizePick={sizePick}
 	              onSizeSelectionChange={setDisplaySizeActive}
 	              rentalSizePick={rentalSizePick}
 	              onRentalSizeSelectionChange={setRentalDisplaySizeActive}
-	              onInstallationTypeChange={setInstallationType}
 	              onChange={handleFormChange}
               onCalculated={handleCalculated}
             />
 
-            {calc && (
-              <div className="summary">
-                <div className="sum-card">
-                  <div className="sum-label">Grand Total</div>
-                  <div className="sum-value">{toBDT(calc.totals.grandTotal)}</div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Right: Preview + Download */}
