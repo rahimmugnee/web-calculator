@@ -30,7 +30,7 @@ export class CatalogRepository {
          FILTER (WHERE cpp.id IS NOT NULL), '{}'::jsonb) AS prices
        FROM products p
        ${join} company_product_prices cpp ON cpp.product_id = p.id AND cpp.company_id = $1 AND cpp.is_active
-       WHERE p.is_active ${categoryFilter}
+       WHERE p.is_active AND p.deleted_at IS NULL ${categoryFilter}
        GROUP BY p.id ORDER BY p.category, p.name`, params
     );
     return { company, products: result.rows };

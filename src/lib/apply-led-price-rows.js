@@ -36,8 +36,50 @@ function preferredBasePriceRows(rows) {
   return preferred;
 }
 
-export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
+const modulePitch = (model) => {
+  const match = String(model?.id || model?.name || "").match(/p\s*(\d+(?:[._]\d+)?)/i);
+  return match ? Number(match[1].replace("_", ".")) : Number.POSITIVE_INFINITY;
+};
+
+const modulePitchName = (id, fallback) => {
+  const match = String(id || "").match(/p(\d+(?:[._]\d+)?)/i);
+  return match ? `P${match[1].replace("_", ".")}` : fallback;
+};
+
+const cabinetSortValue = (values, value) => values[String(value || "").toLowerCase()] ?? 99;
+
+function sortAuthoritativeCatalog(catalog, cabinetOptions) {
+  for (const locations of Object.values(catalog.modelGroups || {})) {
+    for (const models of Object.values(locations || {})) {
+      models.sort((left, right) =>
+        modulePitch(left) - modulePitch(right)
+        || String(left.id || "").localeCompare(String(right.id || ""))
+      );
+    }
+  }
+
+  const displayOrder = { indoor: 0, outdoor: 1 };
+  const materialOrder = { mild_steel: 0, magnesium: 1, aluminium: 2 };
+  const variantOrder = { open: 0, backdoor: 1 };
+  const sizeOrder = { "640x480": 0, "640x640": 1, "960x960": 2, "1280x1280": 3 };
+  cabinetOptions.sort((left, right) =>
+    cabinetSortValue(displayOrder, left.displayType) - cabinetSortValue(displayOrder, right.displayType)
+    || cabinetSortValue(materialOrder, left.materialCode) - cabinetSortValue(materialOrder, right.materialCode)
+    || cabinetSortValue(variantOrder, left.variantCode) - cabinetSortValue(variantOrder, right.variantCode)
+    || cabinetSortValue(sizeOrder, left.sizeKey) - cabinetSortValue(sizeOrder, right.sizeKey)
+    || String(left.id || "").localeCompare(String(right.id || ""))
+  );
+}
+
+export function applyLedPriceRows(baseCatalog, rows = [], brandRows = [], { authoritative = false } = {}) {
   const catalog = cloneCatalog(baseCatalog);
+  if (authoritative) {
+    catalog.modelGroups = {};
+    catalog.moduleBrandPrices = {};
+    catalog.moduleBrandLabels = {};
+    catalog.moduleBrandModelNames = {};
+    catalog.moduleBrandDetails = {};
+  }
   catalog.modelGroups ||= {};
   catalog.moduleBrandPrices ||= {};
   catalog.moduleBrandLabels ||= {};
@@ -58,11 +100,11 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
     }));
   }
 
-  const controllers = [...(catalog.controllers || [])];
-  const novastarControllers = [...(catalog.novastarControllers || [])];
-  const receivingCards = { ...(catalog.receivingCards || {}) };
-  const cabinetOptions = [...(catalog.cabinetOptions || [])];
-  const powerSupplies = [...(catalog.powerSupplies || [])];
+  const controllers = authoritative ? [] : [...(catalog.controllers || [])];
+  const novastarControllers = authoritative ? [] : [...(catalog.novastarControllers || [])];
+  const receivingCards = authoritative ? {} : { ...(catalog.receivingCards || {}) };
+  const cabinetOptions = authoritative ? [] : [...(catalog.cabinetOptions || [])];
+  const powerSupplies = authoritative || rows.length ? [] : [...(catalog.powerSupplies || [])];
   const preferredBaseRows = preferredBasePriceRows(rows);
 
   for (const row of rows) {
@@ -81,7 +123,7 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
       catalog.modelGroups[technology][location] ||= [];
       let model = catalog.modelGroups[technology][location].find((item) => String(item.id) === String(id));
       if (!model) {
-        model = { id, name: row.model || row.technical_metadata?.name || id, prices: {} };
+        model = { id, name: modulePitchName(id, row.technical_metadata?.name || row.model || id), prices: {} };
         catalog.modelGroups[technology][location].push(model);
       }
       if (brand === "Lampro") model.prices = { default: price };
@@ -114,25 +156,29 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
     }
 
     if (row.component_type === "controller" && (row.price_tier === "default" || row.price_tier === "gold")) {
-      const controller = [...controllers, ...novastarControllers].find((item) => String(item.id) === String(id) || String(item.id) === String(row.model));
+      let controller = [...controllers, ...novastarControllers].find((item) => String(item.id) === String(id) || String(item.id) === String(row.model));
+      if (!controller && id) {
+        controller = { ...(row.technical_metadata || {}), id };
+        (String(id).startsWith("NS_") ? novastarControllers : controllers).push(controller);
+      }
       if (controller) Object.assign(controller, databaseProductFields(row, {
         itemName: "Controller",
-        model: componentModelName(controller.model, controller.label, controller.id),
+        model: componentModelName(controller.model, controller.label || row.name, controller.id),
         unit: "Pcs",
       }, controller.id), { price });
       continue;
     }
 
     if (row.component_type === "receiving-card") {
-      const cardId = receivingCards[id] ? id : row.model;
-      const card = receivingCards[cardId];
+      const cardId = receivingCards[id] ? id : receivingCards[row.model] ? row.model : id || row.model;
+      const card = receivingCards[cardId] || (id ? { ...(row.technical_metadata || {}), id } : null);
       if (card) {
         const fields = databaseProductFields(row, {
           itemName: "Receiving Card",
-          model: componentModelName(card.model, card.label, cardId),
+          model: componentModelName(card.model, card.label || row.name, cardId),
           unit: "Pcs",
         }, cardId);
-        receivingCards[cardId] = row.price_tier === "cob"
+        receivingCards[cardId || id] = row.price_tier === "cob"
           ? { ...card, ...fields, cobUnitPrice: price }
           : { ...card, ...fields, unitPrice: price };
       }
@@ -140,7 +186,11 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
     }
 
     if (row.component_type === "cabinet" && (row.price_tier === "default" || row.price_tier === "gold")) {
-      const index = cabinetOptions.findIndex((item) => String(item.id) === String(id) || String(item.id) === String(row.model));
+      let index = cabinetOptions.findIndex((item) => String(item.id) === String(id) || String(item.id) === String(row.model));
+      if (index < 0 && id) {
+        cabinetOptions.push({ ...(row.technical_metadata || {}), id });
+        index = cabinetOptions.length - 1;
+      }
       if (index >= 0) cabinetOptions[index] = {
         ...cabinetOptions[index],
         ...databaseProductFields(row, {
@@ -196,10 +246,11 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
     }
   }
   const databaseBrands = [...groupedBrands.values()];
+  if (authoritative) sortAuthoritativeCatalog(catalog, cabinetOptions);
   return {
     ...catalog,
-    moduleBrands: databaseBrands.length ? databaseBrands.map(({ value, label }) => ({ value, label })) : catalog.moduleBrands,
-    moduleBrandModelIds: databaseBrands.length ? Object.fromEntries(databaseBrands.map((brand) => [brand.value, [...new Set(brand.modelIds)]])) : catalog.moduleBrandModelIds,
+    moduleBrands: databaseBrands.length || authoritative ? databaseBrands.map(({ value, label }) => ({ value, label })) : catalog.moduleBrands,
+    moduleBrandModelIds: databaseBrands.length || authoritative ? Object.fromEntries(databaseBrands.map((brand) => [brand.value, [...new Set(brand.modelIds)]])) : catalog.moduleBrandModelIds,
     controllers,
     novastarControllers,
     receivingCards,

@@ -16,6 +16,14 @@ function componentModelName(model, label, internalId) {
   return isInternalId ? clean(label) : clean(candidate) || clean(label);
 }
 
+function cabinetModelName(cabinet) {
+  const materialCodes = { mild_steel: "MS", aluminium: "AL", magnesium: "MG" };
+  const material = materialCodes[cabinet.materialCode]
+    || String(cabinet.materialLabel || cabinet.materialCode || "CB").replace(/[^a-z]/gi, "").slice(0, 2).toUpperCase();
+  const size = String(cabinet.sizeKey || `${cabinet.widthMm || ""}x${cabinet.heightMm || ""}`).toUpperCase();
+  return `${material}${size}`;
+}
+
 export function mapStaticCatalog({ ledCatalog, paProducts, conferenceProducts }) {
   const rows = [];
 
@@ -60,7 +68,7 @@ export function mapStaticCatalog({ ledCatalog, paProducts, conferenceProducts })
     rows.push(product({ sourceKey: `led:receiving-card:${id}`, category: "receiving-card", componentType: "receiving-card", name: card.label, brand, model: componentModelName(card.model, card.label, id), unit: "Pcs", metadata: card, prices }));
   }
   for (const cabinet of ledCatalog.cabinetOptions || []) {
-    rows.push(product({ sourceKey: `led:cabinet:${cabinet.id}`, category: "led-cabinet", componentType: "cabinet", name: `${cabinet.materialLabel} ${cabinet.variantLabel || ""} ${cabinet.label}`.replace(/\s+/g, " ").trim(), model: cabinet.id, unit: "Pcs", metadata: cabinet, prices: { default: cabinet.price } }));
+    rows.push(product({ sourceKey: `led:cabinet:${cabinet.id}`, category: "led-cabinet", componentType: "cabinet", name: `${cabinet.materialLabel} ${cabinet.variantLabel || ""} ${cabinet.label}`.replace(/\s+/g, " ").trim(), model: cabinetModelName(cabinet), unit: "Pcs", metadata: { ...cabinet, model: cabinetModelName(cabinet) }, prices: { default: cabinet.price } }));
   }
   for (const supply of ledCatalog.powerSupplies || []) {
     const model = componentModelName(supply.model, supply.label, supply.id) || "LED Power Supply";

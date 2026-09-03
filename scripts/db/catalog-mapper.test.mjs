@@ -78,6 +78,23 @@ test("uses the configured model for each power supply brand", () => {
   assert.equal(products.find((item) => item.brand === "G-Energy").metadata.label, "Power Supply: N200V5-A");
 });
 
+test("builds cabinet models from two-letter material codes and cabinet size", () => {
+  const products = mapStaticCatalog({
+    ledCatalog: {
+      modelGroups: {}, controllers: [], novastarControllers: [], receivingCards: {}, powerSupplies: [],
+      cabinetOptions: [
+        { id: "mild", materialCode: "mild_steel", materialLabel: "Mild Steel", sizeKey: "640x480", label: "640mm x 480mm", price: 1 },
+        { id: "aluminium", materialCode: "aluminium", materialLabel: "Aluminium", sizeKey: "640x640", label: "640mm x 640mm", price: 1 },
+        { id: "magnesium", materialCode: "magnesium", materialLabel: "Magnesium", sizeKey: "960x960", label: "960mm x 960mm", price: 1 },
+      ],
+    },
+    paProducts: [], conferenceProducts: [],
+  });
+
+  assert.deepEqual(products.map((item) => item.model), ["MS640X480", "AL640X640", "MG960X960"]);
+  assert.deepEqual(products.map((item) => item.metadata.model), ["MS640X480", "AL640X640", "MG960X960"]);
+});
+
 test("maps component models separately from Novastar internal ids", () => {
   const products = mapStaticCatalog({
     ledCatalog: {

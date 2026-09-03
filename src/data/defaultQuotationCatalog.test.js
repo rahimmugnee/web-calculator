@@ -21,6 +21,10 @@ test("cabinet catalog exposes indoor and outdoor material/size options", () => {
     "backdoor",
   ]);
   expect(options.every((option) => option.price === 8000)).toBe(true);
+  expect(options.every((option) => /^(?:AL|MS|MG)\d+X\d+$/.test(option.model))).toBe(true);
+  expect(options.find((option) => option.materialCode === "mild_steel" && option.sizeKey === "640x480").model).toBe("MS640X480");
+  expect(options.find((option) => option.materialCode === "aluminium" && option.sizeKey === "640x480").model).toBe("AL640X480");
+  expect(options.find((option) => option.materialCode === "magnesium" && option.sizeKey === "640x480").model).toBe("MG640X480");
 });
 
 test("cabinet footprint uses selected option dimensions", () => {

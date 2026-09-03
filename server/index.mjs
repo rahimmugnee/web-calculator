@@ -35,6 +35,12 @@ app.use((req, res, next) => {
 const asyncRoute = (handler) => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 const paging = (query) => ({ limit: Math.min(100, Math.max(1, Number(query.limit) || 25)), offset: Math.max(0, Number(query.offset) || 0) });
 const ASSET_TYPES = new Set(["logo", "site_logo", "invoice_pad", "seal", "signature"]);
+const RECYCLE_PERMISSIONS = { quotation: "manage_quotations", product: "manage_products", brand: "manage_brands", category: "manage_categories" };
+const requireRecyclePermission = (req, res, next) => {
+  const permission = RECYCLE_PERMISSIONS[req.params.entityType];
+  if (!permission) return res.status(400).json({ error: "Unsupported recycle item type." });
+  return req.user.permissions.includes(permission) ? next() : res.status(403).json({ error: "You do not have permission for this action." });
+};
 const LED_COMPONENT_TYPES_BY_SLUG = {
   "led-module": "module",
   "controller-video-processor": "controller",
@@ -102,7 +108,7 @@ app.get("/api/public/company/:id/module-prices", asyncRoute(async (req, res) => 
     FROM products p JOIN company_product_prices cpp ON cpp.product_id=p.id AND cpp.company_id=$1 AND cpp.is_active
     JOIN categories c ON c.id=p.category_id
     LEFT JOIN brands b ON b.id=p.brand_id
-    WHERE p.is_active AND c.is_active AND c.system_type='led-display' AND c.slug='led-module' AND cpp.price_tier='default'`,[pricing.pricing_company_id,pricing.pricing_multiplier]);
+    WHERE p.is_active AND p.deleted_at IS NULL AND c.is_active AND c.deleted_at IS NULL AND (b.id IS NULL OR b.deleted_at IS NULL) AND c.system_type='led-display' AND c.slug='led-module' AND cpp.price_tier='default'`,[pricing.pricing_company_id,pricing.pricing_multiplier]);
   res.json(result.rows);
 }));
 
@@ -114,7 +120,7 @@ app.get("/api/public/company/:id/led-prices", asyncRoute(async (req, res) => {
     JOIN company_product_prices cpp ON cpp.product_id=p.id AND cpp.company_id=$1 AND cpp.is_active
     JOIN categories c ON c.id=p.category_id
     LEFT JOIN brands b ON b.id=p.brand_id
-    WHERE p.is_active AND c.is_active AND c.system_type='led-display'`,[pricing.pricing_company_id,pricing.pricing_multiplier]);
+    WHERE p.is_active AND p.deleted_at IS NULL AND c.is_active AND c.deleted_at IS NULL AND (b.id IS NULL OR b.deleted_at IS NULL) AND c.system_type='led-display'`,[pricing.pricing_company_id,pricing.pricing_multiplier]);
   res.json(result.rows);
 }));
 
@@ -122,8 +128,8 @@ app.get("/api/public/catalog/led-module/brands", asyncRoute(async (_req, res) =>
   const result=await pool.query(`SELECT b.id,b.name,b.slug,p.source_key,p.model,p.technical_metadata FROM brands b
     JOIN category_brands cb ON cb.brand_id=b.id AND cb.is_active
     JOIN categories c ON c.id=cb.category_id
-    LEFT JOIN products p ON p.brand_id=b.id AND p.category_id=c.id AND p.is_active
-    WHERE c.slug='led-module' AND c.is_active AND b.is_active ORDER BY b.name,p.name`);
+    LEFT JOIN products p ON p.brand_id=b.id AND p.category_id=c.id AND p.is_active AND p.deleted_at IS NULL
+    WHERE c.slug='led-module' AND c.is_active AND c.deleted_at IS NULL AND b.is_active AND b.deleted_at IS NULL ORDER BY b.name,p.name`);
   res.json(result.rows);
 }));
 
@@ -273,7 +279,7 @@ app.get("/api/admin/dashboard", asyncRoute(async (req, res) => {
   const organizationExpression = `NULLIF(COALESCE(q.client_information->>'company',q.client_information->>'organization'), '')`;
   const [base, selected, previous, statuses, calculators, recent, months, organizations] = await Promise.all([
     pool.query(
-      `SELECT (SELECT count(*) FROM products WHERE is_active) products,
+      `SELECT (SELECT count(*) FROM products WHERE is_active AND deleted_at IS NULL) products,
         (SELECT count(*) FROM companies WHERE is_active) companies,
         (SELECT count(*) FROM quotations WHERE deleted_at IS NULL AND ($1::bigint IS NULL OR company_id=$1)) quotations,
         (SELECT count(*) FROM invoices WHERE ($1::bigint IS NULL OR company_id=$1)) invoices,
@@ -347,9 +353,11 @@ app.put("/api/admin/companies/:id", requirePermission("manage_companies"), async
 }));
 
 app.get("/api/admin/categories", asyncRoute(async (_req, res) => res.json((await pool.query(
-  `SELECT c.*,count(DISTINCT cb.brand_id)::int brand_count,count(DISTINCT p.id)::int model_count
+  `SELECT c.*,count(DISTINCT b.id)::int brand_count,count(DISTINCT p.id)::int model_count
    FROM categories c LEFT JOIN category_brands cb ON cb.category_id=c.id AND cb.is_active
-   LEFT JOIN products p ON p.category_id=c.id GROUP BY c.id ORDER BY c.system_type,c.sort_order,c.name`
+   LEFT JOIN brands b ON b.id=cb.brand_id AND b.deleted_at IS NULL
+   LEFT JOIN products p ON p.category_id=c.id AND p.deleted_at IS NULL
+   WHERE c.deleted_at IS NULL GROUP BY c.id ORDER BY c.system_type,c.sort_order,c.name`
 )).rows)));
 
 app.post("/api/admin/categories", requirePermission("manage_categories"), asyncRoute(async (req,res) => {
@@ -363,23 +371,23 @@ app.post("/api/admin/categories", requirePermission("manage_categories"), asyncR
 app.put("/api/admin/categories/:id", requirePermission("manage_categories"), asyncRoute(async (req,res) => {
   const id=idValue(req.params.id),b=req.body||{}; const result=await pool.query(
     `UPDATE categories SET parent_id=$1,name=$2,slug=$3,uses_brand=$4,is_active=$5,sort_order=$6,
-     specifications_schema=$7::jsonb,settings=$8::jsonb WHERE id=$9 RETURNING *`,
+     specifications_schema=$7::jsonb,settings=$8::jsonb WHERE id=$9 AND deleted_at IS NULL RETURNING *`,
     [b.parent_id||null,textValue(b.name,"Name"),slugValue(b.slug),b.uses_brand!==false,b.is_active!==false,Number(b.sort_order)||0,JSON.stringify(b.specifications_schema||{}),JSON.stringify(b.settings||{}),id]
   ); await audit(req,{action:"update",entityType:"category",entityId:id,summary:`Updated category ${result.rows[0]?.name||id}`}); res.json(result.rows[0]);
 }));
 
 app.delete("/api/admin/categories/:id", requirePermission("manage_categories"), asyncRoute(async (req,res) => {
-  const id=idValue(req.params.id); const refs=await pool.query("SELECT (SELECT count(*) FROM products WHERE category_id=$1)+(SELECT count(*) FROM categories WHERE parent_id=$1) count",[id]);
-  if(Number(refs.rows[0].count)>0) return res.status(409).json({error:"Deactivate this category because it is referenced by products or child categories."});
-  await pool.query("DELETE FROM categories WHERE id=$1",[id]); await audit(req,{action:"delete",entityType:"category",entityId:id,summary:`Deleted category ${id}`}); res.status(204).end();
+  const id=idValue(req.params.id); const refs=await pool.query("SELECT (SELECT count(*) FROM products WHERE category_id=$1 AND deleted_at IS NULL)+(SELECT count(*) FROM categories WHERE parent_id=$1 AND deleted_at IS NULL) count",[id]);
+  if(Number(refs.rows[0].count)>0) return res.status(409).json({error:"Delete or move this category's active models and child categories first."});
+  const result=await pool.query("UPDATE categories SET deleted_at=now() WHERE id=$1 AND deleted_at IS NULL RETURNING name",[id]);if(!result.rowCount)return res.status(404).json({error:"Category not found."});await syncCatalogFallback(pool);await audit(req,{action:"move-to-recycle-bin",entityType:"category",entityId:id,summary:`Moved category ${result.rows[0].name} to recycle bin`}); res.status(204).end();
 }));
 
 app.get("/api/admin/brands", asyncRoute(async (req,res) => {
   const {limit,offset}=paging(req.query); const search=`%${String(req.query.search||"").trim()}%`;
   const result=await pool.query(
     `SELECT b.*,count(DISTINCT p.id)::int model_count,COALESCE(jsonb_agg(DISTINCT jsonb_build_object('id',c.id,'name',c.name,'system_type',c.system_type)) FILTER(WHERE c.id IS NOT NULL),'[]') categories
-     FROM brands b LEFT JOIN category_brands cb ON cb.brand_id=b.id AND cb.is_active LEFT JOIN categories c ON c.id=cb.category_id LEFT JOIN products p ON p.brand_id=b.id
-     WHERE b.name ILIKE $1 GROUP BY b.id ORDER BY b.name LIMIT $2 OFFSET $3`,[search,limit,offset]); res.json(result.rows);
+     FROM brands b LEFT JOIN category_brands cb ON cb.brand_id=b.id AND cb.is_active LEFT JOIN categories c ON c.id=cb.category_id AND c.deleted_at IS NULL LEFT JOIN products p ON p.brand_id=b.id AND p.deleted_at IS NULL
+     WHERE b.deleted_at IS NULL AND b.name ILIKE $1 GROUP BY b.id ORDER BY b.name LIMIT $2 OFFSET $3`,[search,limit,offset]); res.json(result.rows);
 }));
 
 app.post("/api/admin/brands", requirePermission("manage_brands"), asyncRoute(async(req,res)=>{
@@ -388,20 +396,20 @@ app.post("/api/admin/brands", requirePermission("manage_brands"), asyncRoute(asy
 }));
 
 app.put("/api/admin/brands/:id", requirePermission("manage_brands"), asyncRoute(async(req,res)=>{
-  const id=idValue(req.params.id),b=req.body||{},client=await pool.connect(); try{await client.query("BEGIN"); const result=await client.query("UPDATE brands SET name=$1,slug=$2,is_active=$3 WHERE id=$4 RETURNING *",[textValue(b.name,"Brand name"),slugValue(b.slug),b.is_active!==false,id]); await client.query("UPDATE category_brands SET is_active=false WHERE brand_id=$1",[id]); for(const categoryId of b.category_ids||[]) await client.query("INSERT INTO category_brands(category_id,brand_id,is_active) VALUES($1,$2,true) ON CONFLICT(category_id,brand_id) DO UPDATE SET is_active=true",[idValue(categoryId),id]); await client.query("COMMIT"); await audit(req,{action:"update",entityType:"brand",entityId:id,summary:`Updated brand ${result.rows[0]?.name||id}`}); res.json(result.rows[0]);}catch(e){await client.query("ROLLBACK");throw e;}finally{client.release();}
+  const id=idValue(req.params.id),b=req.body||{},client=await pool.connect(); try{await client.query("BEGIN"); const result=await client.query("UPDATE brands SET name=$1,slug=$2,is_active=$3 WHERE id=$4 AND deleted_at IS NULL RETURNING *",[textValue(b.name,"Brand name"),slugValue(b.slug),b.is_active!==false,id]); await client.query("UPDATE category_brands SET is_active=false WHERE brand_id=$1",[id]); for(const categoryId of b.category_ids||[]) await client.query("INSERT INTO category_brands(category_id,brand_id,is_active) VALUES($1,$2,true) ON CONFLICT(category_id,brand_id) DO UPDATE SET is_active=true",[idValue(categoryId),id]); await client.query("COMMIT"); await audit(req,{action:"update",entityType:"brand",entityId:id,summary:`Updated brand ${result.rows[0]?.name||id}`}); res.json(result.rows[0]);}catch(e){await client.query("ROLLBACK");throw e;}finally{client.release();}
 }));
 
-app.delete("/api/admin/brands/:id", requirePermission("manage_brands"), asyncRoute(async(req,res)=>{const id=idValue(req.params.id);const refs=await pool.query("SELECT count(*) count FROM products WHERE brand_id=$1",[id]);if(Number(refs.rows[0].count))return res.status(409).json({error:"Delete or reassign this brand's models first."});const client=await pool.connect();try{await client.query("BEGIN");await client.query("DELETE FROM category_brands WHERE brand_id=$1",[id]);const deleted=await client.query("DELETE FROM brands WHERE id=$1 RETURNING name",[id]);if(!deleted.rowCount)throw Object.assign(new Error("Brand not found."),{status:404});await client.query("COMMIT");await audit(req,{action:"delete",entityType:"brand",entityId:id,summary:`Deleted brand ${deleted.rows[0].name}`}).catch((error)=>console.error("Brand deletion audit failed:",error));res.status(204).end();}catch(error){await client.query("ROLLBACK").catch(()=>{});throw error;}finally{client.release();}}));
+app.delete("/api/admin/brands/:id", requirePermission("manage_brands"), asyncRoute(async(req,res)=>{const id=idValue(req.params.id);const refs=await pool.query("SELECT count(*) count FROM products WHERE brand_id=$1 AND deleted_at IS NULL",[id]);if(Number(refs.rows[0].count))return res.status(409).json({error:"Delete or reassign this brand's active models first."});const result=await pool.query("UPDATE brands SET deleted_at=now() WHERE id=$1 AND deleted_at IS NULL RETURNING name",[id]);if(!result.rowCount)return res.status(404).json({error:"Brand not found."});await syncCatalogFallback(pool);await audit(req,{action:"move-to-recycle-bin",entityType:"brand",entityId:id,summary:`Moved brand ${result.rows[0].name} to recycle bin`});res.status(204).end();}));
 
-app.get("/api/admin/products", asyncRoute(async(req,res)=>{const {limit,offset}=paging(req.query),params=[],where=[];let priceSelect="'{}'::jsonb AS prices";if(req.query.companyId){const pricing=await pricingProfile(idValue(req.query.companyId,"Company"));params.push(pricing.pricing_company_id);const companyParam=params.length;params.push(pricing.pricing_multiplier);const multiplierParam=params.length;priceSelect=`(SELECT COALESCE(jsonb_object_agg(cpp.price_tier,round(cpp.unit_price*$${multiplierParam}::numeric,4)),'{}'::jsonb) FROM company_product_prices cpp WHERE cpp.product_id=p.id AND cpp.company_id=$${companyParam} AND cpp.is_active) AS prices`;}for(const [key,column] of [["system","c.system_type"],["categoryId","p.category_id"],["brandId","p.brand_id"],["active","p.is_active"]]) if(req.query[key]!==undefined&&req.query[key]!==""){params.push(req.query[key]);where.push(`${column}=$${params.length}`);} if(req.query.search){params.push(`%${req.query.search}%`);where.push(`(p.name ILIKE $${params.length} OR p.model ILIKE $${params.length} OR p.sku ILIKE $${params.length})`);} params.push(limit,offset);const result=await pool.query(`SELECT p.*,c.name category_name,c.system_type,b.name brand_name,${priceSelect} FROM products p LEFT JOIN categories c ON c.id=p.category_id LEFT JOIN brands b ON b.id=p.brand_id ${where.length?`WHERE ${where.join(" AND ")}`:""} ORDER BY p.name LIMIT $${params.length-1} OFFSET $${params.length}`,params);res.json(result.rows);}));
+app.get("/api/admin/products", asyncRoute(async(req,res)=>{const {limit,offset}=paging(req.query),params=[],where=["p.deleted_at IS NULL"];let priceSelect="'{}'::jsonb AS prices";if(req.query.companyId){const pricing=await pricingProfile(idValue(req.query.companyId,"Company"));params.push(pricing.pricing_company_id);const companyParam=params.length;params.push(pricing.pricing_multiplier);const multiplierParam=params.length;priceSelect=`(SELECT COALESCE(jsonb_object_agg(cpp.price_tier,round(cpp.unit_price*$${multiplierParam}::numeric,4)),'{}'::jsonb) FROM company_product_prices cpp WHERE cpp.product_id=p.id AND cpp.company_id=$${companyParam} AND cpp.is_active) AS prices`;}for(const [key,column] of [["system","c.system_type"],["categoryId","p.category_id"],["brandId","p.brand_id"],["active","p.is_active"]]) if(req.query[key]!==undefined&&req.query[key]!==""){params.push(req.query[key]);where.push(`${column}=$${params.length}`);} if(req.query.search){params.push(`%${req.query.search}%`);where.push(`(p.name ILIKE $${params.length} OR p.model ILIKE $${params.length} OR p.sku ILIKE $${params.length})`);} params.push(limit,offset);const result=await pool.query(`SELECT p.*,c.name category_name,c.system_type,b.name brand_name,${priceSelect} FROM products p LEFT JOIN categories c ON c.id=p.category_id LEFT JOIN brands b ON b.id=p.brand_id WHERE ${where.join(" AND ")} ORDER BY p.name LIMIT $${params.length-1} OFFSET $${params.length}`,params);res.json(result.rows);}));
 
-app.post("/api/admin/products", requirePermission("manage_products"), asyncRoute(async(req,res)=>{const b=req.body||{},categoryId=idValue(b.category_id,"Category");const category=await pool.query("SELECT uses_brand,system_type,slug FROM categories WHERE id=$1",[categoryId]);if(!category.rowCount)throw Object.assign(new Error("Category not found."),{status:400});const brandId=category.rows[0].uses_brand?idValue(b.brand_id,"Brand"):null;const key=b.source_key||`admin:${Date.now()}:${slugValue(b.model||b.name,"Model")}`;const componentType=categoryComponentType(category.rows[0],b.component_type);const result=await pool.query(`INSERT INTO products(source_key,sku,category,component_type,name,brand,model,unit,currency,technical_metadata,source_catalog,is_active,category_id,brand_id) SELECT $1,$2,c.system_type,$3,$4,br.name,$5,$6,$7,$8::jsonb,'admin',$9,c.id,br.id FROM categories c LEFT JOIN brands br ON br.id=$10 WHERE c.id=$11 RETURNING *`,[key,b.sku||key,componentType,textValue(b.name,"Product name"),textValue(b.model,"Model",{required:false}),b.unit||"Nos.",b.currency||"BDT",JSON.stringify(b.technical_metadata||{}),b.is_active!==false,brandId,categoryId]);await audit(req,{action:"create",entityType:"product",entityId:result.rows[0].id,summary:`Created product ${result.rows[0].name}`});res.status(201).json(result.rows[0]);}));
+app.post("/api/admin/products", requirePermission("manage_products"), asyncRoute(async(req,res)=>{const b=req.body||{},categoryId=idValue(b.category_id,"Category");const category=await pool.query("SELECT uses_brand,system_type,slug FROM categories WHERE id=$1 AND deleted_at IS NULL",[categoryId]);if(!category.rowCount)throw Object.assign(new Error("Category not found."),{status:400});const brandId=category.rows[0].uses_brand?idValue(b.brand_id,"Brand"):null;const key=b.source_key||`admin:${Date.now()}:${slugValue(b.model||b.name,"Model")}`;const componentType=categoryComponentType(category.rows[0],b.component_type);const result=await pool.query(`INSERT INTO products(source_key,sku,category,component_type,name,brand,model,unit,currency,technical_metadata,source_catalog,is_active,category_id,brand_id) SELECT $1,$2,c.system_type,$3,$4,br.name,$5,$6,$7,$8::jsonb,'admin',$9,c.id,br.id FROM categories c LEFT JOIN brands br ON br.id=$10 AND br.deleted_at IS NULL WHERE c.id=$11 AND c.deleted_at IS NULL RETURNING *`,[key,b.sku||key,componentType,textValue(b.name,"Product name"),textValue(b.model,"Model",{required:false}),b.unit||"Nos.",b.currency||"BDT",JSON.stringify(b.technical_metadata||{}),b.is_active!==false,brandId,categoryId]);await audit(req,{action:"create",entityType:"product",entityId:result.rows[0].id,summary:`Created product ${result.rows[0].name}`});res.status(201).json(result.rows[0]);}));
 
-app.put("/api/admin/products/:id", requirePermission("manage_products"), asyncRoute(async(req,res)=>{const id=idValue(req.params.id),b=req.body||{},categoryId=idValue(b.category_id,"Category");const category=await pool.query("SELECT uses_brand,system_type,slug FROM categories WHERE id=$1",[categoryId]);const brandId=category.rows[0]?.uses_brand?idValue(b.brand_id,"Brand"):null;const componentType=categoryComponentType(category.rows[0]||{},b.component_type);const result=await pool.query(`UPDATE products p SET name=$1,model=$2,sku=$3,unit=$4,currency=$5,technical_metadata=$6::jsonb,is_active=$7,component_type=$8,category_id=$9,brand_id=$10,brand=(SELECT name FROM brands WHERE id=$10),source_catalog='admin' WHERE id=$11 RETURNING *`,[textValue(b.name,"Product name"),textValue(b.model,"Model",{required:false}),b.sku||null,b.unit||"Nos.",b.currency||"BDT",JSON.stringify(b.technical_metadata||{}),b.is_active!==false,componentType,categoryId,brandId,id]);await audit(req,{action:"update",entityType:"product",entityId:id,summary:`Updated product ${result.rows[0]?.name||id}`});res.json(result.rows[0]);}));
+app.put("/api/admin/products/:id", requirePermission("manage_products"), asyncRoute(async(req,res)=>{const id=idValue(req.params.id),b=req.body||{},categoryId=idValue(b.category_id,"Category");const category=await pool.query("SELECT uses_brand,system_type,slug FROM categories WHERE id=$1 AND deleted_at IS NULL",[categoryId]);const brandId=category.rows[0]?.uses_brand?idValue(b.brand_id,"Brand"):null;const componentType=categoryComponentType(category.rows[0]||{},b.component_type);const result=await pool.query(`UPDATE products p SET name=$1,model=$2,sku=$3,unit=$4,currency=$5,technical_metadata=$6::jsonb,is_active=$7,component_type=$8,category_id=$9,brand_id=$10,brand=(SELECT name FROM brands WHERE id=$10 AND deleted_at IS NULL),source_catalog='admin' WHERE id=$11 AND deleted_at IS NULL RETURNING *`,[textValue(b.name,"Product name"),textValue(b.model,"Model",{required:false}),b.sku||null,b.unit||"Nos.",b.currency||"BDT",JSON.stringify(b.technical_metadata||{}),b.is_active!==false,componentType,categoryId,brandId,id]);await audit(req,{action:"update",entityType:"product",entityId:id,summary:`Updated product ${result.rows[0]?.name||id}`});res.json(result.rows[0]);}));
 
-app.delete("/api/admin/products/:id", requirePermission("manage_products"), asyncRoute(async(req,res)=>{const id=idValue(req.params.id);const refs=await pool.query("SELECT (SELECT count(*) FROM quotation_items WHERE product_id=$1)+(SELECT count(*) FROM invoice_items WHERE product_id=$1) count",[id]);if(Number(refs.rows[0].count))return res.status(409).json({error:"Deactivate this product because historical documents reference it."});await pool.query("DELETE FROM products WHERE id=$1",[id]);await audit(req,{action:"delete",entityType:"product",entityId:id,summary:`Deleted product ${id}`});res.status(204).end();}));
+app.delete("/api/admin/products/:id", requirePermission("manage_products"), asyncRoute(async(req,res)=>{const id=idValue(req.params.id),client=await pool.connect();try{await client.query("BEGIN");const deleted=await client.query("UPDATE products SET deleted_at=now() WHERE id=$1 AND deleted_at IS NULL RETURNING name,model",[id]);if(!deleted.rowCount)throw Object.assign(new Error("Model not found."),{status:404});await syncCatalogFallback(client);await client.query("COMMIT");await audit(req,{action:"move-to-recycle-bin",entityType:"product",entityId:id,summary:`Moved model ${deleted.rows[0].model||deleted.rows[0].name||id} to recycle bin`});res.status(204).end();}catch(e){await client.query("ROLLBACK").catch(()=>{});throw e;}finally{client.release();}}));
 
-app.get("/api/admin/prices", asyncRoute(async(req,res)=>{const pricing=await pricingProfile(idValue(req.query.companyId,"Company")),{limit,offset}=paging(req.query),search=`%${req.query.search||""}%`;const result=await pool.query(`SELECT p.id,p.model,p.name,b.name brand,c.name category,c.system_type,COALESCE(jsonb_object_agg(cpp.price_tier,round(cpp.unit_price*$7::numeric,4)) FILTER(WHERE cpp.id IS NOT NULL),'{}') prices,max(cpp.updated_at) last_updated FROM products p LEFT JOIN brands b ON b.id=p.brand_id LEFT JOIN categories c ON c.id=p.category_id LEFT JOIN company_product_prices cpp ON cpp.product_id=p.id AND cpp.company_id=$1 WHERE (p.name ILIKE $2 OR p.model ILIKE $2) AND ($3::bigint IS NULL OR p.category_id=$3) AND ($4::bigint IS NULL OR p.brand_id=$4) GROUP BY p.id,b.name,c.name,c.system_type ORDER BY p.name LIMIT $5 OFFSET $6`,[pricing.pricing_company_id,search,req.query.categoryId||null,req.query.brandId||null,limit,offset,pricing.pricing_multiplier]);res.json(result.rows);}));
+app.get("/api/admin/prices", asyncRoute(async(req,res)=>{const pricing=await pricingProfile(idValue(req.query.companyId,"Company")),{limit,offset}=paging(req.query),search=`%${req.query.search||""}%`;const result=await pool.query(`SELECT p.id,p.model,p.name,b.name brand,c.name category,c.system_type,COALESCE(jsonb_object_agg(cpp.price_tier,round(cpp.unit_price*$7::numeric,4)) FILTER(WHERE cpp.id IS NOT NULL),'{}') prices,max(cpp.updated_at) last_updated FROM products p LEFT JOIN brands b ON b.id=p.brand_id LEFT JOIN categories c ON c.id=p.category_id LEFT JOIN company_product_prices cpp ON cpp.product_id=p.id AND cpp.company_id=$1 WHERE p.deleted_at IS NULL AND (p.name ILIKE $2 OR p.model ILIKE $2) AND ($3::bigint IS NULL OR p.category_id=$3) AND ($4::bigint IS NULL OR p.brand_id=$4) GROUP BY p.id,b.name,c.name,c.system_type ORDER BY p.name LIMIT $5 OFFSET $6`,[pricing.pricing_company_id,search,req.query.categoryId||null,req.query.brandId||null,limit,offset,pricing.pricing_multiplier]);res.json(result.rows);}));
 
 app.put("/api/admin/prices/:productId", requirePermission("manage_prices"), asyncRoute(async(req,res)=>{const productId=idValue(req.params.productId),selectedCompanyId=idValue(req.body.company_id,"Company"),client=await pool.connect();try{await client.query("BEGIN");const pricing=await pricingProfile(selectedCompanyId,client);if(pricing.pricing_company_id!==pricing.selected_company_id&&pricing.pricing_multiplier!==1)throw Object.assign(new Error("This company price is calculated automatically. Update Mugnee pricing instead."),{status:409});for(const [tier,value] of Object.entries(req.body.prices||{})){if(value===""||value===null)continue;const requestedTier=slugValue(tier,"Tier"),storedTier=requestedTier==="gold"?"default":requestedTier;await client.query(`INSERT INTO company_product_prices(company_id,product_id,price_tier,unit_price,currency,is_active) VALUES($1,$2,$3,$4,'BDT',true) ON CONFLICT(company_id,product_id,price_tier) DO UPDATE SET unit_price=EXCLUDED.unit_price,is_active=true`,[pricing.pricing_company_id,productId,storedTier,moneyValue(value)]);}const fallback=await syncCatalogFallback(client);await client.query("COMMIT");await audit(req,{action:"price-update",entityType:"product-price",entityId:productId,companyId:selectedCompanyId,summary:`Updated shared prices for product ${productId}`});res.json({ok:true,fallback});}catch(e){await client.query("ROLLBACK");throw e;}finally{client.release();}}));
 
@@ -417,6 +425,83 @@ app.put("/api/admin/settings/:companyId/:type", requirePermission("manage_calcul
 
 app.put("/api/admin/templates/:companyId/quotation", requirePermission("manage_templates"), asyncRoute(async(req,res)=>{const companyId=idValue(req.params.companyId),b=req.body||{};const result=await pool.query(`UPDATE quotation_settings SET quotation_prefix=$1,header_information=$2::jsonb,footer_information=$3::jsonb,terms=$4::jsonb,branding=$5::jsonb,default_validity_days=$6,default_delivery_period=$7 WHERE company_id=$8 RETURNING *`,[textValue(b.quotation_prefix,"Quotation prefix"),JSON.stringify(b.header_information||{}),JSON.stringify(b.footer_information||{}),JSON.stringify(b.terms||[]),JSON.stringify(b.branding||{}),b.default_validity_days||null,b.default_delivery_period||null,companyId]);await audit(req,{action:"update",entityType:"quotation-template",entityId:result.rows[0]?.id,companyId,summary:"Updated quotation pad and terms"});res.json(result.rows[0]);}));
 app.put("/api/admin/templates/:companyId/invoice", requirePermission("manage_templates"), asyncRoute(async(req,res)=>{const companyId=idValue(req.params.companyId),b=req.body||{};const result=await pool.query(`UPDATE invoice_settings SET invoice_prefix=$1,template_key=$2,settings=$3::jsonb WHERE company_id=$4 RETURNING *`,[textValue(b.invoice_prefix,"Invoice prefix"),slugValue(b.template_key,"Template key"),JSON.stringify(b.settings||{}),companyId]);await audit(req,{action:"update",entityType:"invoice-template",entityId:result.rows[0]?.id,companyId,summary:"Updated invoice template settings"});res.json(result.rows[0]);}));
+
+app.get("/api/admin/recycle-bin", asyncRoute(async(req,res)=>{
+  const {limit,offset}=paging(req.query),companyId=req.query.companyId||null;
+  const result=await pool.query(`WITH recycled AS (
+    SELECT 'quotation'::text entity_type,q.id entity_id,'Quotation'::text type_label,q.quotation_number item_name,
+      concat_ws(' · ',NULLIF(q.client_name,''),NULLIF(COALESCE(q.client_information->>'company',q.client_information->>'organization'),'')) details,
+      q.deleted_at,q.grand_total amount,q.status,q.company_id
+    FROM quotations q WHERE q.deleted_at IS NOT NULL AND ($1::bigint IS NULL OR q.company_id=$1)
+    UNION ALL
+    SELECT 'product',p.id,'Model',COALESCE(NULLIF(p.model,''),p.name),concat_ws(' · ',c.name,b.name,p.name),p.deleted_at,NULL::numeric,'deleted',NULL::bigint
+    FROM products p LEFT JOIN categories c ON c.id=p.category_id LEFT JOIN brands b ON b.id=p.brand_id WHERE p.deleted_at IS NOT NULL
+    UNION ALL
+    SELECT 'brand',b.id,'Brand',b.name,COALESCE((SELECT string_agg(c.name,', ' ORDER BY c.name) FROM category_brands cb JOIN categories c ON c.id=cb.category_id WHERE cb.brand_id=b.id),'Shared catalog brand'),b.deleted_at,NULL::numeric,'deleted',NULL::bigint
+    FROM brands b WHERE b.deleted_at IS NOT NULL
+    UNION ALL
+    SELECT 'category',c.id,'Category',c.name,concat_ws(' · ',c.system_type,p.name),c.deleted_at,NULL::numeric,'deleted',NULL::bigint
+    FROM categories c LEFT JOIN categories p ON p.id=c.parent_id WHERE c.deleted_at IS NOT NULL
+  ) SELECT *,count(*) OVER() total_count FROM recycled ORDER BY deleted_at DESC LIMIT $2 OFFSET $3`,[companyId,limit,offset]);
+  res.json(result.rows);
+}));
+
+app.post("/api/admin/recycle-bin/:entityType/:id/restore",requireRecyclePermission,asyncRoute(async(req,res)=>{
+  const type=req.params.entityType,id=idValue(req.params.id),client=await pool.connect();let itemName,companyId=null;
+  try{
+    await client.query("BEGIN");
+    if(type==="quotation"){
+      const result=await client.query("UPDATE quotations SET deleted_at=NULL WHERE id=$1 AND deleted_at IS NOT NULL RETURNING quotation_number,company_id",[id]);
+      if(!result.rowCount)throw Object.assign(new Error("Deleted quotation not found."),{status:404});
+      itemName=result.rows[0].quotation_number;companyId=result.rows[0].company_id;
+    }else if(type==="product"){
+      const found=await client.query("SELECT p.model,p.name,p.brand_id,c.deleted_at category_deleted_at,b.deleted_at brand_deleted_at FROM products p LEFT JOIN categories c ON c.id=p.category_id LEFT JOIN brands b ON b.id=p.brand_id WHERE p.id=$1 AND p.deleted_at IS NOT NULL",[id]);
+      if(!found.rowCount)throw Object.assign(new Error("Deleted model not found."),{status:404});
+      if(found.rows[0].category_deleted_at||found.rows[0].brand_id&&found.rows[0].brand_deleted_at)throw Object.assign(new Error("Restore this model's category and brand first."),{status:409});
+      await client.query("UPDATE products SET deleted_at=NULL WHERE id=$1",[id]);itemName=found.rows[0].model||found.rows[0].name;
+    }else if(type==="brand"){
+      const result=await client.query("UPDATE brands SET deleted_at=NULL WHERE id=$1 AND deleted_at IS NOT NULL RETURNING name",[id]);
+      if(!result.rowCount)throw Object.assign(new Error("Deleted brand not found."),{status:404});itemName=result.rows[0].name;
+    }else{
+      const found=await client.query("SELECT c.name,p.deleted_at parent_deleted_at FROM categories c LEFT JOIN categories p ON p.id=c.parent_id WHERE c.id=$1 AND c.deleted_at IS NOT NULL",[id]);
+      if(!found.rowCount)throw Object.assign(new Error("Deleted category not found."),{status:404});
+      if(found.rows[0].parent_deleted_at)throw Object.assign(new Error("Restore the parent category first."),{status:409});
+      await client.query("UPDATE categories SET deleted_at=NULL WHERE id=$1",[id]);itemName=found.rows[0].name;
+    }
+    if(type!=="quotation")await syncCatalogFallback(client);
+    await client.query("COMMIT");
+    await audit(req,{action:"restore",entityType:type,entityId:id,companyId,summary:`Restored ${type} ${itemName}`});
+    res.json({ok:true});
+  }catch(error){await client.query("ROLLBACK").catch(()=>{});throw error;}finally{client.release();}
+}));
+
+app.delete("/api/admin/recycle-bin/:entityType/:id/permanent",requireRecyclePermission,asyncRoute(async(req,res)=>{
+  const type=req.params.entityType,id=idValue(req.params.id),client=await pool.connect();let itemName,companyId=null;
+  try{
+    await client.query("BEGIN");
+    if(type==="quotation"){
+      const result=await client.query("DELETE FROM quotations WHERE id=$1 AND deleted_at IS NOT NULL RETURNING quotation_number,company_id",[id]);
+      if(!result.rowCount)throw Object.assign(new Error("Deleted quotation not found in recycle bin."),{status:404});itemName=result.rows[0].quotation_number;companyId=result.rows[0].company_id;
+    }else if(type==="product"){
+      const result=await client.query("DELETE FROM products WHERE id=$1 AND deleted_at IS NOT NULL RETURNING name,model",[id]);
+      if(!result.rowCount)throw Object.assign(new Error("Deleted model not found in recycle bin."),{status:404});itemName=result.rows[0].model||result.rows[0].name;
+    }else if(type==="brand"){
+      const refs=await client.query("SELECT count(*) count FROM products WHERE brand_id=$1",[id]);
+      if(Number(refs.rows[0].count))throw Object.assign(new Error("Permanently delete this brand's recycled models first."),{status:409});
+      await client.query("DELETE FROM category_brands WHERE brand_id=$1",[id]);const result=await client.query("DELETE FROM brands WHERE id=$1 AND deleted_at IS NOT NULL RETURNING name",[id]);
+      if(!result.rowCount)throw Object.assign(new Error("Deleted brand not found in recycle bin."),{status:404});itemName=result.rows[0].name;
+    }else{
+      const refs=await client.query("SELECT (SELECT count(*) FROM products WHERE category_id=$1)+(SELECT count(*) FROM categories WHERE parent_id=$1) count",[id]);
+      if(Number(refs.rows[0].count))throw Object.assign(new Error("Permanently delete this category's recycled models and child categories first."),{status:409});
+      const result=await client.query("DELETE FROM categories WHERE id=$1 AND deleted_at IS NOT NULL RETURNING name",[id]);
+      if(!result.rowCount)throw Object.assign(new Error("Deleted category not found in recycle bin."),{status:404});itemName=result.rows[0].name;
+    }
+    if(type!=="quotation")await syncCatalogFallback(client);
+    await client.query("COMMIT");
+    await audit(req,{action:"permanent-delete",entityType:type,entityId:id,companyId,summary:`Permanently deleted ${type} ${itemName}`});
+    res.status(204).end();
+  }catch(error){await client.query("ROLLBACK").catch(()=>{});throw error;}finally{client.release();}
+}));
 
 app.get("/api/admin/quotations", asyncRoute(async(req,res)=>{
   const {limit,offset}=paging(req.query), params=[req.query.companyId||null], where=["q.deleted_at IS NULL","($1::bigint IS NULL OR q.company_id=$1)"];

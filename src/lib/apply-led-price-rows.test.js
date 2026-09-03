@@ -101,6 +101,60 @@ test("keeps every power-supply model and label attached to its stable id", () =>
   ]));
 });
 
+test("removes database-deleted LED components when live rows are authoritative", () => {
+  const base = {
+    modelGroups: { smd: { indoor: [{ id: "deleted-module", name: "P2", prices: { default: 1 } }] } },
+    moduleBrandPrices: { Lampro: { "deleted-module": { default: 1 } } },
+    moduleBrands: [{ value: "Lampro", label: "Lampro" }],
+    controllers: [{ id: "deleted-controller", price: 1 }],
+    novastarControllers: [],
+    receivingCards: { "deleted-card": { unitPrice: 1 } },
+    cabinetOptions: [{ id: "deleted-cabinet", price: 1 }],
+    powerSupplies: [{ id: "deleted-supply", price: 1 }],
+  };
+
+  const catalog = applyLedPriceRows(base, [], [], { authoritative: true });
+
+  expect(catalog.modelGroups).toEqual({});
+  expect(catalog.moduleBrands).toEqual([]);
+  expect(catalog.controllers).toEqual([]);
+  expect(catalog.receivingCards).toEqual({});
+  expect(catalog.cabinetOptions).toEqual([]);
+  expect(catalog.powerSupplies).toEqual([]);
+});
+
+test("rebuilds restored LED components from authoritative database metadata", () => {
+  const rows = [
+    { component_type: "controller", source_key: "led:controller:C2", name: "Controller: C2", model: "C2", brand_name: "Huidu", price_tier: "default", unit_price: 200, technical_metadata: { id: "C2", pixels: 2000000 } },
+    { component_type: "receiving-card", source_key: "led:receiving-card:R2", name: "Receiving Card: R2", model: "R2", brand_name: "Huidu", price_tier: "default", unit_price: 300, technical_metadata: { id: "R2" } },
+    { component_type: "cabinet", source_key: "led:cabinet:CAB2", name: "Cabinet 640x480", model: "CAB2", price_tier: "default", unit_price: 400, technical_metadata: { id: "CAB2", widthMm: 640, heightMm: 480 } },
+    { component_type: "power-supply", source_key: "led:power-supply:PS2", name: "Power Supply: PS2", model: "PS2", brand_name: "Lampro", price_tier: "default", unit_price: 500, technical_metadata: { id: "PS2" } },
+  ];
+
+  const catalog = applyLedPriceRows({}, rows, [], { authoritative: true });
+
+  expect(catalog.controllers[0]).toMatchObject({ id: "C2", model: "C2", price: 200, pixels: 2000000 });
+  expect(catalog.receivingCards.R2).toMatchObject({ id: "R2", model: "R2", unitPrice: 300 });
+  expect(catalog.cabinetOptions[0]).toMatchObject({ id: "CAB2", model: "CAB2", price: 400, widthMm: 640 });
+  expect(catalog.powerSupplies[0]).toMatchObject({ id: "PS2", model: "PS2", price: 500 });
+});
+
+test("keeps module pitches and cabinet variants in deterministic display order", () => {
+  const rows = [
+    { component_type: "module", source_key: "led:module:lampro:smd-in-p2", brand_name: "Lampro", price_tier: "default", unit_price: 100, technical_metadata: { id: "smd-in-p2", technology: "smd", location: "indoor" } },
+    { component_type: "module", source_key: "led:module:lampro:smd-in-p1_25", model: "LC1.25P", brand_name: "Lampro", price_tier: "default", unit_price: 100, technical_metadata: { id: "smd-in-p1_25", technology: "smd", location: "indoor" } },
+    { component_type: "cabinet", source_key: "led:cabinet:ms-back", model: "MS640X480", price_tier: "default", unit_price: 100, technical_metadata: { id: "ms-back", displayType: "outdoor", materialCode: "mild_steel", variantCode: "backdoor", sizeKey: "640x480" } },
+    { component_type: "cabinet", source_key: "led:cabinet:al-indoor", model: "AL640X480", price_tier: "default", unit_price: 100, technical_metadata: { id: "al-indoor", displayType: "indoor", materialCode: "aluminium", sizeKey: "640x480" } },
+    { component_type: "cabinet", source_key: "led:cabinet:ms-open", model: "MS640X480", price_tier: "default", unit_price: 100, technical_metadata: { id: "ms-open", displayType: "outdoor", materialCode: "mild_steel", variantCode: "open", sizeKey: "640x480" } },
+  ];
+
+  const catalog = applyLedPriceRows({}, rows, [], { authoritative: true });
+
+  expect(catalog.modelGroups.smd.indoor.map(({ id }) => id)).toEqual(["smd-in-p1_25", "smd-in-p2"]);
+  expect(catalog.modelGroups.smd.indoor[0].name).toBe("P1.25");
+  expect(catalog.cabinetOptions.map(({ id }) => id)).toEqual(["al-indoor", "ms-open", "ms-back"]);
+});
+
 test.each([
   ["default then gold", false],
   ["gold then default", true],

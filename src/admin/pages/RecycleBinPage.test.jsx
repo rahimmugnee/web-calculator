@@ -58,7 +58,7 @@ test("requires confirmation before permanently deleting a recycled quotation", a
   dialog = screen.getByRole("dialog", { name: "Delete permanently?" });
   fireEvent.click(within(dialog).getByRole("button", { name: "Delete Permanently" }));
 
-  await waitFor(() => expect(remove).toHaveBeenCalledWith("/admin/quotations/7/permanent"));
+  await waitFor(() => expect(remove).toHaveBeenCalledWith("/admin/recycle-bin/quotation/7/permanent"));
   await waitFor(() => expect(screen.queryByRole("dialog", { name: "Delete permanently?" })).not.toBeInTheDocument());
 });
 
@@ -79,7 +79,7 @@ test("requires confirmation before restoring a recycled quotation", async () => 
   dialog = screen.getByRole("dialog", { name: "Restore quotation?" });
   fireEvent.click(within(dialog).getByRole("button", { name: "Restore Quotation" }));
 
-  await waitFor(() => expect(post).toHaveBeenCalledWith("/admin/quotations/7/restore", {}));
+  await waitFor(() => expect(post).toHaveBeenCalledWith("/admin/recycle-bin/quotation/7/restore", {}));
   await waitFor(() => expect(screen.queryByRole("dialog", { name: "Restore quotation?" })).not.toBeInTheDocument());
 });
 
@@ -101,4 +101,29 @@ test("shows the full recycled quotation in a modal before the status column", as
 
   fireEvent.keyDown(window, { key: "Escape" });
   await waitFor(() => expect(screen.queryByRole("dialog", { name: "Quotation Details" })).not.toBeInTheDocument());
+});
+
+test("lists and restores a deleted catalog model", async () => {
+  const model = {
+    entity_type: "product",
+    entity_id: 100,
+    type_label: "Model",
+    item_name: "LD-200",
+    details: "Power Supply · Lampro · Power Supply: LD-200",
+    deleted_at: "2026-09-03T12:00:00.000Z",
+    amount: null,
+    status: "deleted",
+  };
+  get.mockImplementation(() => Promise.resolve([model]));
+  render(<RecycleBinPage />);
+
+  expect(await screen.findByText("LD-200")).toBeInTheDocument();
+  expect(screen.getByText("Model")).toHaveClass("recycle-type", "product");
+  expect(screen.queryByRole("button", { name: "View Quotation" })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Restore" }));
+  const dialog = screen.getByRole("dialog", { name: "Restore model?" });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Restore Model" }));
+
+  await waitFor(() => expect(post).toHaveBeenCalledWith("/admin/recycle-bin/product/100/restore", {}));
 });

@@ -67,15 +67,15 @@ export async function syncCatalogFallback(client) {
       JOIN company_product_prices cpp ON cpp.product_id=p.id AND cpp.company_id=$1 AND cpp.is_active
       JOIN categories c ON c.id=p.category_id
       LEFT JOIN brands b ON b.id=p.brand_id
-      WHERE p.is_active AND c.is_active AND c.system_type='led-display'`, [company.rows[0].id]),
+      WHERE p.is_active AND p.deleted_at IS NULL AND c.is_active AND c.deleted_at IS NULL AND (b.id IS NULL OR b.deleted_at IS NULL) AND c.system_type='led-display'`, [company.rows[0].id]),
     client.query(`SELECT b.id,b.name,b.slug,p.source_key,p.model,p.technical_metadata FROM brands b
       JOIN category_brands cb ON cb.brand_id=b.id AND cb.is_active
       JOIN categories c ON c.id=cb.category_id
-      LEFT JOIN products p ON p.brand_id=b.id AND p.category_id=c.id AND p.is_active
-      WHERE c.slug='led-module' AND c.is_active AND b.is_active ORDER BY b.name,p.name`),
+      LEFT JOIN products p ON p.brand_id=b.id AND p.category_id=c.id AND p.is_active AND p.deleted_at IS NULL
+      WHERE c.slug='led-module' AND c.is_active AND c.deleted_at IS NULL AND b.is_active AND b.deleted_at IS NULL ORDER BY b.name,p.name`),
   ]);
 
-  const catalog = orderCatalogSections(applyLedPriceRows(componentModelAndPrice, prices.rows, brands.rows));
+  const catalog = orderCatalogSections(applyLedPriceRows(componentModelAndPrice, prices.rows, brands.rows, { authoritative: true }));
   const json = `${JSON.stringify(catalog, null, 2)}\n`;
   const componentSource = `/**
  * LED component catalog synchronized from the Mugnee price database.

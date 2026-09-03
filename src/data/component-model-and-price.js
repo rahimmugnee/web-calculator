@@ -45,35 +45,9 @@ export const componentModelAndPrice = {
     }
   },
   "moduleBrandPrices": {
-    "Leyard": {
-      "smd-in-p1_25": { "default": 9550 },
-      "smd-in-p1_53": { "default": 6332 },
-      "smd-in-p1_86": { "default": 4270 },
-      "smd-in-p2": { "default": 3250 },
-      "smd-in-p2_5": { "default": 2600 },
-      "smd-in-p3": { "default": 3100 },
-      "smd-out-p2_5": { "default": 6750 },
-      "smd-out-p3": { "default": 2868 },
-      "smd-out-p3.91": { "default": 3750 },
-      "smd-out-p4": { "default": 3000 },
-      "smd-out-p5": { "default": 2600 },
-      "smd-out-p6": { "default": 2110 },
-      "smd-out-p6_67": { "default": 2455 },
-      "smd-out-p8": { "default": 2179 },
-      "smd-out-p10": { "default": 1927 },
-      "gob-in-p1_25": { "default": 6050 },
-      "gob-in-p1_53": { "default": 4850 },
-      "gob-in-p1_86": { "default": 4600 },
-      "gob-in-p2": { "default": 3868 },
-      "gob-in-p2.5": { "default": 3200 },
-      "gob-in-p3": { "default": 4250 },
-      "cob-in-p1_25": { "default": 12750 },
-      "cob-in-p1_53": { "default": 8950 },
-      "cob-in-p1_86": { "default": 6050 }
-    },
     "Absen": {
-      "smd-in-p1_25": { "default": 9450 },
       "smd-in-p1_53": { "default": 6232 },
+      "smd-in-p1_25": { "default": 9450 },
       "smd-in-p1_86": { "default": 4170 },
       "smd-in-p2": { "default": 3150 },
       "smd-in-p2_5": { "default": 2500 },
@@ -94,63 +68,63 @@ export const componentModelAndPrice = {
       "gob-in-p2.5": { "default": 3100 },
       "gob-in-p3": { "default": 4150 },
       "cob-in-p1_25": { "default": 12650 },
-      "cob-in-p1_53": { "default": 8850 },
-      "cob-in-p1_86": { "default": 5950 }
+      "cob-in-p1_86": { "default": 5950 },
+      "cob-in-p1_53": { "default": 8850 }
+    },
+    "Leyard": {
+      "smd-in-p1_25": { "default": 9550 },
+      "smd-in-p1_53": { "default": 6332 },
+      "smd-in-p1_86": { "default": 4270 },
+      "smd-in-p2": { "default": 3250 },
+      "smd-in-p2_5": { "default": 2600 },
+      "smd-in-p3": { "default": 3100 },
+      "smd-out-p2_5": { "default": 6750 },
+      "smd-out-p3": { "default": 2868 },
+      "smd-out-p3.91": { "default": 3750 },
+      "smd-out-p5": { "default": 2600 },
+      "smd-out-p4": { "default": 3000 },
+      "smd-out-p6": { "default": 2110 },
+      "smd-out-p8": { "default": 2179 },
+      "smd-out-p6_67": { "default": 2455 },
+      "smd-out-p10": { "default": 1927 },
+      "gob-in-p1_53": { "default": 4850 },
+      "gob-in-p1_25": { "default": 6050 },
+      "gob-in-p1_86": { "default": 4600 },
+      "gob-in-p2.5": { "default": 3200 },
+      "gob-in-p2": { "default": 3868 },
+      "gob-in-p3": { "default": 4250 },
+      "cob-in-p1_25": { "default": 12750 },
+      "cob-in-p1_53": { "default": 8950 },
+      "cob-in-p1_86": { "default": 6050 }
     },
     "Lampro": {
-      "smd-in-p2_5": { "default": 2350 },
-      "smd-in-p2": { "default": 3000 },
-      "smd-in-p3": { "default": 2850 },
-      "smd-out-p2_5": { "default": 6500 },
-      "smd-out-p3": { "default": 2618 },
-      "smd-out-p3.91": { "default": 3500 },
       "smd-in-p1_25": { "default": 9300 },
       "smd-in-p1_53": { "default": 6082 },
       "smd-in-p1_86": { "default": 4020 },
+      "smd-in-p3": { "default": 2850 },
+      "smd-in-p2": { "default": 3000 },
+      "smd-in-p2_5": { "default": 2350 },
+      "smd-out-p2_5": { "default": 6500 },
+      "smd-out-p3": { "default": 2618 },
+      "smd-out-p3.91": { "default": 3500 },
       "smd-out-p4": { "default": 2850 },
       "smd-out-p5": { "default": 2350 },
-      "smd-out-p6": { "default": 1860 },
       "smd-out-p6_67": { "default": 2205 },
       "smd-out-p8": { "default": 1929 },
       "smd-out-p10": { "default": 1677 },
       "gob-in-p1_25": { "default": 5800 },
       "gob-in-p1_53": { "default": 4600 },
-      "cob-in-p1_25": { "default": 13000 },
-      "gob-in-p1_86": { "default": 4350 },
       "gob-in-p2": { "default": 3618 },
       "gob-in-p2.5": { "default": 2950 },
       "gob-in-p3": { "default": 4000 },
+      "cob-in-p1_25": { "default": 13000 },
       "cob-in-p1_53": { "default": 8700 },
-      "cob-in-p1_86": { "default": 5800 }
+      "cob-in-p1_86": { "default": 5800 },
+      "gob-in-p1_86": { "default": 4350 },
+      "smd-out-p6": { "default": 1860 }
     }
   },
   "moduleBrandModelNames": {
-    "Lampro": {
-      "smd-in-p1_25": "LC1.25P",
-      "smd-in-p1_53": "LC1.53P",
-      "smd-in-p1_86": "LC1.86P",
-      "smd-in-p2": "LC2P",
-      "smd-in-p2_5": "LC2.5P",
-      "smd-in-p3": "LC3P",
-      "smd-out-p2_5": "LC2.5PO",
-      "smd-out-p3": "LC3.076PO",
-      "smd-out-p3.91": "LR3.91O",
-      "smd-out-p4": "LC4PO",
-      "smd-out-p5": "LC5PO",
-      "smd-out-p6": "LC6PO",
-      "smd-out-p6_67": "LC6.667PO",
-      "smd-out-p8": "LC8PO",
-      "smd-out-p10": "LC10PO",
-      "gob-in-p1_25": "LC1.25P GOB",
-      "gob-in-p1_53": "LC1.53P GOB",
-      "gob-in-p1_86": "LC1.86P GOB",
-      "gob-in-p2": "LC2P GOB",
-      "gob-in-p2.5": "LC2.5P GOB",
-      "gob-in-p3": "LC3P GOB",
-      "cob-in-p1_25": "LC COB 1.25",
-      "cob-in-p1_53": "LC COB 1.53",
-      "cob-in-p1_86": "LC COB 1.86"
-    },
     "Absen": {
       "smd-in-p1_53": "P1.53",
       "smd-in-p1_25": "P1.25",
@@ -174,8 +148,8 @@ export const componentModelAndPrice = {
       "gob-in-p2.5": "P2.5",
       "gob-in-p3": "P3",
       "cob-in-p1_25": "P1.25",
-      "cob-in-p1_53": "P1.53",
-      "cob-in-p1_86": "P1.86"
+      "cob-in-p1_86": "P1.86",
+      "cob-in-p1_53": "P1.53"
     },
     "Leyard": {
       "smd-in-p1_25": "P1.25",
@@ -195,34 +169,60 @@ export const componentModelAndPrice = {
       "smd-out-p10": "P10",
       "gob-in-p1_53": "P1.53",
       "gob-in-p1_25": "P1.25",
-      "gob-in-p2.5": "P2.5",
       "gob-in-p1_86": "P1.86",
+      "gob-in-p2.5": "P2.5",
       "gob-in-p2": "P2",
       "gob-in-p3": "P3",
       "cob-in-p1_25": "P1.25",
       "cob-in-p1_53": "P1.53",
       "cob-in-p1_86": "P1.86"
+    },
+    "Lampro": {
+      "smd-in-p1_25": "LC1.25P",
+      "smd-in-p1_53": "LC1.53P",
+      "smd-in-p1_86": "LC1.86P",
+      "smd-in-p3": "LC3P",
+      "smd-in-p2": "LC2P",
+      "smd-in-p2_5": "LC2.5P",
+      "smd-out-p2_5": "LC2.5PO",
+      "smd-out-p3": "LC3.076PO",
+      "smd-out-p3.91": "LR3.91O",
+      "smd-out-p4": "LC4PO",
+      "smd-out-p5": "LC5PO",
+      "smd-out-p6_67": "LC6.667PO",
+      "smd-out-p8": "LC8PO",
+      "smd-out-p10": "LC10PO",
+      "gob-in-p1_25": "LC1.25P GOB",
+      "gob-in-p1_53": "LC1.53P GOB",
+      "gob-in-p2": "LC2P GOB",
+      "gob-in-p2.5": "LC2.5P GOB",
+      "gob-in-p3": "LC3P GOB",
+      "cob-in-p1_25": "LC COB 1.25",
+      "cob-in-p1_53": "LC COB 1.53",
+      "cob-in-p1_86": "LC COB 1.86",
+      "gob-in-p1_86": "LC1.86P GOB",
+      "smd-out-p6": "LC6PO"
     }
   },
   "moduleBrandGoldAdjustments": {
     "Absen": 150
   },
   "controllers": [
-    { "id": "WF1", "model": "Control Card WF1", "label": "Control Card WF1", "price": 562, "itemName": "Control Card WF1", "brand": "Huidu", "unit": "Pcs" },
-    { "id": "WF2", "model": "Control Card WF2", "label": "Control Card WF2", "price": 687, "itemName": "Control Card WF2", "brand": "Huidu", "unit": "Pcs" },
-    { "id": "WF4", "model": "Control Card WF4", "label": "Control Card WF4", "price": 1109, "itemName": "Control Card WF4", "brand": "Huidu", "unit": "Pcs" },
-    { "id": "A3L", "model": "HD-A3L", "label": "Crontoller: HD-A3L", "price": 23400, "itemName": "Crontoller: HD-A3L", "brand": "Huidu", "unit": "Pcs" },
-    { "id": "A5L", "model": "HD-A5L", "label": "Crontoller: HD-A5L", "price": 30500, "itemName": "Crontoller: HD-A5L", "brand": "Huidu", "unit": "Pcs" },
-    { "id": "A6L", "model": "HD-A6L", "label": "Crontoller: HD-A6L", "price": 4300, "itemName": "Crontoller: HD-A6L", "brand": "Huidu", "unit": "Pcs" },
-    { "id": "C16L", "model": "C16L Controller", "label": "C16L Controller", "price": 18000, "itemName": "C16L Controller", "brand": "Huidu", "unit": "Pcs" },
-    { "id": "VP210H", "model": "HD VP210H", "label": "Video Processor: HD VP210H", "price": 27600, "itemName": "Video Processor: HD VP210H", "brand": "Huidu", "unit": "Pcs" },
-    { "id": "VP410H", "model": "HD VP410H", "label": "Video Processor: HD VP410H", "price": 33000, "itemName": "Video Processor: HD VP410H", "brand": "Huidu", "unit": "Pcs" },
-    { "id": "VP630", "model": "HD-VP630", "label": "Video Processor: HD-VP630 ", "price": 79000, "itemName": "Video Processor: HD-VP630 ", "brand": "Huidu", "unit": "Pcs" },
-    { "id": "VP830", "model": "HD VP830", "label": "Video Processor: HD VP830", "price": 109000, "itemName": "Video Processor: HD VP830", "brand": "Huidu", "unit": "Pcs" },
-    { "id": "VP1240A", "model": "HD VP1240A", "label": "HD VP1240A", "price": 138000, "itemName": "HD VP1240A", "brand": "Huidu", "unit": "Pcs" },
-    { "id": "VP1220S", "model": "HD VP1220S", "label": "HD VP1220S", "price": 85025, "itemName": "HD VP1220S", "brand": "Huidu", "unit": "Pcs" },
-    { "id": "VP1620S", "model": "HD VP1620S", "label": "HD VP1620S", "price": 150000, "itemName": "HD VP1620S", "brand": "Huidu", "unit": "Pcs" },
-    { "id": "VP1640A", "model": "HD VP1640A", "label": "HD VP1640A", "price": 166800, "itemName": "HD VP1640A", "brand": "Huidu", "unit": "Pcs" }
+    { "id": "WF1", "unit": "Pcs", "brand": "Huidu", "label": "Control Card WF1", "model": "Control Card WF1", "price": 562, "itemName": "Control Card WF1" },
+    { "id": "WF2", "unit": "Pcs", "brand": "Huidu", "label": "Control Card WF2", "model": "Control Card WF2", "price": 687, "itemName": "Control Card WF2" },
+    { "id": "WF4", "unit": "Pcs", "brand": "Huidu", "label": "Control Card WF4", "model": "Control Card WF4", "price": 1109, "itemName": "Control Card WF4" },
+    { "id": "A3L", "unit": "Pcs", "brand": "Huidu", "label": "Crontoller: HD-A3L", "model": "HD-A3L", "price": 23400, "itemName": "Crontoller: HD-A3L" },
+    { "id": "A5L", "unit": "Pcs", "brand": "Huidu", "label": "Crontoller: HD-A5L", "model": "HD-A5L", "price": 30500, "itemName": "Crontoller: HD-A5L" },
+    { "id": "C16L", "unit": "Pcs", "brand": "Huidu", "label": "C16L Controller", "model": "C16L Controller", "price": 18000, "itemName": "C16L Controller" },
+    { "id": "VP210H", "unit": "Pcs", "brand": "Huidu", "label": "Video Processor: HD VP210H", "model": "HD VP210H", "price": 27600, "itemName": "Video Processor: HD VP210H" },
+    { "id": "VP410H", "unit": "Pcs", "brand": "Huidu", "label": "Video Processor: HD VP410H", "model": "HD VP410H", "price": 33000, "itemName": "Video Processor: HD VP410H" },
+    { "id": "VP630", "unit": "Pcs", "brand": "Huidu", "label": "Video Processor: HD-VP630 ", "model": "HD-VP630", "price": 79000, "itemName": "Video Processor: HD-VP630 " },
+    { "id": "VP830", "unit": "Pcs", "brand": "Huidu", "label": "Video Processor: HD VP830", "model": "HD VP830", "price": 109000, "itemName": "Video Processor: HD VP830" },
+    { "id": "VP1240A", "unit": "Pcs", "brand": "Huidu", "label": "HD VP1240A", "model": "HD VP1240A", "price": 138000, "itemName": "HD VP1240A" },
+    { "id": "VP1220S", "unit": "Pcs", "brand": "Huidu", "label": "HD VP1220S", "model": "HD VP1220S", "price": 85025, "itemName": "HD VP1220S" },
+    { "id": "A6L", "unit": "Pcs", "brand": "Huidu", "label": "Crontoller: HD-A6L", "model": "HD-A6L", "price": 4300, "itemName": "Crontoller: HD-A6L" },
+    { "id": "VP1620S", "unit": "Pcs", "brand": "Huidu", "label": "HD VP1620S", "model": "HD VP1620S", "price": 150000, "itemName": "HD VP1620S" },
+    { "id": "VP1640A", "unit": "Pcs", "brand": "Huidu", "label": "HD VP1640A", "model": "HD VP1640A", "price": 166800, "itemName": "HD VP1640A" }
   ],
   "ctrlCap": {
     "indoor": [
@@ -258,26 +258,24 @@ export const componentModelAndPrice = {
   "moduleBrands": [
     { "value": "Absen", "label": "Absen" },
     { "value": "Lampro", "label": "Lampro" },
-    { "value": "Leyard", "label": "Leyard" },
-    { "value": "Synoveta", "label": "Synoveta" }
+    { "value": "Leyard", "label": "Leyard" }
   ],
   "controllerSystemBrands": [
     { "value": "Huidu", "label": "Huidu" },
     { "value": "Novastar", "label": "Novastar" }
   ],
   "novastarControllers": [
-    { "id": "NS_TB1", "model": "TB-1", "label": "Controller: TB-1", "price": 21000, "itemName": "Controller: TB-1", "brand": "Novastar", "unit": "Pcs" },
-    { "id": "NS_TB2", "model": "TB-20 Plus", "label": "Controller: TB-20 Plus", "price": 34000, "itemName": "Controller: TB-20 Plus", "brand": "Novastar", "unit": "Pcs" },
-    { "id": "NS_TB40", "model": "TB-40", "label": "Controller: TB-40", "price": 40000, "itemName": "Controller: TB-40", "brand": "Novastar", "unit": "Pcs" },
-    { "id": "NS_TB50", "model": "TB-50", "label": "Controller: TB-50", "price": 57000, "itemName": "Controller: TB-50", "brand": "Novastar", "unit": "Pcs" },
-    { "id": "NS_TB60", "model": "TB-60", "label": "Controller: TB-60", "price": 75500, "itemName": "Controller: TB-60", "brand": "Novastar", "unit": "Pcs" },
-    { "id": "NS_TU15PRO", "model": "TU-15 Pro", "label": "Controller: TU-15 Pro", "price": 150000, "itemName": "Controller: TU-15 Pro", "brand": "Novastar", "unit": "Pcs" },
-    { "id": "NS_TU20PRO", "model": "TU-20 Pro", "label": "Controller: TU-20 Pro", "price": 180000, "itemName": "Controller: TU-20 Pro", "brand": "Novastar", "unit": "Pcs" },
-    { "id": "NS_TU40PRO", "model": "TU-40 Pro", "label": "Controller: TU-40 Pro", "price": 312000, "itemName": "Controller: TU-40 Pro", "brand": "Novastar", "unit": "Pcs" },
-    { "id": "NS_DSP400", "model": "DSP-400", "label": "Video Processor: DSP-400", "price": 198000, "itemName": "Video Processor: DSP-400", "brand": "Novastar", "unit": "Pcs" },
-    { "id": "NS_DSP600", "model": "DSP-600 Pro", "label": "Video Processor: DSP-600 Pro", "price": 215000, "itemName": "Video Processor: DSP-600 Pro", "brand": "Novastar", "unit": "Pcs" },
-    { "id": "NS_DSP1000", "model": "DSP-1000 Pro", "label": "Video Processor: DSP-1000 Pro", "price": 280000, "itemName": "Video Processor: DSP-1000 Pro", "brand": "Novastar", "unit": "Pcs" },
-    { "id": "NS_DSP2000", "model": "VX2000 Pro", "label": "Video Processor: VX2000 Pro", "price": 560000, "itemName": "Video Processor: VX2000 Pro", "brand": "Novastar", "unit": "Pcs" }
+    { "id": "NS_TB40", "unit": "Pcs", "brand": "Novastar", "label": "Controller: TB-40", "model": "TB-40", "price": 40000, "itemName": "Controller: TB-40" },
+    { "id": "NS_TB50", "unit": "Pcs", "brand": "Novastar", "label": "Controller: TB-50", "model": "TB-50", "price": 57000, "itemName": "Controller: TB-50" },
+    { "id": "NS_TB60", "unit": "Pcs", "brand": "Novastar", "label": "Controller: TB-60", "model": "TB-60", "price": 75500, "itemName": "Controller: TB-60" },
+    { "id": "NS_TU15PRO", "unit": "Pcs", "brand": "Novastar", "label": "Controller: TU-15 Pro", "model": "TU-15 Pro", "price": 150000, "itemName": "Controller: TU-15 Pro" },
+    { "id": "NS_TU20PRO", "unit": "Pcs", "brand": "Novastar", "label": "Controller: TU-20 Pro", "model": "TU-20 Pro", "price": 180000, "itemName": "Controller: TU-20 Pro" },
+    { "id": "NS_TU40PRO", "unit": "Pcs", "brand": "Novastar", "label": "Controller: TU-40 Pro", "model": "TU-40 Pro", "price": 312000, "itemName": "Controller: TU-40 Pro" },
+    { "id": "NS_DSP2000", "unit": "Pcs", "brand": "Novastar", "label": "Video Processor: VX2000 Pro", "model": "VX2000 Pro", "price": 560000, "itemName": "Video Processor: VX2000 Pro" },
+    { "id": "NS_TB1", "unit": "Pcs", "brand": "Novastar", "label": "Controller: TB-1", "model": "TB-1", "price": 21000, "itemName": "Controller: TB-1" },
+    { "id": "NS_DSP400", "unit": "Pcs", "brand": "Novastar", "label": "Video Processor: DSP-400", "model": "DSP-400", "price": 198000, "itemName": "Video Processor: DSP-400" },
+    { "id": "NS_DSP1000", "unit": "Pcs", "brand": "Novastar", "label": "Video Processor: DSP-1000 Pro", "model": "DSP-1000 Pro", "price": 280000, "itemName": "Video Processor: DSP-1000 Pro" },
+    { "id": "NS_DSP600", "unit": "Pcs", "brand": "Novastar", "label": "Video Processor: DSP-600 Pro", "model": "DSP-600 Pro", "price": 215000, "itemName": "Video Processor: DSP-600 Pro" }
   ],
   "novastarCtrlCap": {
     "indoor": [
@@ -309,39 +307,39 @@ export const componentModelAndPrice = {
     ]
   },
   "receivingCards": {
-    "NS_NV3210": { "model": "NV3210", "label": "Receiving Card: NV3210", "unitPrice": 4000, "pin": 26, "itemName": "Receiving Card: NV3210", "brand": "Novastar", "unit": "Pcs" },
-    "NS_NV7512": { "model": "NV7512", "label": "Receiving Card: NV7512", "unitPrice": 2900, "pin": 16, "itemName": "Receiving Card: NV7512", "brand": "Novastar", "unit": "Pcs" },
-    "NS_A5S_26": { "model": "A5s Plus", "label": "Receiving Card: A5s Plus", "unitPrice": 3100, "pin": 26, "itemName": "Receiving Card: A5s Plus", "brand": "Novastar", "unit": "Pcs" },
-    "NS_A5S_16": { "model": "A5s Plus", "label": "Receiving Card: A5s Plus", "unitPrice": 2600, "pin": 16, "itemName": "Receiving Card: A5s Plus", "brand": "Novastar", "unit": "Pcs" },
-    "R732": { "model": "R-732", "label": "Receiving Card: R-732", "unitPrice": 2950, "cobUnitPrice": 2900, "itemName": "Receiving Card: R-732", "brand": "Huidu", "unit": "Pcs" },
-    "R712": { "model": "R-712", "label": "Receiving Card: R-712", "unitPrice": 2500, "itemName": "Receiving Card: R-712", "brand": "Huidu", "unit": "Pcs" }
+    "NS_NV3210": { "pin": 26, "unit": "Pcs", "brand": "Novastar", "label": "Receiving Card: NV3210", "model": "NV3210", "itemName": "Receiving Card: NV3210", "unitPrice": 4000, "id": "NS_NV3210" },
+    "NS_NV7512": { "pin": 16, "unit": "Pcs", "brand": "Novastar", "label": "Receiving Card: NV7512", "model": "NV7512", "itemName": "Receiving Card: NV7512", "unitPrice": 2900, "id": "NS_NV7512" },
+    "NS_A5S_26": { "pin": 26, "unit": "Pcs", "brand": "Novastar", "label": "Receiving Card: A5s Plus", "model": "A5s Plus", "itemName": "Receiving Card: A5s Plus", "unitPrice": 3100, "id": "NS_A5S_26" },
+    "NS_A5S_16": { "pin": 16, "unit": "Pcs", "brand": "Novastar", "label": "Receiving Card: A5s Plus", "model": "A5s Plus", "itemName": "Receiving Card: A5s Plus", "unitPrice": 2600, "id": "NS_A5S_16" },
+    "R732": { "unit": "Pcs", "brand": "Huidu", "label": "Receiving Card: R-732", "model": "R-732", "itemName": "Receiving Card: R-732", "unitPrice": 2950, "cobUnitPrice": 2900, "id": "R732" },
+    "R712": { "unit": "Pcs", "brand": "Huidu", "label": "Receiving Card: R-712", "model": "R-712", "itemName": "Receiving Card: R-712", "unitPrice": 2500, "id": "R712" }
   },
   "powerSupplies": [
-    { "id": "PS_LD200", "model": "LD-200", "label": "Power Supply: LD-200", "price": 1600, "itemName": "Power Supply: LD-200", "brand": "Lampro", "unit": "Pcs" },
-    { "id": "PS_LRS200", "model": "LRS-200", "label": "Power Supply: LRS-200", "price": 1600, "itemName": "Power Supply: LRS-200", "brand": "Mean well", "unit": "Pcs" },
-    { "id": "PS_N200V5A", "model": "N200V5-A", "label": "Power Supply: N200V5-A", "price": 1600, "itemName": "Power Supply: N200V5-A", "brand": "G-Energy", "unit": "Pcs" }
+    { "id": "PS_LD200", "label": "Power Supply: LD-200", "price": 1600, "itemName": "Power Supply: LD-200", "brand": "Lampro", "model": "LD-200", "unit": "Pcs" },
+    { "id": "PS_LRS200", "label": "Power Supply: LRS-200", "price": 1600, "itemName": "Power Supply: LRS-200", "brand": "Mean well", "model": "LRS-200", "unit": "Pcs" },
+    { "id": "PS_N200V5A", "label": "Power Supply: N200V5-A", "price": 1600, "itemName": "Power Supply: N200V5-A", "brand": "G-Energy", "model": "N200V5-A", "unit": "Pcs" }
   ],
   "cabinetCasePrice": 8000,
   "modulesPerCabinet": 6,
   "cabinetOptions": [
-    { "id": "cabinet_indoor_aluminium_640x480", "displayType": "indoor", "materialCode": "aluminium", "materialLabel": "Aluminium", "variantCode": "", "variantLabel": "", "sizeKey": "640x480", "label": "640mm x 480mm", "widthMm": 640, "heightMm": 480, "modulesPerCabinet": 6, "price": 8000, "itemName": "Aluminium 640mm x 480mm", "brand": "", "model": "cabinet_indoor_aluminium_640x480", "unit": "Pcs" },
-    { "id": "cabinet_indoor_aluminium_640x640", "displayType": "indoor", "materialCode": "aluminium", "materialLabel": "Aluminium", "variantCode": "", "variantLabel": "", "sizeKey": "640x640", "label": "640mm x 640mm", "widthMm": 640, "heightMm": 640, "modulesPerCabinet": 8, "price": 8000, "itemName": "Aluminium 640mm x 640mm", "brand": "", "model": "cabinet_indoor_aluminium_640x640", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_mild_steel_open_640x480", "displayType": "outdoor", "materialCode": "mild_steel", "materialLabel": "Mild Steel", "variantCode": "open", "variantLabel": "Open", "sizeKey": "640x480", "label": "640mm x 480mm", "widthMm": 640, "heightMm": 480, "modulesPerCabinet": 6, "price": 8000, "itemName": "Mild Steel Open 640mm x 480mm", "brand": "", "model": "cabinet_outdoor_mild_steel_open_640x480", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_mild_steel_open_640x640", "displayType": "outdoor", "materialCode": "mild_steel", "materialLabel": "Mild Steel", "variantCode": "open", "variantLabel": "Open", "sizeKey": "640x640", "label": "640mm x 640mm", "widthMm": 640, "heightMm": 640, "modulesPerCabinet": 8, "price": 8000, "itemName": "Mild Steel Open 640mm x 640mm", "brand": "", "model": "cabinet_outdoor_mild_steel_open_640x640", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_mild_steel_open_960x960", "displayType": "outdoor", "materialCode": "mild_steel", "materialLabel": "Mild Steel", "variantCode": "open", "variantLabel": "Open", "sizeKey": "960x960", "label": "960mm x 960mm", "widthMm": 960, "heightMm": 960, "modulesPerCabinet": 18, "price": 8000, "itemName": "Mild Steel Open 960mm x 960mm", "brand": "", "model": "cabinet_outdoor_mild_steel_open_960x960", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_mild_steel_open_1280x1280", "displayType": "outdoor", "materialCode": "mild_steel", "materialLabel": "Mild Steel", "variantCode": "open", "variantLabel": "Open", "sizeKey": "1280x1280", "label": "1280mm x 1280mm", "widthMm": 1280, "heightMm": 1280, "modulesPerCabinet": 32, "price": 8000, "itemName": "Mild Steel Open 1280mm x 1280mm", "brand": "", "model": "cabinet_outdoor_mild_steel_open_1280x1280", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_mild_steel_backdoor_640x480", "displayType": "outdoor", "materialCode": "mild_steel", "materialLabel": "Mild Steel", "variantCode": "backdoor", "variantLabel": "Backdoor", "sizeKey": "640x480", "label": "640mm x 480mm", "widthMm": 640, "heightMm": 480, "modulesPerCabinet": 6, "price": 8000, "itemName": "Mild Steel Backdoor 640mm x 480mm", "brand": "", "model": "cabinet_outdoor_mild_steel_backdoor_640x480", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_mild_steel_backdoor_640x640", "displayType": "outdoor", "materialCode": "mild_steel", "materialLabel": "Mild Steel", "variantCode": "backdoor", "variantLabel": "Backdoor", "sizeKey": "640x640", "label": "640mm x 640mm", "widthMm": 640, "heightMm": 640, "modulesPerCabinet": 8, "price": 8000, "itemName": "Mild Steel Backdoor 640mm x 640mm", "brand": "", "model": "cabinet_outdoor_mild_steel_backdoor_640x640", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_mild_steel_backdoor_960x960", "displayType": "outdoor", "materialCode": "mild_steel", "materialLabel": "Mild Steel", "variantCode": "backdoor", "variantLabel": "Backdoor", "sizeKey": "960x960", "label": "960mm x 960mm", "widthMm": 960, "heightMm": 960, "modulesPerCabinet": 18, "price": 8000, "itemName": "Mild Steel Backdoor 960mm x 960mm", "brand": "", "model": "cabinet_outdoor_mild_steel_backdoor_960x960", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_mild_steel_backdoor_1280x1280", "displayType": "outdoor", "materialCode": "mild_steel", "materialLabel": "Mild Steel", "variantCode": "backdoor", "variantLabel": "Backdoor", "sizeKey": "1280x1280", "label": "1280mm x 1280mm", "widthMm": 1280, "heightMm": 1280, "modulesPerCabinet": 32, "price": 8000, "itemName": "Mild Steel Backdoor 1280mm x 1280mm", "brand": "", "model": "cabinet_outdoor_mild_steel_backdoor_1280x1280", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_magnesium_640x480", "displayType": "outdoor", "materialCode": "magnesium", "materialLabel": "Magnesium", "variantCode": "", "variantLabel": "", "sizeKey": "640x480", "label": "640mm x 480mm", "widthMm": 640, "heightMm": 480, "modulesPerCabinet": 6, "price": 8000, "itemName": "Magnesium 640mm x 480mm", "brand": "", "model": "cabinet_outdoor_magnesium_640x480", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_magnesium_640x640", "displayType": "outdoor", "materialCode": "magnesium", "materialLabel": "Magnesium", "variantCode": "", "variantLabel": "", "sizeKey": "640x640", "label": "640mm x 640mm", "widthMm": 640, "heightMm": 640, "modulesPerCabinet": 8, "price": 8000, "itemName": "Magnesium 640mm x 640mm", "brand": "", "model": "cabinet_outdoor_magnesium_640x640", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_magnesium_960x960", "displayType": "outdoor", "materialCode": "magnesium", "materialLabel": "Magnesium", "variantCode": "", "variantLabel": "", "sizeKey": "960x960", "label": "960mm x 960mm", "widthMm": 960, "heightMm": 960, "modulesPerCabinet": 18, "price": 8000, "itemName": "Magnesium 960mm x 960mm", "brand": "", "model": "cabinet_outdoor_magnesium_960x960", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_magnesium_1280x1280", "displayType": "outdoor", "materialCode": "magnesium", "materialLabel": "Magnesium", "variantCode": "", "variantLabel": "", "sizeKey": "1280x1280", "label": "1280mm x 1280mm", "widthMm": 1280, "heightMm": 1280, "modulesPerCabinet": 32, "price": 8000, "itemName": "Magnesium 1280mm x 1280mm", "brand": "", "model": "cabinet_outdoor_magnesium_1280x1280", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_aluminium_640x480", "displayType": "outdoor", "materialCode": "aluminium", "materialLabel": "Aluminium", "variantCode": "", "variantLabel": "", "sizeKey": "640x480", "label": "640mm x 480mm", "widthMm": 640, "heightMm": 480, "modulesPerCabinet": 6, "price": 8000, "itemName": "Aluminium 640mm x 480mm", "brand": "", "model": "cabinet_outdoor_aluminium_640x480", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_aluminium_640x640", "displayType": "outdoor", "materialCode": "aluminium", "materialLabel": "Aluminium", "variantCode": "", "variantLabel": "", "sizeKey": "640x640", "label": "640mm x 640mm", "widthMm": 640, "heightMm": 640, "modulesPerCabinet": 8, "price": 8000, "itemName": "Aluminium 640mm x 640mm", "brand": "", "model": "cabinet_outdoor_aluminium_640x640", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_aluminium_960x960", "displayType": "outdoor", "materialCode": "aluminium", "materialLabel": "Aluminium", "variantCode": "", "variantLabel": "", "sizeKey": "960x960", "label": "960mm x 960mm", "widthMm": 960, "heightMm": 960, "modulesPerCabinet": 18, "price": 8000, "itemName": "Aluminium 960mm x 960mm", "brand": "", "model": "cabinet_outdoor_aluminium_960x960", "unit": "Pcs" },
-    { "id": "cabinet_outdoor_aluminium_1280x1280", "displayType": "outdoor", "materialCode": "aluminium", "materialLabel": "Aluminium", "variantCode": "", "variantLabel": "", "sizeKey": "1280x1280", "label": "1280mm x 1280mm", "widthMm": 1280, "heightMm": 1280, "modulesPerCabinet": 32, "price": 8000, "itemName": "Aluminium 1280mm x 1280mm", "brand": "", "model": "cabinet_outdoor_aluminium_1280x1280", "unit": "Pcs" }
+    { "id": "cabinet_indoor_aluminium_640x480", "unit": "Pcs", "brand": "", "label": "640mm x 480mm", "model": "AL640X480", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Aluminium 640mm x 480mm", "displayType": "indoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "modulesPerCabinet": 6 },
+    { "id": "cabinet_indoor_aluminium_640x640", "unit": "Pcs", "brand": "", "label": "640mm x 640mm", "model": "AL640X640", "price": 8000, "sizeKey": "640x640", "widthMm": 640, "heightMm": 640, "itemName": "Aluminium 640mm x 640mm", "displayType": "indoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "modulesPerCabinet": 8 },
+    { "id": "cabinet_outdoor_mild_steel_open_640x480", "unit": "Pcs", "brand": "", "label": "640mm x 480mm", "model": "MS640X480", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Mild Steel Open 640mm x 480mm", "displayType": "outdoor", "variantCode": "open", "materialCode": "mild_steel", "variantLabel": "Open", "materialLabel": "Mild Steel", "modulesPerCabinet": 6 },
+    { "id": "cabinet_outdoor_mild_steel_open_640x640", "unit": "Pcs", "brand": "", "label": "640mm x 640mm", "model": "MS640X640", "price": 8000, "sizeKey": "640x640", "widthMm": 640, "heightMm": 640, "itemName": "Mild Steel Open 640mm x 640mm", "displayType": "outdoor", "variantCode": "open", "materialCode": "mild_steel", "variantLabel": "Open", "materialLabel": "Mild Steel", "modulesPerCabinet": 8 },
+    { "id": "cabinet_outdoor_mild_steel_open_960x960", "unit": "Pcs", "brand": "", "label": "960mm x 960mm", "model": "MS960X960", "price": 8000, "sizeKey": "960x960", "widthMm": 960, "heightMm": 960, "itemName": "Mild Steel Open 960mm x 960mm", "displayType": "outdoor", "variantCode": "open", "materialCode": "mild_steel", "variantLabel": "Open", "materialLabel": "Mild Steel", "modulesPerCabinet": 18 },
+    { "id": "cabinet_outdoor_mild_steel_open_1280x1280", "unit": "Pcs", "brand": "", "label": "1280mm x 1280mm", "model": "MS1280X1280", "price": 8000, "sizeKey": "1280x1280", "widthMm": 1280, "heightMm": 1280, "itemName": "Mild Steel Open 1280mm x 1280mm", "displayType": "outdoor", "variantCode": "open", "materialCode": "mild_steel", "variantLabel": "Open", "materialLabel": "Mild Steel", "modulesPerCabinet": 32 },
+    { "id": "cabinet_outdoor_mild_steel_backdoor_640x480", "unit": "Pcs", "brand": "", "label": "640mm x 480mm", "model": "MS640X480", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Mild Steel Backdoor 640mm x 480mm", "displayType": "outdoor", "variantCode": "backdoor", "materialCode": "mild_steel", "variantLabel": "Backdoor", "materialLabel": "Mild Steel", "modulesPerCabinet": 6 },
+    { "id": "cabinet_outdoor_mild_steel_backdoor_640x640", "unit": "Pcs", "brand": "", "label": "640mm x 640mm", "model": "MS640X640", "price": 8000, "sizeKey": "640x640", "widthMm": 640, "heightMm": 640, "itemName": "Mild Steel Backdoor 640mm x 640mm", "displayType": "outdoor", "variantCode": "backdoor", "materialCode": "mild_steel", "variantLabel": "Backdoor", "materialLabel": "Mild Steel", "modulesPerCabinet": 8 },
+    { "id": "cabinet_outdoor_mild_steel_backdoor_960x960", "unit": "Pcs", "brand": "", "label": "960mm x 960mm", "model": "MS960X960", "price": 8000, "sizeKey": "960x960", "widthMm": 960, "heightMm": 960, "itemName": "Mild Steel Backdoor 960mm x 960mm", "displayType": "outdoor", "variantCode": "backdoor", "materialCode": "mild_steel", "variantLabel": "Backdoor", "materialLabel": "Mild Steel", "modulesPerCabinet": 18 },
+    { "id": "cabinet_outdoor_mild_steel_backdoor_1280x1280", "unit": "Pcs", "brand": "", "label": "1280mm x 1280mm", "model": "MS1280X1280", "price": 8000, "sizeKey": "1280x1280", "widthMm": 1280, "heightMm": 1280, "itemName": "Mild Steel Backdoor 1280mm x 1280mm", "displayType": "outdoor", "variantCode": "backdoor", "materialCode": "mild_steel", "variantLabel": "Backdoor", "materialLabel": "Mild Steel", "modulesPerCabinet": 32 },
+    { "id": "cabinet_outdoor_magnesium_640x480", "unit": "Pcs", "brand": "", "label": "640mm x 480mm", "model": "MG640X480", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Magnesium 640mm x 480mm", "displayType": "outdoor", "variantCode": "", "materialCode": "magnesium", "variantLabel": "", "materialLabel": "Magnesium", "modulesPerCabinet": 6 },
+    { "id": "cabinet_outdoor_magnesium_640x640", "unit": "Pcs", "brand": "", "label": "640mm x 640mm", "model": "MG640X640", "price": 8000, "sizeKey": "640x640", "widthMm": 640, "heightMm": 640, "itemName": "Magnesium 640mm x 640mm", "displayType": "outdoor", "variantCode": "", "materialCode": "magnesium", "variantLabel": "", "materialLabel": "Magnesium", "modulesPerCabinet": 8 },
+    { "id": "cabinet_outdoor_magnesium_960x960", "unit": "Pcs", "brand": "", "label": "960mm x 960mm", "model": "MG960X960", "price": 8000, "sizeKey": "960x960", "widthMm": 960, "heightMm": 960, "itemName": "Magnesium 960mm x 960mm", "displayType": "outdoor", "variantCode": "", "materialCode": "magnesium", "variantLabel": "", "materialLabel": "Magnesium", "modulesPerCabinet": 18 },
+    { "id": "cabinet_outdoor_magnesium_1280x1280", "unit": "Pcs", "brand": "", "label": "1280mm x 1280mm", "model": "MG1280X1280", "price": 8000, "sizeKey": "1280x1280", "widthMm": 1280, "heightMm": 1280, "itemName": "Magnesium 1280mm x 1280mm", "displayType": "outdoor", "variantCode": "", "materialCode": "magnesium", "variantLabel": "", "materialLabel": "Magnesium", "modulesPerCabinet": 32 },
+    { "id": "cabinet_outdoor_aluminium_640x480", "unit": "Pcs", "brand": "", "label": "640mm x 480mm", "model": "AL640X480", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Aluminium 640mm x 480mm", "displayType": "outdoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "modulesPerCabinet": 6 },
+    { "id": "cabinet_outdoor_aluminium_640x640", "unit": "Pcs", "brand": "", "label": "640mm x 640mm", "model": "AL640X640", "price": 8000, "sizeKey": "640x640", "widthMm": 640, "heightMm": 640, "itemName": "Aluminium 640mm x 640mm", "displayType": "outdoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "modulesPerCabinet": 8 },
+    { "id": "cabinet_outdoor_aluminium_960x960", "unit": "Pcs", "brand": "", "label": "960mm x 960mm", "model": "AL960X960", "price": 8000, "sizeKey": "960x960", "widthMm": 960, "heightMm": 960, "itemName": "Aluminium 960mm x 960mm", "displayType": "outdoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "modulesPerCabinet": 18 },
+    { "id": "cabinet_outdoor_aluminium_1280x1280", "unit": "Pcs", "brand": "", "label": "1280mm x 1280mm", "model": "AL1280X1280", "price": 8000, "sizeKey": "1280x1280", "widthMm": 1280, "heightMm": 1280, "itemName": "Aluminium 1280mm x 1280mm", "displayType": "outdoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "modulesPerCabinet": 32 }
   ],
   "cabinetSizes": [
     { "id": "cabinet_640x480", "label": "640mm x 480mm", "widthMm": 640, "heightMm": 480, "modulesPerCabinet": 6 },
@@ -497,14 +495,14 @@ export const componentModelAndPrice = {
   "moduleBrandModelIds": {
     "Absen": [
       "smd-in-p1_25",
-      "cob-in-p1_25",
       "gob-in-p1_25",
+      "cob-in-p1_25",
       "cob-in-p1_53",
       "smd-in-p1_53",
       "gob-in-p1_53",
       "smd-in-p1_86",
-      "gob-in-p1_86",
       "cob-in-p1_86",
+      "gob-in-p1_86",
       "smd-out-p10",
       "gob-in-p2",
       "smd-in-p2",
@@ -522,23 +520,23 @@ export const componentModelAndPrice = {
       "smd-out-p8"
     ],
     "Lampro": [
-      "gob-in-p1_25",
-      "cob-in-p1_25",
       "smd-in-p1_25",
+      "cob-in-p1_25",
+      "gob-in-p1_25",
+      "smd-in-p1_53",
       "gob-in-p1_53",
       "cob-in-p1_53",
-      "smd-in-p1_53",
+      "gob-in-p1_86",
       "smd-in-p1_86",
       "cob-in-p1_86",
-      "gob-in-p1_86",
       "smd-out-p10",
-      "gob-in-p2",
       "smd-in-p2",
-      "gob-in-p2.5",
+      "gob-in-p2",
       "smd-in-p2_5",
+      "gob-in-p2.5",
       "smd-out-p2_5",
-      "smd-in-p3",
       "gob-in-p3",
+      "smd-in-p3",
       "smd-out-p3",
       "smd-out-p3.91",
       "smd-out-p4",
@@ -551,17 +549,17 @@ export const componentModelAndPrice = {
       "smd-in-p1_25",
       "cob-in-p1_25",
       "gob-in-p1_25",
+      "smd-in-p1_53",
       "gob-in-p1_53",
       "cob-in-p1_53",
-      "smd-in-p1_53",
+      "gob-in-p1_86",
       "cob-in-p1_86",
       "smd-in-p1_86",
-      "gob-in-p1_86",
       "smd-out-p10",
       "smd-in-p2",
       "gob-in-p2",
-      "gob-in-p2.5",
       "smd-in-p2_5",
+      "gob-in-p2.5",
       "smd-out-p2_5",
       "gob-in-p3",
       "smd-in-p3",
@@ -572,8 +570,7 @@ export const componentModelAndPrice = {
       "smd-out-p6",
       "smd-out-p6_67",
       "smd-out-p8"
-    ],
-    "Synoveta": []
+    ]
   },
   "moduleBrandLabels": {
     "Absen": {
@@ -599,8 +596,8 @@ export const componentModelAndPrice = {
       "gob-in-p2.5": "P 2.5 indoor LED Display Module",
       "gob-in-p3": "P 3 indoor LED Display Module",
       "cob-in-p1_25": "P 1.25 indoor LED Display Module",
-      "cob-in-p1_53": "P 1.53 indoor LED Display Module",
-      "cob-in-p1_86": "P 1.86 indoor LED Display Module"
+      "cob-in-p1_86": "P 1.86 indoor LED Display Module",
+      "cob-in-p1_53": "P 1.53 indoor LED Display Module"
     },
     "Leyard": {
       "smd-in-p1_25": "P 1.25 indoor LED Display Module",
@@ -620,8 +617,8 @@ export const componentModelAndPrice = {
       "smd-out-p10": "P 10 outdoor LED Display Module",
       "gob-in-p1_53": "P 1.53 indoor LED Display Module",
       "gob-in-p1_25": "P 1.25 indoor LED Display Module",
-      "gob-in-p2.5": "P 2.5 indoor LED Display Module",
       "gob-in-p1_86": "P 1.86 indoor LED Display Module",
+      "gob-in-p2.5": "P 2.5 indoor LED Display Module",
       "gob-in-p2": "P 2 indoor LED Display Module",
       "gob-in-p3": "P 3 indoor LED Display Module",
       "cob-in-p1_25": "P 1.25 indoor LED Display Module",
@@ -629,30 +626,30 @@ export const componentModelAndPrice = {
       "cob-in-p1_86": "P 1.86 indoor LED Display Module"
     },
     "Lampro": {
+      "smd-in-p1_25": "P 1.25 indoor LED Display Module",
       "smd-in-p1_53": "P 1.53 indoor LED Display Module",
       "smd-in-p1_86": "P 1.86 indoor LED Display Module",
+      "smd-in-p3": "P 3 indoor LED Display Module",
       "smd-in-p2": "P 2 indoor LED Display Module",
       "smd-in-p2_5": "P 2.5 indoor LED Display Module",
-      "smd-in-p3": "P 3 indoor LED Display Module",
-      "smd-out-p3": "P 3 outdoor LED Display Module",
       "smd-out-p2_5": "P 2.5 outdoor LED Display Module",
+      "smd-out-p3": "P 3 outdoor LED Display Module",
       "smd-out-p3.91": "P 3.91 outdoor LED Display Module",
-      "smd-in-p1_25": "P 1.25 indoor LED Display Module",
-      "smd-out-p5": "P 5 outdoor LED Display Module",
       "smd-out-p4": "P 4 outdoor LED Display Module",
-      "smd-out-p8": "P 8 outdoor LED Display Module",
+      "smd-out-p5": "P 5 outdoor LED Display Module",
       "smd-out-p6_67": "P 6.67 outdoor LED Display Module",
+      "smd-out-p8": "P 8 outdoor LED Display Module",
       "smd-out-p10": "P 10 outdoor LED Display Module",
-      "gob-in-p1_86": "P 1.86 indoor LED Display Module",
       "gob-in-p1_25": "P 1.25 indoor LED Display Module",
       "gob-in-p1_53": "P 1.53 indoor LED Display Module",
       "gob-in-p2": "P 2 indoor LED Display Module",
       "gob-in-p2.5": "P 2.5 indoor LED Display Module",
       "gob-in-p3": "P 3 indoor LED Display Module",
+      "cob-in-p1_25": "P 1.25 indoor LED Display Module",
       "cob-in-p1_53": "P 1.53 indoor LED Display Module",
       "cob-in-p1_86": "P 1.86 indoor LED Display Module",
-      "smd-out-p6": "P 6 outdoor LED Display Module",
-      "cob-in-p1_25": "P 1.25 indoor LED Display Module"
+      "gob-in-p1_86": "P 1.86 indoor LED Display Module",
+      "smd-out-p6": "P 6 outdoor LED Display Module"
     }
   },
   "moduleBrandDetails": {
@@ -789,16 +786,16 @@ export const componentModelAndPrice = {
         "model": "P1.25",
         "unit": "Pcs"
       },
-      "cob-in-p1_53": {
-        "itemName": "P 1.53 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P1.53",
-        "unit": "Pcs"
-      },
       "cob-in-p1_86": {
         "itemName": "P 1.86 indoor LED Display Module",
         "brand": "Absen",
         "model": "P1.86",
+        "unit": "Pcs"
+      },
+      "cob-in-p1_53": {
+        "itemName": "P 1.53 indoor LED Display Module",
+        "brand": "Absen",
+        "model": "P1.53",
         "unit": "Pcs"
       }
     },
@@ -905,16 +902,16 @@ export const componentModelAndPrice = {
         "model": "P1.25",
         "unit": "Pcs"
       },
-      "gob-in-p2.5": {
-        "itemName": "P 2.5 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P2.5",
-        "unit": "Pcs"
-      },
       "gob-in-p1_86": {
         "itemName": "P 1.86 indoor LED Display Module",
         "brand": "Leyard",
         "model": "P1.86",
+        "unit": "Pcs"
+      },
+      "gob-in-p2.5": {
+        "itemName": "P 2.5 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P2.5",
         "unit": "Pcs"
       },
       "gob-in-p2": {
@@ -949,6 +946,12 @@ export const componentModelAndPrice = {
       }
     },
     "Lampro": {
+      "smd-in-p1_25": {
+        "itemName": "P 1.25 indoor LED Display Module",
+        "brand": "Lampro",
+        "model": "LC1.25P",
+        "unit": "Pcs"
+      },
       "smd-in-p1_53": {
         "itemName": "P 1.53 indoor LED Display Module",
         "brand": "Lampro",
@@ -959,6 +962,12 @@ export const componentModelAndPrice = {
         "itemName": "P 1.86 indoor LED Display Module",
         "brand": "Lampro",
         "model": "LC1.86P",
+        "unit": "Pcs"
+      },
+      "smd-in-p3": {
+        "itemName": "P 3 indoor LED Display Module",
+        "brand": "Lampro",
+        "model": "LC3P",
         "unit": "Pcs"
       },
       "smd-in-p2": {
@@ -973,10 +982,10 @@ export const componentModelAndPrice = {
         "model": "LC2.5P",
         "unit": "Pcs"
       },
-      "smd-in-p3": {
-        "itemName": "P 3 indoor LED Display Module",
+      "smd-out-p2_5": {
+        "itemName": "P 2.5 outdoor LED Display Module",
         "brand": "Lampro",
-        "model": "LC3P",
+        "model": "LC2.5PO",
         "unit": "Pcs"
       },
       "smd-out-p3": {
@@ -985,28 +994,10 @@ export const componentModelAndPrice = {
         "model": "LC3.076PO",
         "unit": "Pcs"
       },
-      "smd-out-p2_5": {
-        "itemName": "P 2.5 outdoor LED Display Module",
-        "brand": "Lampro",
-        "model": "LC2.5PO",
-        "unit": "Pcs"
-      },
       "smd-out-p3.91": {
         "itemName": "P 3.91 outdoor LED Display Module",
         "brand": "Lampro",
         "model": "LR3.91O",
-        "unit": "Pcs"
-      },
-      "smd-in-p1_25": {
-        "itemName": "P 1.25 indoor LED Display Module",
-        "brand": "Lampro",
-        "model": "LC1.25P",
-        "unit": "Pcs"
-      },
-      "smd-out-p5": {
-        "itemName": "P 5 outdoor LED Display Module",
-        "brand": "Lampro",
-        "model": "LC5PO",
         "unit": "Pcs"
       },
       "smd-out-p4": {
@@ -1015,10 +1006,10 @@ export const componentModelAndPrice = {
         "model": "LC4PO",
         "unit": "Pcs"
       },
-      "smd-out-p8": {
-        "itemName": "P 8 outdoor LED Display Module",
+      "smd-out-p5": {
+        "itemName": "P 5 outdoor LED Display Module",
         "brand": "Lampro",
-        "model": "LC8PO",
+        "model": "LC5PO",
         "unit": "Pcs"
       },
       "smd-out-p6_67": {
@@ -1027,16 +1018,16 @@ export const componentModelAndPrice = {
         "model": "LC6.667PO",
         "unit": "Pcs"
       },
+      "smd-out-p8": {
+        "itemName": "P 8 outdoor LED Display Module",
+        "brand": "Lampro",
+        "model": "LC8PO",
+        "unit": "Pcs"
+      },
       "smd-out-p10": {
         "itemName": "P 10 outdoor LED Display Module",
         "brand": "Lampro",
         "model": "LC10PO",
-        "unit": "Pcs"
-      },
-      "gob-in-p1_86": {
-        "itemName": "P 1.86 indoor LED Display Module",
-        "brand": "Lampro",
-        "model": "LC1.86P GOB",
         "unit": "Pcs"
       },
       "gob-in-p1_25": {
@@ -1069,6 +1060,12 @@ export const componentModelAndPrice = {
         "model": "LC3P GOB",
         "unit": "Pcs"
       },
+      "cob-in-p1_25": {
+        "itemName": "P 1.25 indoor LED Display Module",
+        "brand": "Lampro",
+        "model": "LC COB 1.25",
+        "unit": "Pcs"
+      },
       "cob-in-p1_53": {
         "itemName": "P 1.53 indoor LED Display Module",
         "brand": "Lampro",
@@ -1081,16 +1078,16 @@ export const componentModelAndPrice = {
         "model": "LC COB 1.86",
         "unit": "Pcs"
       },
+      "gob-in-p1_86": {
+        "itemName": "P 1.86 indoor LED Display Module",
+        "brand": "Lampro",
+        "model": "LC1.86P GOB",
+        "unit": "Pcs"
+      },
       "smd-out-p6": {
         "itemName": "P 6 outdoor LED Display Module",
         "brand": "Lampro",
         "model": "LC6PO",
-        "unit": "Pcs"
-      },
-      "cob-in-p1_25": {
-        "itemName": "P 1.25 indoor LED Display Module",
-        "brand": "Lampro",
-        "model": "LC COB 1.25",
         "unit": "Pcs"
       }
     }
