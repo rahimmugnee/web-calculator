@@ -15,7 +15,6 @@ import {
   getPsuCapacity,
   getCabinetRcPsuPerCabinet,
   getModuleRes,
-  pickPSUModel,
   gridAndPixels,
   pickControllerByPixels,
   getNovastarControllersForDisplayType,
@@ -483,6 +482,9 @@ export default function PriceForm({
   const receivingCardSelectionManualRef = useRef(false);
   const [psQty, setPsQty] = useState(17);
   const [psuBrand, setPsuBrand] = useState("Lampro");
+  const [powerSupplyId, setPowerSupplyId] = useState(
+    catalog.powerSupplies?.find((supply) => supply.brand === "Lampro")?.id || catalog.powerSupplies?.[0]?.id || ""
+  );
 
   const [accessoriesMode, setAccessoriesMode] = useState("auto");
   const [accessoriesValue, setAccessoriesValue] = useState(0);
@@ -772,11 +774,16 @@ export default function PriceForm({
   useEffect(() => setPsQty(autoPsQty), [autoPsQty, dispType, modelId, display.widthFt, display.heightFt, cabinetEnabled]);
 
   const psuBrandOptions = useMemo(
-    () =>
-      (catalog.powerSupplyBrands?.length ? catalog.powerSupplyBrands : ["Lampro", "G-Energy", "Mean well"]).map((brand) =>
-        typeof brand === "string" ? { value: brand, label: brand } : { value: brand.value, label: brand.label || brand.value }
-      ),
-    [catalog.powerSupplyBrands]
+    () => [...new Set((catalog.powerSupplies || []).map((supply) => supply.brand).filter(Boolean))]
+      .map((brand) => ({ value: brand, label: brand })),
+    [catalog.powerSupplies]
+  );
+
+  const powerSupplyOptions = useMemo(
+    () => (catalog.powerSupplies || [])
+      .filter((supply) => supply.brand === psuBrand)
+      .map((supply) => ({ value: supply.id, label: supply.model || supply.label || supply.id })),
+    [catalog.powerSupplies, psuBrand]
   );
 
   useEffect(() => {
@@ -784,6 +791,12 @@ export default function PriceForm({
       setPsuBrand(psuBrandOptions[0].value);
     }
   }, [psuBrand, psuBrandOptions]);
+
+  useEffect(() => {
+    if (powerSupplyOptions.length && !powerSupplyOptions.some((option) => option.value === powerSupplyId)) {
+      setPowerSupplyId(powerSupplyOptions[0].value);
+    }
+  }, [powerSupplyId, powerSupplyOptions]);
 
   const moduleBrandOptions = useMemo(
     () =>
@@ -802,20 +815,20 @@ export default function PriceForm({
     }
   }, [moduleBrand, moduleBrandOptions]);
 
-  const psuModelLabel = catalog.powerSupplyModels?.[psuBrand] || catalog.psuModelLabel;
   const psuPicked = useMemo(() => {
-    const details = catalog.powerSupplyDetails?.[psuBrand] || {};
-    const pickedModel = details.model || psuModelLabel || "";
+    const selected = (catalog.powerSupplies || []).find((supply) => supply.id === powerSupplyId)
+      || (catalog.powerSupplies || []).find((supply) => supply.brand === psuBrand)
+      || {};
+    const pickedModel = selected.model || "";
     return {
-      ...pickPSUModel(psuModelLabel),
-      ...details,
-      itemName: powerSupplyItemName(details.itemName, pickedModel),
+      ...selected,
+      itemName: powerSupplyItemName(selected.itemName || selected.label, pickedModel),
       model: pickedModel,
     };
-  }, [catalog.powerSupplyDetails, psuBrand, psuModelLabel]);
+  }, [catalog.powerSupplies, powerSupplyId, psuBrand]);
 
   // âœ… PSU unit price (auto + manual) â€” NEW
-  const psUnitPriceAuto = useMemo(() => Number(catalog.powerSupplyPrices?.[psuBrand] ?? catalog.powerSupplyPrice ?? 0), [catalog.powerSupplyPrices, catalog.powerSupplyPrice, psuBrand]);
+  const psUnitPriceAuto = useMemo(() => Number(psuPicked.price || 0), [psuPicked.price]);
   useEffect(() => {
     // model/type/tech/cabinet change à¦¹à¦²à§‡à¦“ default reset
     setPsPriceOverrideEnabled(false);
@@ -935,6 +948,7 @@ export default function PriceForm({
         receivingPicked: rcPicked,
         receivingUnitPrice: rcUnitPrice,
 
+        powerSupplyId,
         psuPicked,
         customItem: {
           enabled: customItemEnabled,
@@ -1026,6 +1040,7 @@ export default function PriceForm({
       controllerPicked,
       rcPicked,
       rcUnitPrice,
+      powerSupplyId,
       psuPicked,
       psUnitPrice,
       psuBrand,
@@ -1583,6 +1598,26 @@ export default function PriceForm({
               }}
             />
           </label>
+
+          <label>
+            Power Supply Brand
+            <CustomSelect
+              ariaLabel="Power Supply Brand"
+              value={psuBrand}
+              options={psuBrandOptions}
+              onChange={setPsuBrand}
+            />
+          </label>
+
+          <label>
+            Power Supply Model
+            <CustomSelect
+              ariaLabel="Power Supply Model"
+              value={powerSupplyId}
+              options={powerSupplyOptions}
+              onChange={setPowerSupplyId}
+            />
+          </label>
         </div>
 
         <h3 className="component-price-title">Component Unit Price (Tk)</h3>
@@ -1823,16 +1858,6 @@ export default function PriceForm({
               step="1"
               value={psQty}
 	              onChange={(e) => setPsQty(parseFloat(e.target.value || 0))}
-	            />
-	          </label>
-
-	          <label>
-	            Power Supply Brand
-	            <CustomSelect
-	              ariaLabel="Power Supply Brand"
-	              value={psuBrand}
-	              options={psuBrandOptions}
-	              onChange={setPsuBrand}
 	            />
 	          </label>
 

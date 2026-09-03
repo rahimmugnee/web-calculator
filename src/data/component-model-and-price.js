@@ -267,6 +267,7 @@ export const componentModelAndPrice = {
   ],
   "novastarControllers": [
     { "id": "NS_TB1", "model": "TB-1", "label": "Controller: TB-1", "price": 21000, "itemName": "Controller: TB-1", "brand": "Novastar", "unit": "Pcs" },
+    { "id": "NS_TB2", "model": "TB-20 Plus", "label": "Controller: TB-20 Plus", "price": 34000, "itemName": "Controller: TB-20 Plus", "brand": "Novastar", "unit": "Pcs" },
     { "id": "NS_TB40", "model": "TB-40", "label": "Controller: TB-40", "price": 40000, "itemName": "Controller: TB-40", "brand": "Novastar", "unit": "Pcs" },
     { "id": "NS_TB50", "model": "TB-50", "label": "Controller: TB-50", "price": 57000, "itemName": "Controller: TB-50", "brand": "Novastar", "unit": "Pcs" },
     { "id": "NS_TB60", "model": "TB-60", "label": "Controller: TB-60", "price": 75500, "itemName": "Controller: TB-60", "brand": "Novastar", "unit": "Pcs" },
@@ -280,6 +281,7 @@ export const componentModelAndPrice = {
   ],
   "novastarCtrlCap": {
     "indoor": [
+      { "id": "NS_TB2", "max": 0 },
       { "id": "NS_TB40", "max": 0 },
       { "id": "NS_TB50", "max": 0 },
       { "id": "NS_TB60", "max": 0 },
@@ -293,6 +295,7 @@ export const componentModelAndPrice = {
     ],
     "outdoor": [
       { "id": "NS_TB1", "max": 0 },
+      { "id": "NS_TB2", "max": 550000 },
       { "id": "NS_TB40", "max": 1150000 },
       { "id": "NS_TB50", "max": 0 },
       { "id": "NS_TB60", "max": 2200000 },
@@ -313,43 +316,11 @@ export const componentModelAndPrice = {
     "R732": { "model": "R-732", "label": "Receiving Card: R-732", "unitPrice": 2950, "cobUnitPrice": 2900, "itemName": "Receiving Card: R-732", "brand": "Huidu", "unit": "Pcs" },
     "R712": { "model": "R-712", "label": "Receiving Card: R-712", "unitPrice": 2500, "itemName": "Receiving Card: R-712", "brand": "Huidu", "unit": "Pcs" }
   },
-  "powerSupplyPrice": 1600,
-  "powerSupplyPrices": {
-    "Lampro": 1600,
-    "Mean well": 1600,
-    "G-Energy": 1600
-  },
-  "powerSupplyBrands": [
-    { "value": "Lampro", "label": "Lampro" },
-    { "value": "Mean well", "label": "Mean well" },
-    { "value": "G-Energy", "label": "G-Energy" }
+  "powerSupplies": [
+    { "id": "PS_LD200", "model": "LD-200", "label": "Power Supply: LD-200", "price": 1600, "itemName": "Power Supply: LD-200", "brand": "Lampro", "unit": "Pcs" },
+    { "id": "PS_LRS200", "model": "LRS-200", "label": "Power Supply: LRS-200", "price": 1600, "itemName": "Power Supply: LRS-200", "brand": "Mean well", "unit": "Pcs" },
+    { "id": "PS_N200V5A", "model": "N200V5-A", "label": "Power Supply: N200V5-A", "price": 1600, "itemName": "Power Supply: N200V5-A", "brand": "G-Energy", "unit": "Pcs" }
   ],
-  "powerSupplyModels": {
-    "Lampro": "LD-200",
-    "G-Energy": "N200V5-A",
-    "Mean well": "LRS-200"
-  },
-  "psuModelLabel": "LD-200",
-  "powerSupplyDetails": {
-    "Lampro": {
-      "itemName": "Power Supply: LD-200",
-      "brand": "Lampro",
-      "model": "LD-200",
-      "unit": "Pcs"
-    },
-    "G-Energy": {
-      "itemName": "Power Supply: N200V5-A",
-      "brand": "G-Energy",
-      "model": "N200V5-A",
-      "unit": "Pcs"
-    },
-    "Mean well": {
-      "itemName": "Power Supply: LRS-200",
-      "brand": "Mean well",
-      "model": "LRS-200",
-      "unit": "Pcs"
-    }
-  },
   "cabinetCasePrice": 8000,
   "modulesPerCabinet": 6,
   "cabinetOptions": [

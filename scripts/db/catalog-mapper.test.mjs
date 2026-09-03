@@ -7,7 +7,7 @@ test("maps one LED module base price and keeps non-module defaults", () => {
     ledCatalog: {
       modelGroups: { smd: { indoor: [{ id: "p2", name: "P2", prices: { gold: 10, diamond: 20 } }] } },
       moduleBrandPrices: {}, controllers: [], novastarControllers: [], receivingCards: {}, cabinetOptions: [],
-      psuModelLabel: "PSU", powerSupplyBrands: [], powerSupplyPrice: 5,
+      powerSupplies: [],
     },
     paProducts: [{ id: "amp", componentType: "amplifier", productName: "Amp", unitPrice: 100 }],
     conferenceProducts: [],
@@ -18,7 +18,7 @@ test("maps one LED module base price and keeps non-module defaults", () => {
 });
 
 test("preserves category-specific fields in metadata", () => {
-  const products = mapStaticCatalog({ ledCatalog: { modelGroups: {}, controllers: [], novastarControllers: [], receivingCards: {}, cabinetOptions: [], powerSupplyPrice: 0 }, paProducts: [{ id: "x", productName: "X", componentType: "speaker", impedanceOhms: 8, unitPrice: 1 }], conferenceProducts: [] });
+  const products = mapStaticCatalog({ ledCatalog: { modelGroups: {}, controllers: [], novastarControllers: [], receivingCards: {}, cabinetOptions: [], powerSupplies: [] }, paProducts: [{ id: "x", productName: "X", componentType: "speaker", impedanceOhms: 8, unitPrice: 1 }], conferenceProducts: [] });
   const item = products.find((product) => product.sourceKey === "pa:x");
   assert.equal(item.metadata.impedanceOhms, 8);
 });
@@ -31,7 +31,7 @@ test("creates every adjusted-brand module with one adjusted base price", () => {
         { id: "p2", name: "P2", prices: { gold: 2000 } },
       ] } },
       moduleBrandPrices: {}, moduleBrandGoldAdjustments: { Absen: 150 },
-      controllers: [], novastarControllers: [], receivingCards: {}, cabinetOptions: [], powerSupplyPrice: 0,
+      controllers: [], novastarControllers: [], receivingCards: {}, cabinetOptions: [], powerSupplies: [],
     },
     paProducts: [], conferenceProducts: [],
   });
@@ -45,7 +45,7 @@ test("uses brand-specific module model names", () => {
     ledCatalog: {
       modelGroups: { smd: { indoor: [{ id: "smd-in-p2", name: "P2", prices: { default: 3000 } }] } },
       moduleBrandPrices: {}, moduleBrandModelNames: { Lampro: { "smd-in-p2": "LC2P" } },
-      controllers: [], novastarControllers: [], receivingCards: {}, cabinetOptions: [], powerSupplyPrice: 0,
+      controllers: [], novastarControllers: [], receivingCards: {}, cabinetOptions: [], powerSupplies: [],
     },
     paProducts: [], conferenceProducts: [],
   });
@@ -60,10 +60,11 @@ test("uses the configured model for each power supply brand", () => {
   const products = mapStaticCatalog({
     ledCatalog: {
       modelGroups: {}, controllers: [], novastarControllers: [], receivingCards: {}, cabinetOptions: [],
-      powerSupplyPrice: 1600,
-      powerSupplyPrices: { Lampro: 1600, "Mean well": 1700, "G-Energy": 1800 },
-      powerSupplyBrands: ["Lampro", "Mean well", "G-Energy"],
-      powerSupplyModels: { Lampro: "LD-200", "Mean well": "LRS-200", "G-Energy": "N200V5-A" },
+      powerSupplies: [
+        { id: "PS_LD200", model: "LD-200", label: "Power Supply: LD-200", price: 1600, brand: "Lampro", unit: "Pcs" },
+        { id: "PS_LRS200", model: "LRS-200", label: "Power Supply: LRS-200", price: 1700, brand: "Mean well", unit: "Pcs" },
+        { id: "PS_N200V5A", model: "N200V5-A", label: "Power Supply: N200V5-A", price: 1800, brand: "G-Energy", unit: "Pcs" },
+      ],
     },
     paProducts: [], conferenceProducts: [],
   });
@@ -73,12 +74,14 @@ test("uses the configured model for each power supply brand", () => {
   assert.equal(products.find((item) => item.brand === "Lampro").unit, "Pcs");
   assert.equal(products.find((item) => item.brand === "Mean well").model, "LRS-200");
   assert.equal(products.find((item) => item.brand === "G-Energy").model, "N200V5-A");
+  assert.equal(products.find((item) => item.brand === "G-Energy").sourceKey, "led:power-supply:PS_N200V5A");
+  assert.equal(products.find((item) => item.brand === "G-Energy").metadata.label, "Power Supply: N200V5-A");
 });
 
 test("maps component models separately from Novastar internal ids", () => {
   const products = mapStaticCatalog({
     ledCatalog: {
-      modelGroups: {}, controllers: [], cabinetOptions: [], powerSupplyBrands: [], powerSupplyPrice: 0,
+      modelGroups: {}, controllers: [], cabinetOptions: [], powerSupplies: [],
       novastarControllers: [{ id: "NS_TU15PRO", model: "TU-15 Pro", label: "Controller: TU-15 Pro", price: 150000 }],
       receivingCards: { NS_NV3210: { model: "NV3210", label: "Receiving Card: NV3210", unitPrice: 4000 } },
     },

@@ -20,8 +20,8 @@ const quotationItemModelName = (item = {}) => {
     return componentModelName(item.model_description);
   }
   const selectedBrand = String(item.snapshot_data?.brand || "").trim().toLowerCase();
-  const model = Object.entries(componentModelAndPrice.powerSupplyModels || {})
-    .find(([brand]) => brand.toLowerCase() === selectedBrand)?.[1];
+  const model = (componentModelAndPrice.powerSupplies || [])
+    .find((supply) => String(supply.brand || "").trim().toLowerCase() === selectedBrand)?.model;
   return text(model || item.model_description);
 };
 

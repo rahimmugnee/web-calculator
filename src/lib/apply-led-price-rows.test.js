@@ -9,8 +9,7 @@ test("overlays every LED component price without mutating factory defaults", () 
     novastarControllers: [],
     receivingCards: { R1: { label: "R1", unitPrice: 300 } },
     cabinetOptions: [{ id: "CAB1", price: 400 }],
-    powerSupplyBrands: ["Lampro"],
-    powerSupplyPrice: 500,
+    powerSupplies: [{ id: "PS1", model: "PSU-BASE", label: "Power Supply: PSU-BASE", price: 500, brand: "Lampro", unit: "Pcs" }],
   };
   const rows = [
     { component_type: "module", source_key: "led:module:lampro:p1", name: "P 1 SMD indoor LED Display Module", model: "LC1P", unit: "Box", brand_name: "Lampro", price_tier: "gold", unit_price: "110", technical_metadata: { id: "p1", technology: "smd", location: "indoor" } },
@@ -18,7 +17,7 @@ test("overlays every LED component price without mutating factory defaults", () 
     { component_type: "controller", name: "Video Controller", model: "CTRL-DB", unit: "Set", brand_name: "ControlBrand", price_tier: "default", unit_price: "210", technical_metadata: { id: "C1" } },
     { component_type: "receiving-card", name: "Data Receiver", model: "RC-DB", unit: "Card", brand_name: "ReceiverBrand", price_tier: "default", unit_price: "310", technical_metadata: { id: "R1" } },
     { component_type: "cabinet", name: "LED Case", model: "CAB-DB", unit: "Case", brand_name: "CaseBrand", price_tier: "default", unit_price: "410", technical_metadata: { id: "CAB1" } },
-    { component_type: "power-supply", name: "LED PSU", model: "PSU-DB", unit: "Unit", brand_name: "Lampro", price_tier: "default", unit_price: "510" },
+    { component_type: "power-supply", source_key: "led:power-supply:PS1", name: "LED PSU", model: "PSU-DB", unit: "Unit", brand_name: "Lampro", price_tier: "default", unit_price: "510", technical_metadata: { id: "PS1" } },
   ];
 
   const catalog = applyLedPriceRows(base, rows);
@@ -37,8 +36,7 @@ test("overlays every LED component price without mutating factory defaults", () 
   expect(catalog.receivingCards.R1).toMatchObject({ itemName: "Data Receiver", brand: "ReceiverBrand", model: "RC-DB", unit: "Card" });
   expect(catalog.cabinetOptions[0].price).toBe(410);
   expect(catalog.cabinetOptions[0]).toMatchObject({ itemName: "LED Case", brand: "CaseBrand", model: "CAB-DB", unit: "Case" });
-  expect(catalog.powerSupplyPrice).toBe(510);
-  expect(catalog.powerSupplyDetails.Lampro).toEqual({ itemName: "LED PSU", brand: "Lampro", model: "PSU-DB", unit: "Unit" });
+  expect(catalog.powerSupplies[0]).toEqual({ id: "PS1", label: "LED PSU", price: 510, itemName: "LED PSU", brand: "Lampro", model: "PSU-DB", unit: "Unit" });
   expect(base.modelGroups.smd.indoor[0].prices.gold).toBe(100);
 });
 
@@ -80,6 +78,29 @@ test("keeps Novastar internal ids separate from invoice models", () => {
   expect(catalog.receivingCards.NS_NV3210).toMatchObject({ model: "NV3210" });
 });
 
+test("keeps every power-supply model and label attached to its stable id", () => {
+  const base = {
+    powerSupplies: [
+      { id: "PS_LD200", model: "LD-200", label: "Power Supply: LD-200", price: 1, brand: "Lampro" },
+      { id: "PS_LRS200", model: "LRS-200", label: "Power Supply: LRS-200", price: 1, brand: "Mean well" },
+      { id: "PS_N200V5A", model: "N200V5-A", label: "Power Supply: N200V5-A", price: 1, brand: "G-Energy" },
+    ],
+  };
+  const rows = [
+    { component_type: "power-supply", source_key: "led:power-supply:PS_N200V5A", name: "Power Supply: N200V5-A", model: "N200V5-A", brand_name: "G-Energy", price_tier: "default", unit_price: 1800, technical_metadata: { id: "PS_N200V5A" } },
+    { component_type: "power-supply", source_key: "led:power-supply:PS_LD200", name: "Power Supply: LD-200", model: "LD-200", brand_name: "Lampro", price_tier: "default", unit_price: 1600, technical_metadata: { id: "PS_LD200" } },
+    { component_type: "power-supply", source_key: "led:power-supply:PS_LRS200", name: "Power Supply: LRS-200", model: "LRS-200", brand_name: "Mean well", price_tier: "default", unit_price: 1700, technical_metadata: { id: "PS_LRS200" } },
+  ];
+
+  const catalog = applyLedPriceRows(base, rows);
+
+  expect(catalog.powerSupplies).toEqual(expect.arrayContaining([
+    expect.objectContaining({ id: "PS_LD200", brand: "Lampro", model: "LD-200", label: "Power Supply: LD-200", price: 1600 }),
+    expect.objectContaining({ id: "PS_LRS200", brand: "Mean well", model: "LRS-200", label: "Power Supply: LRS-200", price: 1700 }),
+    expect.objectContaining({ id: "PS_N200V5A", brand: "G-Energy", model: "N200V5-A", label: "Power Supply: N200V5-A", price: 1800 }),
+  ]));
+});
+
 test.each([
   ["default then gold", false],
   ["gold then default", true],
@@ -87,8 +108,7 @@ test.each([
   const base = {
     controllers: [{ id: "C1", price: 1 }],
     cabinetOptions: [{ id: "CAB1", price: 2 }],
-    powerSupplyBrands: ["Lampro"],
-    powerSupplyPrice: 3,
+    powerSupplies: [{ id: "PS1", model: "PSU", label: "Power Supply: PSU", price: 3, brand: "Lampro", unit: "Pcs" }],
     receivingCards: { R1: { label: "R1", unitPrice: 4, cobUnitPrice: 5 } },
   };
   const pairs = [
@@ -101,8 +121,8 @@ test.each([
       { component_type: "cabinet", source_key: "led:cabinet:CAB1", model: "CAB1", price_tier: "gold", unit_price: 310, technical_metadata: { id: "CAB1" } },
     ],
     [
-      { component_type: "power-supply", source_key: "led:power-supply:default", brand_name: "Lampro", price_tier: "default", unit_price: 510 },
-      { component_type: "power-supply", source_key: "led:power-supply:default", brand_name: "Lampro", price_tier: "gold", unit_price: 310 },
+      { component_type: "power-supply", source_key: "led:power-supply:PS1", brand_name: "Lampro", price_tier: "default", unit_price: 510, technical_metadata: { id: "PS1" } },
+      { component_type: "power-supply", source_key: "led:power-supply:PS1", brand_name: "Lampro", price_tier: "gold", unit_price: 310, technical_metadata: { id: "PS1" } },
     ],
   ];
   const rows = pairs.flatMap((pair) => reverse ? [...pair].reverse() : pair);
@@ -115,7 +135,6 @@ test.each([
 
   expect(catalog.controllers[0].price).toBe(210);
   expect(catalog.cabinetOptions[0].price).toBe(410);
-  expect(catalog.powerSupplyPrice).toBe(510);
-  expect(catalog.powerSupplyPrices.Lampro).toBe(510);
+  expect(catalog.powerSupplies[0].price).toBe(510);
   expect(catalog.receivingCards.R1).toMatchObject({ unitPrice: 310, cobUnitPrice: 610 });
 });

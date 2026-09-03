@@ -1,0 +1,619 @@
+
+> calculator@0.1.0 start
+> react-scripts start
+
+Attempting to bind to HOST environment variable: 0.0.0.0
+If this was unintentional, check that you haven't mistakenly set it in your shell.
+Learn more here: https://cra.link/advanced-config
+
+[HPM] Proxy created: /  -> http://127.0.0.1:3001
+Starting the development server...
+
+Compiled successfully!
+
+You can now view calculator in the browser.
+
+  Local:            http://localhost:3000
+  On Your Network:  http://192.168.68.79:3000
+
+Note that the development build is not optimized.
+To create a production build, use npm run build.
+
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Failed to compile.
+
+[eslint] 
+src\components\PriceForm.jsx
+  Line 1072:5:   'onInstallationTypeChange' is not defined  no-undef
+  Line 1073:25:  'onInstallationTypeChange' is not defined  no-undef
+  Line 1236:8:   'setInstallationType' is not defined       no-undef
+  Line 1237:8:   'onInstallationTypeChange' is not defined  no-undef
+  Line 1239:7:   'onInstallationTypeChange' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+WARNING in [eslint] 
+src\components\PriceForm.jsx
+  Line 1073:6:  React Hook useEffect has an unnecessary dependency: 'onInstallationTypeChange'. Either exclude it or remove the dependency array. Outer scope values like 'onInstallationTypeChange' aren't valid dependencies because mutating them doesn't re-render the component    react-hooks/exhaustive-deps
+  Line 1239:6:  React Hook useCallback has an unnecessary dependency: 'onInstallationTypeChange'. Either exclude it or remove the dependency array. Outer scope values like 'onInstallationTypeChange' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+
+ERROR in [eslint] 
+src\components\PriceForm.jsx
+  Line 1072:5:   'onInstallationTypeChange' is not defined  no-undef
+  Line 1073:25:  'onInstallationTypeChange' is not defined  no-undef
+  Line 1236:8:   'setInstallationType' is not defined       no-undef
+  Line 1237:8:   'onInstallationTypeChange' is not defined  no-undef
+  Line 1239:7:   'onInstallationTypeChange' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error and 1 warning
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Failed to compile.
+
+[eslint] 
+src\components\PriceForm.jsx
+  Line 1309:17:  'setDispType' is not defined  no-undef
+  Line 1323:17:  'setDispType' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+ERROR in [eslint] 
+src\components\PriceForm.jsx
+  Line 1309:17:  'setDispType' is not defined  no-undef
+  Line 1323:17:  'setDispType' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error
+Compiling...
+Failed to compile.
+
+[eslint] 
+src\components\PriceForm.jsx
+  Line 1309:17:  'setDispType' is not defined  no-undef
+  Line 1323:17:  'setDispType' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+ERROR in [eslint] 
+src\components\PriceForm.jsx
+  Line 1309:17:  'setDispType' is not defined  no-undef
+  Line 1323:17:  'setDispType' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error
+Compiling...
+Failed to compile.
+
+[eslint] 
+src\components\PriceForm.jsx
+  Line 1309:17:  'setDispType' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+ERROR in [eslint] 
+src\components\PriceForm.jsx
+  Line 1309:17:  'setDispType' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Failed to compile.
+
+[eslint] 
+src\components\PriceForm.jsx
+  Line 440:7:    'setTechnology' is not defined  no-undef
+  Line 1335:31:  'setTechnology' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+ERROR in [eslint] 
+src\components\PriceForm.jsx
+  Line 440:7:    'setTechnology' is not defined  no-undef
+  Line 1335:31:  'setTechnology' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error
+Compiling...
+Failed to compile.
+
+[eslint] 
+src\components\PriceForm.jsx
+  Line 440:7:    'setTechnology' is not defined  no-undef
+  Line 1335:31:  'setTechnology' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+ERROR in [eslint] 
+src\components\PriceForm.jsx
+  Line 440:7:    'setTechnology' is not defined  no-undef
+  Line 1335:31:  'setTechnology' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error
+Compiling...
+Failed to compile.
+
+[eslint] 
+src\components\PriceForm.jsx
+  Line 1321:18:  'techOptions' is not defined    no-undef
+  Line 1325:30:  'techOptions' is not defined    no-undef
+  Line 1326:31:  'setTechnology' is not defined  no-undef
+  Line 1329:51:  'techOptions' is not defined    no-undef
+
+Search for the keywords to learn more about each error.
+ERROR in [eslint] 
+src\components\PriceForm.jsx
+  Line 1321:18:  'techOptions' is not defined    no-undef
+  Line 1325:30:  'techOptions' is not defined    no-undef
+  Line 1326:31:  'setTechnology' is not defined  no-undef
+  Line 1329:51:  'techOptions' is not defined    no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src\components\PriceForm.jsx
+  Line 871:9:  'controllerPixelCapacity' is assigned a value but never used  no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src\components\PriceForm.jsx
+  Line 871:9:  'controllerPixelCapacity' is assigned a value but never used  no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src\components\PriceForm.jsx
+  Line 871:9:  'controllerPixelCapacity' is assigned a value but never used  no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src\components\PriceForm.jsx
+  Line 871:9:  'controllerPixelCapacity' is assigned a value but never used  no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Failed to compile.
+
+[eslint] 
+src\components\PriceForm.jsx
+Syntax error: Expected corresponding JSX closing tag for <div>. (2152:7) (2152:7)
+ERROR in ./src/components/PriceForm.jsx
+Module build failed (from ./node_modules/babel-loader/lib/index.js):
+SyntaxError: F:\Web Calculator\Mugnee Calculator\src\components\PriceForm.jsx: Expected corresponding JSX closing tag for <div>. (2152:7)
+
+  2150 |         </div>
+  2151 | 	      </section>
+> 2152 | 	      </>
+       | 	      ^
+  2153 | 	      )}
+  2154 |
+  2155 | 	    </form>
+    at constructor (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:367:19)
+    at FlowParserMixin.raise (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:6624:19)
+    at FlowParserMixin.jsxParseElementAt (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:4751:14)
+    at FlowParserMixin.jsxParseElementAt (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:4727:32)
+    at FlowParserMixin.jsxParseElement (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:4778:17)
+    at FlowParserMixin.parseExprAtom (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:4788:19)
+    at FlowParserMixin.parseExprSubscripts (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:11145:23)
+    at FlowParserMixin.parseUpdate (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:11130:21)
+    at FlowParserMixin.parseMaybeUnary (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:11110:23)
+    at FlowParserMixin.parseMaybeUnaryOrPrivate (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10963:61)
+    at FlowParserMixin.parseExprOps (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10968:23)
+    at FlowParserMixin.parseMaybeConditional (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10945:23)
+    at FlowParserMixin.parseMaybeAssign (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10895:21)
+    at F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3527:39
+    at FlowParserMixin.tryParse (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:6932:20)
+    at FlowParserMixin.parseMaybeAssign (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3527:18)
+    at F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10864:39
+    at FlowParserMixin.allowInAnd (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:12500:12)
+    at FlowParserMixin.parseMaybeAssignAllowIn (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10864:17)
+    at FlowParserMixin.parseMaybeAssignAllowInOrVoidPattern (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:12567:17)
+    at FlowParserMixin.parseParenAndDistinguishExpression (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:11747:28)
+    at FlowParserMixin.parseParenAndDistinguishExpression (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3620:18)
+    at FlowParserMixin.parseExprAtom (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:11395:23)
+    at FlowParserMixin.parseExprAtom (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:4793:20)
+    at FlowParserMixin.parseExprSubscripts (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:11145:23)
+    at FlowParserMixin.parseUpdate (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:11130:21)
+    at FlowParserMixin.parseMaybeUnary (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:11110:23)
+    at FlowParserMixin.parseMaybeUnaryOrPrivate (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10963:61)
+    at FlowParserMixin.parseExprOps (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10968:23)
+    at FlowParserMixin.parseMaybeConditional (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10945:23)
+    at FlowParserMixin.parseMaybeAssign (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10895:21)
+    at FlowParserMixin.parseMaybeAssign (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3578:18)
+    at F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3045:77
+    at FlowParserMixin.forwardNoArrowParamsConversionAt (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3095:16)
+    at FlowParserMixin.parseConditional (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3045:27)
+    at FlowParserMixin.parseMaybeConditional (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10949:17)
+    at FlowParserMixin.parseMaybeAssign (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10895:21)
+    at FlowParserMixin.parseMaybeAssign (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3578:18)
+    at F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3045:77
+    at FlowParserMixin.forwardNoArrowParamsConversionAt (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3095:16)
+    at FlowParserMixin.parseConditional (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3045:27)
+    at FlowParserMixin.parseMaybeConditional (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10949:17)
+    at FlowParserMixin.parseMaybeAssign (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10895:21)
+    at FlowParserMixin.parseMaybeAssign (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3578:18)
+    at F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3045:77
+    at FlowParserMixin.forwardNoArrowParamsConversionAt (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3095:16)
+    at FlowParserMixin.parseConditional (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3045:27)
+    at FlowParserMixin.parseMaybeConditional (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10949:17)
+    at FlowParserMixin.parseMaybeAssign (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:10895:21)
+    at FlowParserMixin.parseMaybeAssign (F:\Web Calculator\Mugnee Calculator\node_modules\@babel\parser\lib\index.js:3578:18)
+
+ERROR in [eslint] 
+src\components\PriceForm.jsx
+  Line 2152:7:  Parsing error: Expected corresponding JSX closing tag for <div>. (2152:7)
+
+webpack compiled with 2 errors
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src\components\PriceForm.jsx
+  Line 432:27:  'setDiscountEnabled' is assigned a value but never used    no-unused-vars
+  Line 433:22:  'setDiscountTk' is assigned a value but never used         no-unused-vars
+  Line 488:29:  'setCustomItemEnabled' is assigned a value but never used  no-unused-vars
+  Line 489:23:  'setCustomItems' is assigned a value but never used        no-unused-vars
+  Line 490:9:   'nextCustomItemId' is assigned a value but never used      no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src\components\PriceForm.jsx
+  Line 432:27:  'setDiscountEnabled' is assigned a value but never used    no-unused-vars
+  Line 433:22:  'setDiscountTk' is assigned a value but never used         no-unused-vars
+  Line 488:29:  'setCustomItemEnabled' is assigned a value but never used  no-unused-vars
+  Line 489:23:  'setCustomItems' is assigned a value but never used        no-unused-vars
+  Line 490:9:   'nextCustomItemId' is assigned a value but never used      no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully

@@ -99,6 +99,8 @@ test("uses dropdowns for display structure choices", () => {
   const productModelSection = screen.getByRole("heading", { name: "Model, Brand & Size" }).closest("section");
   expect(screen.queryByRole("heading", { name: "Controller and Receiving Card Brand" })).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Controller Model" }).closest("section")).toBe(productModelSection);
+  expect(screen.getByRole("button", { name: "Power Supply Brand" }).closest("section")).toBe(productModelSection);
+  expect(screen.getByRole("button", { name: "Power Supply Model" })).toHaveTextContent("LD-200");
 
   const controllerRow = screen.getByRole("button", { name: "Controller Model" }).closest(".form-row");
   expect(screen.getByRole("button", { name: "Receiving Card" }).closest(".form-row")).toBe(controllerRow);
@@ -111,7 +113,6 @@ test("uses dropdowns for display structure choices", () => {
   expect(screen.getByLabelText("LED Module (pcs)").closest("section")).toBe(quantitySection);
   expect(screen.getByLabelText("Receiving Card (pcs)").closest("section")).toBe(quantitySection);
   expect(screen.getByLabelText("Power Supply (pcs)").closest("section")).toBe(quantitySection);
-  expect(screen.getByRole("button", { name: "Power Supply Brand" }).closest("section")).toBe(quantitySection);
 
   const vatOption = screen.getByRole("button", { name: "VAT Option" });
   const paymentTerms = screen.getByRole("button", { name: "Payment Terms" });
@@ -224,6 +225,7 @@ test("manual component selections survive tab focus and live catalog refreshes",
   fireEvent.click(screen.getByRole("option", { name: "NV7512 (16 pin)" }));
   fireEvent.click(screen.getByRole("button", { name: "Power Supply Brand" }));
   fireEvent.click(screen.getByRole("option", { name: "G-Energy" }));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Power Supply Model" })).toHaveTextContent("N200V5-A"));
 
   const fetchCountBeforeFocus = global.fetch.mock.calls.length;
   fireEvent.focus(window);
@@ -238,6 +240,6 @@ test("manual component selections survive tab focus and live catalog refreshes",
     expect(screen.getByRole("button", { name: "Controller Model" })).toHaveTextContent("TU-40 Pro");
     expect(screen.getByRole("button", { name: "Receiving Card" })).toHaveTextContent("NV7512");
     expect(screen.getByRole("button", { name: "Power Supply Brand" })).toHaveTextContent("G-Energy");
-    expect(screen.queryByText(/N200V5-A/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Power Supply Model" })).toHaveTextContent("N200V5-A");
   });
 });

@@ -1,7 +1,6 @@
 import { componentModelName } from "./itemNames.js";
 
 const cloneCatalog = (catalog) => JSON.parse(JSON.stringify(catalog || {}));
-const brandValue = (brand) => typeof brand === "string" ? brand : brand?.value;
 const basePriceComponents = new Set(["module", "controller", "cabinet", "power-supply"]);
 const basePriceTiers = new Set(["default", "gold"]);
 
@@ -63,12 +62,7 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
   const novastarControllers = [...(catalog.novastarControllers || [])];
   const receivingCards = { ...(catalog.receivingCards || {}) };
   const cabinetOptions = [...(catalog.cabinetOptions || [])];
-  const powerSupplyModels = { ...(catalog.powerSupplyModels || {}) };
-  const powerSupplyDetails = { ...(catalog.powerSupplyDetails || {}) };
-  const powerSupplyPrices = Object.fromEntries(
-    (catalog.powerSupplyBrands || []).map((brand) => [brandValue(brand), Number(catalog.powerSupplyPrice) || 0])
-  );
-  let powerSupplyPrice = Number(catalog.powerSupplyPrice) || 0;
+  const powerSupplies = [...(catalog.powerSupplies || [])];
   const preferredBaseRows = preferredBasePriceRows(rows);
 
   for (const row of rows) {
@@ -160,16 +154,31 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
     }
 
     if (row.component_type === "power-supply" && (row.price_tier === "default" || row.price_tier === "gold")) {
-      if (row.brand_name) powerSupplyPrices[row.brand_name] = price;
-      if (row.brand_name && row.model) powerSupplyModels[row.brand_name] = row.model;
-      if (row.brand_name) powerSupplyDetails[row.brand_name] = databaseProductFields(row, {
-        itemName: "Power Supply",
-        brand: row.brand_name,
-        model: powerSupplyModels[row.brand_name] || "",
-        unit: "Pcs",
-      });
-      const firstBrand = brandValue((catalog.powerSupplyBrands || [])[0]);
-      if (!row.brand_name || row.brand_name === firstBrand) powerSupplyPrice = price;
+      const rowBrand = row.brand_name || row.technical_metadata?.brand || "";
+      const index = powerSupplies.findIndex((supply) =>
+        String(supply.id) === String(id)
+        || (rowBrand && supply.brand === rowBrand && (!row.model || supply.model === row.model))
+      );
+      const current = index >= 0 ? powerSupplies[index] : {};
+      const fields = databaseProductFields(row, {
+        itemName: current.itemName || current.label || "Power Supply",
+        brand: rowBrand || current.brand,
+        model: current.model || row.technical_metadata?.model || "",
+        unit: current.unit || "Pcs",
+      }, current.id);
+      const model = fields.model || current.model || "";
+      const itemName = fields.itemName || current.itemName || current.label || (model ? `Power Supply: ${model}` : "Power Supply");
+      const supply = {
+        ...current,
+        id: current.id || id,
+        label: row.name || current.label || itemName,
+        price,
+        ...fields,
+        itemName,
+      };
+      if (index >= 0) powerSupplies[index] = supply;
+      else powerSupplies.push(supply);
+      continue;
     }
   }
 
@@ -187,10 +196,6 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
     }
   }
   const databaseBrands = [...groupedBrands.values()];
-  const databasePowerSupplyBrands = [...new Set(rows
-    .filter((row) => row.component_type === "power-supply" && row.brand_name)
-    .map((row) => row.brand_name))];
-
   return {
     ...catalog,
     moduleBrands: databaseBrands.length ? databaseBrands.map(({ value, label }) => ({ value, label })) : catalog.moduleBrands,
@@ -199,12 +204,6 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
     novastarControllers,
     receivingCards,
     cabinetOptions,
-    powerSupplyPrice,
-    powerSupplyPrices,
-    powerSupplyBrands: databasePowerSupplyBrands.length
-      ? databasePowerSupplyBrands.map((brand) => ({ value: brand, label: brand }))
-      : catalog.powerSupplyBrands,
-    powerSupplyModels,
-    powerSupplyDetails,
+    powerSupplies,
   };
 }

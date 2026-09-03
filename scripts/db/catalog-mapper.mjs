@@ -62,11 +62,19 @@ export function mapStaticCatalog({ ledCatalog, paProducts, conferenceProducts })
   for (const cabinet of ledCatalog.cabinetOptions || []) {
     rows.push(product({ sourceKey: `led:cabinet:${cabinet.id}`, category: "led-cabinet", componentType: "cabinet", name: `${cabinet.materialLabel} ${cabinet.variantLabel || ""} ${cabinet.label}`.replace(/\s+/g, " ").trim(), model: cabinet.id, unit: "Pcs", metadata: cabinet, prices: { default: cabinet.price } }));
   }
-  for (const [index, brandOption] of (ledCatalog.powerSupplyBrands || ["Lampro"]).entries()) {
-    const brand = typeof brandOption === "string" ? brandOption : brandOption.value;
-    const sourceKey = index === 0 ? "led:power-supply:default" : `led:power-supply:${String(brand).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-    const model = ledCatalog.powerSupplyModels?.[brand] || ledCatalog.psuModelLabel || "LED Power Supply";
-    rows.push(product({ sourceKey, category: "power-supply", componentType: "power-supply", name: `Power Supply: ${model}`, brand, model, unit: "Pcs", metadata: { brand, model }, prices: { default: ledCatalog.powerSupplyPrices?.[brand] ?? ledCatalog.powerSupplyPrice } }));
+  for (const supply of ledCatalog.powerSupplies || []) {
+    const model = componentModelName(supply.model, supply.label, supply.id) || "LED Power Supply";
+    rows.push(product({
+      sourceKey: `led:power-supply:${supply.id}`,
+      category: "power-supply",
+      componentType: "power-supply",
+      name: supply.itemName || supply.label || `Power Supply: ${model}`,
+      brand: supply.brand || null,
+      model,
+      unit: supply.unit || "Pcs",
+      metadata: supply,
+      prices: { default: supply.price },
+    }));
   }
 
   for (const item of paProducts || []) {
