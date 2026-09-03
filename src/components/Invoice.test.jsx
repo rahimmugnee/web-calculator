@@ -82,13 +82,14 @@ test("renders multiple custom items as separate quotation rows", () => {
   expect(calc.totals.totalCustomItem).toBe(4000);
 });
 
-test("renders COB P1.25 as an Sft display and omits receiving card and power supply", () => {
+test("renders COB P1.25 with the regular module, receiving card and power supply rows", () => {
   const snapshot = buildSnapshot({ enabled: false, name: "", price: 0 });
   snapshot.model = { id: "cob-in-p1_25", name: "P1.25 Indoor" };
   snapshot.display.sft = "12";
   snapshot.items = {
     ...snapshot.items,
     cobP125SftPricing: true,
+    modulesQty: 12,
     rcQty: 4,
     psQty: 6,
     receivingPicked: { label: "Receiving Card: NV3210" },
@@ -112,12 +113,12 @@ test("renders COB P1.25 as an Sft display and omits receiving card and power sup
     </CatalogProvider>
   );
 
-  const displayRow = screen.getByText("LED Display Module with Cabinet").closest("tr");
-  expect(within(displayRow).getByText("P1.25 COB")).toBeInTheDocument();
-  expect(within(displayRow).getByText("Sft")).toBeInTheDocument();
+  const displayRow = screen.getByText("LED Display Module").closest("tr");
+  expect(within(displayRow).getByText("P1.25 Indoor")).toBeInTheDocument();
+  expect(within(displayRow).getByText("Pcs")).toBeInTheDocument();
   expect(within(displayRow).getByText("12")).toBeInTheDocument();
-  expect(screen.queryByText("Receiving Card: NV3210")).not.toBeInTheDocument();
-  expect(screen.queryByText("Power Supply")).not.toBeInTheDocument();
+  expect(screen.getByText("NV3210")).toBeInTheDocument();
+  expect(screen.getByText("Power Supply")).toBeInTheDocument();
 });
 
 test("renders Mugnee item, brand and model in separate table columns", () => {

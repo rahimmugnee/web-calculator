@@ -55,10 +55,6 @@ function buildStepSeries(step, max) {
 
 const RATIO_HEIGHT_OPTIONS = buildStepSeries(0.525, 25.2);
 const RATIO_WIDTH_OPTIONS = buildStepSeries(1.05, 45.15);
-const COB_P125_HEIGHT_OPTIONS = buildStepSeries(337.5 / 304.8, 25.2);
-const COB_P125_PANEL_WIDTH_FT = 600 / 304.8;
-const COB_P125_PANEL_HEIGHT_FT = 337.5 / 304.8;
-const COB_P125_PIXELS_PER_PANEL = 480 * 270;
 const MIN_AUTO_DISPLAY_SFT = 10;
 const pixelFormatter = new Intl.NumberFormat("en-BD", { maximumFractionDigits: 0 });
 const CUSTOM_MODULE_BRAND_VALUE = "Custom";
@@ -97,8 +93,8 @@ const CABINET_SIZE_PICK_ROWS = {
   cabinetWidth1280: "1280x1280",
   cabinetHeight1280: "1280x1280",
 };
-const CABINET_WIDTH_PICK_ROWS = ["cobP125Width", "cabinetWidth", "cabinetWidth960", "cabinetWidth1280"];
-const CABINET_HEIGHT_PICK_ROWS = ["cobP125Height", "cabinetHeight", "cabinetHeight640", "cabinetHeight960", "cabinetHeight1280"];
+const CABINET_WIDTH_PICK_ROWS = ["cabinetWidth", "cabinetWidth960", "cabinetWidth1280"];
+const CABINET_HEIGHT_PICK_ROWS = ["cabinetHeight", "cabinetHeight640", "cabinetHeight960", "cabinetHeight1280"];
 const CABINET_PICK_ROWS = [...CABINET_WIDTH_PICK_ROWS, ...CABINET_HEIGHT_PICK_ROWS];
 
 function formatDisplayMeasure(value) {
@@ -276,14 +272,10 @@ function buildTotalsForCalc({
   cabinetUnitPrice,
 }) {
   const { items, install, display, accessories } = snapshot;
-  const moduleBillingQty = items?.cobP125SftPricing
-    ? Math.max(0, Number(display?.sft) || 0)
-    : autoModulesQty;
-
   return calcAll({
     quotationMode: snapshot.quotationMode,
     irregularQty: snapshot.irregular?.qty,
-    modulesQty: moduleBillingQty,
+    modulesQty: autoModulesQty,
 
     // âœ… With Cabinet à¦¹à¦²à§‡ rc/ps cabinetQty à¦…à¦¨à§à¦¯à¦¾à§Ÿà§€ à¦¯à¦¾à¦¬à§‡ (snapshot à¦ already set)
     rcQty: items.rcQty ?? 0,
@@ -613,22 +605,6 @@ export default function PriceForm({
     return v;
   }, [modulePriceOverrideEnabled, modulePriceOverrideStr, moduleUnitPriceAuto]);
 
-  const isCobP125 =
-    dispType === "indoor" &&
-    technology === "cob" &&
-    moduleBrand === "Leyard" &&
-    (model?.id === "cob-in-p1_25" || model?.name === "P1.25");
-
-  const cobP125PanelQty = useMemo(() => {
-    if (!isCobP125) return 0;
-    const widthFt = Number(display.widthFt);
-    const heightFt = Number(display.heightFt);
-    if (!Number.isFinite(widthFt) || !Number.isFinite(heightFt) || widthFt <= 0 || heightFt <= 0) return 0;
-    const panelsAcross = Math.max(1, Math.round(widthFt / COB_P125_PANEL_WIDTH_FT));
-    const panelsDown = Math.max(1, Math.round(heightFt / COB_P125_PANEL_HEIGHT_FT));
-    return panelsAcross * panelsDown;
-  }, [display.heightFt, display.widthFt, isCobP125]);
-
   // âœ… Cabinet Unit Price (auto + manual) â€” NEW
   const cabinetUnitPriceAuto = useMemo(
     () => Number(selectedCabinetSize?.price ?? catalog.cabinetCasePrice ?? 0),
@@ -651,16 +627,14 @@ export default function PriceForm({
   }, [cabinetEnabled, cabinetPriceOverrideEnabled, cabinetPriceOverrideStr, cabinetUnitPriceAuto]);
 
   const { totalPixels } = useMemo(() => {
-    if (isCobP125) return { totalPixels: cobP125PanelQty * COB_P125_PIXELS_PER_PANEL };
     return gridAndPixels(model.id || model.name, display.widthFt, display.heightFt, catalog.moduleRes, catalog.physical);
-  }, [cobP125PanelQty, isCobP125, model.id, model.name, display.widthFt, display.heightFt, catalog.moduleRes, catalog.physical]);
+  }, [model.id, model.name, display.widthFt, display.heightFt, catalog.moduleRes, catalog.physical]);
 
   const totalModulePixels = useMemo(() => {
-    if (isCobP125) return cobP125PanelQty * COB_P125_PIXELS_PER_PANEL;
     const res = getModuleRes(model.id || model.name, catalog.moduleRes);
     if (!res || !autoModulesQty) return 0;
     return autoModulesQty * res.pxW * res.pxH;
-  }, [isCobP125, cobP125PanelQty, model.id, model.name, autoModulesQty, catalog.moduleRes]);
+  }, [model.id, model.name, autoModulesQty, catalog.moduleRes]);
 
   const irregularMultiplier = quotationMode === "irregular" ? Math.max(1, Math.ceil(parseFloat(irregularQty || 1) || 1)) : 1;
   const displayTotalModulePixels = totalModulePixels * irregularMultiplier;
@@ -758,7 +732,6 @@ export default function PriceForm({
   );
 
   const autoRcQty = useMemo(() => {
-    if (isCobP125) return 0;
     // With cabinet, RC qty follows the selected cabinet size and pixel pitch.
     if (cabinetEnabled) return (cabinetQty || 0) * cabinetRcPsuPerCabinet.rc;
 
@@ -766,7 +739,6 @@ export default function PriceForm({
     return cap > 0 ? Math.ceil((autoModulesQty || 0) / cap) : 0;
   }, [
     dispType,
-    isCobP125,
     model.id,
     model.name,
     autoModulesQty,
@@ -779,13 +751,12 @@ export default function PriceForm({
   ]);
 
   const autoPsQty = useMemo(() => {
-    if (isCobP125) return 0;
     // With cabinet, PSU qty follows the selected cabinet size and pixel pitch.
     if (cabinetEnabled) return (cabinetQty || 0) * cabinetRcPsuPerCabinet.psu;
 
     const cap = getPsuCapacity(dispType, model.id || model.name, catalog.psuCapacity);
     return cap > 0 ? Math.ceil((autoModulesQty || 0) / cap) : 0;
-  }, [dispType, isCobP125, model.id, model.name, autoModulesQty, cabinetEnabled, cabinetQty, cabinetRcPsuPerCabinet.psu, catalog.psuCapacity]);
+  }, [dispType, model.id, model.name, autoModulesQty, cabinetEnabled, cabinetQty, cabinetRcPsuPerCabinet.psu, catalog.psuCapacity]);
 
   useEffect(() => setRcQty(autoRcQty), [autoRcQty, dispType, modelId, display.widthFt, display.heightFt, cabinetEnabled]);
   useEffect(() => setPsQty(autoPsQty), [autoPsQty, dispType, modelId, display.widthFt, display.heightFt, cabinetEnabled]);
@@ -922,11 +893,8 @@ export default function PriceForm({
 
       items: {
         modulesQty: autoModulesQty,
-        rcQty: isCobP125 ? 0 : rcQty,
-        psQty: isCobP125 ? 0 : psQty,
-        cobP125SftPricing: isCobP125,
-        cobP125PanelQty,
-        cobP125PixelsPerPanel: isCobP125 ? COB_P125_PIXELS_PER_PANEL : 0,
+        rcQty,
+        psQty,
 
         // âœ… Cabinet
         cabinetEnabled,
@@ -1016,8 +984,6 @@ export default function PriceForm({
 	      quotationMode,
 	      irregularQty,
       autoModulesQty,
-      isCobP125,
-      cobP125PanelQty,
       rcQty,
       psQty,
       cabinetEnabled,
@@ -1146,10 +1112,7 @@ export default function PriceForm({
   // âœ… Accept preset size chips (width/height) and allow manual override afterward
   useEffect(() => {
     if (!sizePick) return;
-    const isCobP125WidthPick = isCobP125 && sizePick.row === "cobP125Width" && sizePick.width !== undefined;
-    const autoHeight = isCobP125WidthPick
-      ? getNearestSizeOption(COB_P125_HEIGHT_OPTIONS, Number(sizePick.width) * 9 / 16)
-      : sizePick.width !== undefined && (sizePick.row === "width" || sizePick.row === "p3p6")
+    const autoHeight = sizePick.width !== undefined && (sizePick.row === "width" || sizePick.row === "p3p6")
       ? parseFloat(getAutoHeightFromWidth(sizePick.width))
       : null;
 
@@ -1182,9 +1145,6 @@ export default function PriceForm({
       if (isCabinetHeightPick) {
         clearSizeSelectionRows(next, CABINET_HEIGHT_PICK_ROWS);
       }
-      if (isCobP125WidthPick) {
-        clearSizeSelectionRows(next, CABINET_HEIGHT_PICK_ROWS);
-      }
       if (sizePick.row === "width" || sizePick.row === "height" || sizePick.row === "p3p6") {
         clearSizeSelectionRows(next, CABINET_PICK_ROWS);
       }
@@ -1206,19 +1166,14 @@ export default function PriceForm({
         !Number.isNaN(autoHeight) &&
         !isCabinetPick
       ) {
-        if (isCobP125WidthPick) {
-          delete next.height;
-          next.cobP125Height = autoHeight;
-        } else {
-          next.height = autoHeight;
-        }
+        next.height = autoHeight;
       } else if (sizePick.row === "height" && sizePick.height !== undefined) {
         next.height = sizePick.height;
       }
 
       return next;
     });
-  }, [isCobP125, setCabinetSizeByKey, sizePick, updateSizeSelection]);
+  }, [setCabinetSizeByKey, sizePick, updateSizeSelection]);
 
 	  const displayControlsClassName = `form-row${
 	    dispType === "outdoor" && cabinetEnabled ? " form-row-cabinet-outdoor" : ""
@@ -1381,7 +1336,7 @@ export default function PriceForm({
 
 	      {/* Product model */}
 	      <section>
-        <h3>Product Model</h3>
+        <h3>Model, Brand &amp; Size</h3>
 
         <div className="form-row product-model-main-row">
           <label>
@@ -1718,7 +1673,7 @@ export default function PriceForm({
 
 	        <div className="form-row" style={{ marginTop: 10, gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
 	          <label>
-	            {isCobP125 ? "Total Panel Pixels" : "Total Module Pixels"}
+	            Total Module Pixels
 	            <input className="input pixel-value-input" value={pixelFormatter.format(displayTotalModulePixels)} readOnly />
           </label>
 
@@ -1807,9 +1762,9 @@ export default function PriceForm({
 
 	        <div className="form-row component-quantity-row" style={{ marginTop: 10 }}>
 	          <label>
-	            {isCobP125 ? "LED Module Area (sft)" : "LED Module (pcs)"}
-	            <input className="input" type="number" value={isCobP125 ? display.sft || 0 : autoModulesQty || 0} readOnly />
-	            {!isCobP125 && cabinetEnabled ? (
+	            LED Module (pcs)
+	            <input className="input" type="number" value={autoModulesQty || 0} readOnly />
+	            {cabinetEnabled ? (
 	              <span style={{ fontSize: 12, color: "#64748b" }}>
 	                {cabinetQty || 0} cabinet x {cabinetModulesPerCabinet} modules
 	              </span>

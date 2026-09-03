@@ -140,11 +140,11 @@ test('updates the quotation reference when pixel pitch or display size changes',
 
   renderApp();
   const sequenceKey = `quotationReferenceSequence:MUG:${new Date().getFullYear()}`;
-  await screen.findByRole('button', { name: 'Select Model' });
+  await screen.findByRole('button', { name: 'Pixel Pitch' });
   await waitFor(() => expect(Number(window.localStorage.getItem(sequenceKey))).toBeGreaterThan(0));
   const initialSequence = Number(window.localStorage.getItem(sequenceKey));
 
-  fireEvent.click(screen.getByRole('button', { name: 'Select Model' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Pixel Pitch' }));
   fireEvent.click(screen.getByRole('option', { name: 'P2' }));
   await waitFor(() => expect(Number(window.localStorage.getItem(sequenceKey))).toBe(initialSequence + 1));
 

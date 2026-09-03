@@ -23,8 +23,6 @@ const P3P6 = [
 ];
 
 const CABINET_SIZE_ROWS = [
-  { row: "cobP125Width", label: "COB P1.25 Width (600mm)", values: buildStepSeries(600 / 304.8, 40) },
-  { row: "cobP125Height", label: "COB P1.25 Height (337.5mm)", values: buildStepSeries(337.5 / 304.8, 25.2) },
   { row: "cabinetWidth", label: "Cabinet Width (640mm)", values: buildStepSeries(2.1, 40) },
   { row: "cabinetHeight", label: "Cabinet Height (480mm)", values: buildStepSeries(1.575, 25.2) },
   { row: "cabinetHeight640", label: "Cabinet Height (640mm)", values: buildStepSeries(2.1, 25.2) },
@@ -114,7 +112,7 @@ export default function DisplaySize({ onPick, activeChips = {} }) {
         </div>
 
         <div className="ds-hint">
-          Size calculated based on COB P1.25 600x337.5 mm and cabinet sizes 640x480 mm, 640x640 mm, 960x960 mm, and 1280x1280 mm (approx ft).
+          Size calculated based on cabinet sizes 640x480 mm, 640x640 mm, 960x960 mm, and 1280x1280 mm (approx ft).
         </div>
       </div>
     </section>

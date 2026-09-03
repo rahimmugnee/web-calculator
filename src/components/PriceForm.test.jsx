@@ -24,9 +24,6 @@ function renderPriceForm() {
         <button type="button" onClick={() => setSizePick(null)}>
           reset-size-pick
         </button>
-        <button type="button" onClick={() => setSizePick({ row: "cobP125Width", width: 11.81 })}>
-          pick-cob-p125-width
-        </button>
         <button type="button" onClick={() => setDisplayType("indoor")}>set-display-indoor</button>
         <button type="button" onClick={() => { setDisplayType("outdoor"); setTechnology("smd"); }}>set-display-outdoor</button>
         <button type="button" onClick={() => setTechnology("gob")}>set-technology-gob</button>
@@ -99,7 +96,7 @@ test("uses dropdowns for display structure choices", () => {
   expect(screen.getByRole("button", { name: "Quality" })).toHaveTextContent("Platinum - 15% premium");
   expect(screen.getByLabelText(/Custom Warranty/i)).toHaveAttribute("placeholder", "Default: 2 Year(s)");
 
-  const productModelSection = screen.getByRole("heading", { name: "Product Model" }).closest("section");
+  const productModelSection = screen.getByRole("heading", { name: "Model, Brand & Size" }).closest("section");
   expect(screen.queryByRole("heading", { name: "Controller and Receiving Card Brand" })).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Controller Model" }).closest("section")).toBe(productModelSection);
 
@@ -130,23 +127,18 @@ test("uses dropdowns for display structure choices", () => {
   expect(screen.getByRole("button", { name: "Payment Terms" })).toHaveTextContent("75% Advance, 25% before Installation");
 });
 
-test("COB P1.25 width pick selects the nearest 16:9 panel height", async () => {
+test("Leyard COB P1.25 keeps the regular module quotation format", async () => {
   renderPriceForm();
 
   fireEvent.click(screen.getByRole("button", { name: "set-technology-cob" }));
   fireEvent.click(screen.getByRole("button", { name: "Module Brand" }));
   fireEvent.click(await screen.findByRole("option", { name: "Leyard" }));
-  fireEvent.click(screen.getByRole("button", { name: "pick-cob-p125-width" }));
 
-  await waitFor(() => {
-    expect(screen.getByLabelText(/width \(ft\)/i)).toHaveValue("11.81");
-    expect(screen.getByLabelText(/height \(ft\)/i)).toHaveValue("6.64");
-    expect(screen.getByLabelText("LED Module Area (sft)")).toHaveValue(78.42);
-    expect(screen.getByLabelText("Total Panel Pixels")).toHaveValue("4,665,600");
-    expect(screen.getByTestId("active-size")).toHaveTextContent(
-      JSON.stringify({ cobP125Width: 11.81, cobP125Height: 6.64 })
-    );
-  });
+  expect(screen.getByRole("button", { name: "Module Brand" })).toHaveTextContent("Leyard");
+  expect(screen.getByLabelText("LED Module (pcs)")).toBeInTheDocument();
+  expect(screen.getByLabelText("Total Module Pixels")).toBeInTheDocument();
+  expect(screen.queryByLabelText("LED Module Area (sft)")).not.toBeInTheDocument();
+  expect(screen.queryByLabelText("Total Panel Pixels")).not.toBeInTheDocument();
 });
 
 test("Lampro COB P1.25 keeps the regular module quotation format", async () => {

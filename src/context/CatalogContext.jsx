@@ -4,12 +4,11 @@ import { applyLedPriceRows } from "../lib/apply-led-price-rows.js";
 import { loadQuotationCatalog } from "../lib/load-quotation-catalog.js";
 
 const CatalogContext = createContext(null);
-const SELECTED_COMPANY_KEY = "calculatorSelectedCompanyId";
 
 export function CatalogProvider({ children }) {
   const [company, setCompany] = useState(null);
   const [companies, setCompanies] = useState([]);
-  const [selectedCompanyId, setSelectedCompanyIdState] = useState(() => window.localStorage.getItem(SELECTED_COMPANY_KEY) || "");
+  const [selectedCompanyId, setSelectedCompanyIdState] = useState("");
   const [catalog, setCatalog] = useState(componentModelAndPrice);
   const catalogRequestId = useRef(0);
   const loadCompany = useCallback(async () => {
@@ -26,6 +25,7 @@ export function CatalogProvider({ children }) {
       const companyRows = await companyResponse.json();
       setCompanies(companyRows);
       const profile = companyRows.find((item) => String(item.id) === String(selectedCompanyId))
+        || companyRows.find((item) => item.name === "Mugnee Multiple Limited")
         || companyRows.find((item) => item.is_default)
         || companyRows[0];
       if (!profile) throw new Error("Company branding unavailable");
@@ -58,7 +58,6 @@ export function CatalogProvider({ children }) {
   const setSelectedCompanyId = useCallback((companyId) => {
     const value = String(companyId || "");
     setSelectedCompanyIdState(value);
-    window.localStorage.setItem(SELECTED_COMPANY_KEY, value);
   }, []);
   const value = useMemo(() => ({ catalog, company, companies, selectedCompanyId: String(company?.id || selectedCompanyId), setSelectedCompanyId }), [catalog,company,companies,selectedCompanyId,setSelectedCompanyId]);
 

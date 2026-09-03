@@ -52,7 +52,6 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
   const isIrregular = snapshot?.quotationMode === "irregular";
   const irregularQty = Math.max(1, Math.ceil(Number(snapshot?.irregular?.qty) || 1));
   const moduleModelName = model.code || model.name;
-  const cobModuleModelName = model.code || "P1.25 COB";
   const cabinetText = items?.cabinetEnabled
     ? `${items?.cabinet?.invoiceLabel || "Aluminium Cabinet"} (${items?.cabinet?.sizeLabel || "640 x 480mm"})`
     : "Cabinet";
@@ -69,7 +68,6 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
   // ---- Dynamic rows (SL auto) ----
   const rows = [];
   let sl = 1;
-  const isCobP125 = items?.cobP125SftPricing === true;
 
   // ✅ Module (NO Technology here)
   const rcLabel = items.receivingPicked?.label || "Receiving Card";
@@ -92,10 +90,10 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
   } else {
     rows.push({
       sl: sl++,
-      name: isCobP125 ? "LED Display Module with Cabinet" : "LED Display Module",
-      model: isCobP125 ? cobModuleModelName : moduleModelName,
-      unit: isCobP125 ? "Sft" : "Pcs",
-      qty: isCobP125 ? Number(display.sft) || 0 : items.modulesQty,
+      name: "LED Display Module",
+      model: moduleModelName,
+      unit: "Pcs",
+      qty: items.modulesQty,
       unitPrice: unitModule,
       total: totals.totalModules,
       brand: items.brands?.module,
@@ -117,7 +115,7 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
   }
 
   // Receiving card
-  if (!isIrregular && !isCobP125) {
+  if (!isIrregular) {
     rows.push({
       sl: sl++,
       name: "Receiving Card",
