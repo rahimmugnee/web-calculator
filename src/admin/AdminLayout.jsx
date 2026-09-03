@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth, useCompany } from "./contexts";
 import { navigate } from "./router";
+import { isPrivilegedAdmin } from "./access";
 
 const sections = [
   ["CATALOG", [["Dashboard", "/admin/dashboard", "dashboard"], ["Categories", "/admin/categories", "categories"]]],
   ["SALES", [["Quotations", "/admin/quotations", "quotations"], ["Customers", "/admin/customers", "customer"]]],
-  ["COMPANY MANAGEMENT", [["Companies", "/admin/companies", "company"]]],
+  ["COMPANY MANAGEMENT", [["Companies", "/admin/companies", "company", true]]],
   ["TEMPLATES", [["Terms & Conditions", "/admin/templates/terms", "terms"], ["Recycle Bin", "/admin/recycle-bin", "trash"]]],
-  ["SYSTEM", [["Users & Roles", "/admin/users", "users"], ["Activity Logs", "/admin/activity-logs", "activity"], ["Settings", "/admin/settings", "settings"]]],
+  ["SYSTEM", [["Users & Roles", "/admin/users", "users", true], ["Activity Logs", "/admin/activity-logs", "activity"], ["Settings", "/admin/settings", "settings"]]],
 ];
 
 function SidebarIcon({ name }) {
@@ -70,6 +71,10 @@ export default function AdminLayout({ path, children }) {
 
   const displayName = user?.display_name || "Admin User";
   const roleName = user?.role_name || "Administrator";
+  const canAccessPrivilegedAdmin = isPrivilegedAdmin(user);
+  const visibleSections = sections
+    .map(([label, links]) => [label, links.filter(([, , , privileged]) => !privileged || canAccessPrivilegedAdmin)])
+    .filter(([, links]) => links.length);
 
   return <div className={`admin-shell${collapsed ? " sidebar-collapsed" : ""}`}>
     <aside className="admin-sidebar">
@@ -80,7 +85,7 @@ export default function AdminLayout({ path, children }) {
       </div>
 
       <nav className="admin-sidebar-nav" aria-label="Admin navigation">
-        {sections.map(([label, links]) => <div className="admin-nav-section" key={label}>
+        {visibleSections.map(([label, links]) => <div className="admin-nav-section" key={label}>
           <div className="admin-nav-label">{label}</div>
           {links.map(([name, target, icon]) => <a key={target} href={target} title={collapsed ? name : undefined} className={path === target || (target !== "/admin/dashboard" && path.startsWith(`${target}/`)) ? "active" : ""} onClick={(event) => go(event, target)}>
             <span className="admin-nav-icon"><SidebarIcon name={icon}/></span><span className="admin-nav-text">{name}</span>

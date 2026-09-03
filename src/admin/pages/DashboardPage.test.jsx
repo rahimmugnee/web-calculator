@@ -3,7 +3,10 @@ import { get } from "../api";
 import DashboardPage from "./DashboardPage";
 
 jest.mock("../api", () => ({ get: jest.fn() }));
-jest.mock("../contexts", () => ({ useCompany: () => ({ companyId: "1", company: { name: "Mugnee Multiple Limited" } }) }));
+jest.mock("../contexts", () => ({
+  useCompany: () => ({ companyId: "1", company: { name: "Mugnee Multiple Limited" } }),
+  useAuth: () => ({ user: { role: "super-admin", role_name: "Super Admin" } }),
+}));
 
 const august = {
   selected_month: "2026-08",
@@ -38,6 +41,9 @@ test("filters every dashboard section by the selected month", async () => {
   render(<DashboardPage />);
   const selector = await screen.findByRole("combobox", { name: "Filter dashboard by month" });
 
+  await waitFor(() => expect(document.querySelector(".dashboard-page")).not.toHaveClass("is-loading"));
+  fireEvent.change(selector, { target: { value: "2026-08" } });
+  await waitFor(() => expect(get).toHaveBeenCalledWith("/admin/dashboard?companyId=1&month=2026-08"));
   await waitFor(() => expect(document.querySelector(".dashboard-page")).not.toHaveClass("is-loading"));
   expect(await screen.findByText("৳12,704,456")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "View Organizations" }));

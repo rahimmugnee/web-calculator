@@ -42,6 +42,7 @@ export function pickReceivingCard(dispType, modelName = "", brand = "Huidu", tec
   const pick = (id, overrides = {}) => {
     const cfg = receivingCards[id] || {};
     return {
+      ...cfg,
       id,
       label: cfg.label || id,
       unitPrice: overrides.unitPrice ?? cfg.unitPrice ?? 0,

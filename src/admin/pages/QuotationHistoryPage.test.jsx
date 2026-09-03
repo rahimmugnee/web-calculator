@@ -54,6 +54,15 @@ test("shows the taka symbol in quotation price headers", () => {
   expect(screen.getByRole("columnheader", { name: "Total Price ৳" })).toBeInTheDocument();
 });
 
+test("offers a PDF download from quotation details", () => {
+  const { container } = render(<QuotationDetails titleId="pdf-title" row={quotation} onClose={jest.fn()} />);
+
+  const button = screen.getByRole("button", { name: "Download PDF" });
+  expect(button).toBeInTheDocument();
+  expect(container.querySelector(`#quotation-pdf-${quotation.id}`)).toHaveClass("quotation-pdf-target");
+  expect(button.closest(".quotation-pdf-excluded")).toBeInTheDocument();
+});
+
 test("uses a centered confirmation modal before deleting a quotation", async () => {
   render(<QuotationHistoryPage />);
   const deleteButton = await screen.findByRole("button", { name: "Delete" });

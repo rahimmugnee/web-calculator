@@ -576,8 +576,10 @@ label{
   transition:.15s;
   appearance:none;
 }
-.input::placeholder{
-  color:#111827;
+.input::placeholder,
+input::placeholder,
+textarea::placeholder{
+  color:#9ca3af !important;
   opacity:1;
 }
 
@@ -637,6 +639,9 @@ input[type=number]{
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
+}
+.custom-select-trigger .custom-select-placeholder{
+  color:#9ca3af;
 }
 .custom-select.disabled .custom-select-trigger{
   cursor:not-allowed;
@@ -1093,13 +1098,13 @@ section h3{
 .invoice-table .col-total-price{ width:17%; }
 
 .mugnee-invoice-table .col-sl{ width:4%; }
-.mugnee-invoice-table .col-item{ width:35%; }
+.mugnee-invoice-table .col-item{ width:36%; }
 .mugnee-invoice-table .col-brand{ width:12%; }
 .mugnee-invoice-table .col-model{ width:12%; }
 .mugnee-invoice-table .col-unit{ width:7%; }
 .mugnee-invoice-table .col-qty{ width:5%; }
 .mugnee-invoice-table .col-unit-price{ width:12%; }
-.mugnee-invoice-table .col-total-price{ width:15%; }
+.mugnee-invoice-table .col-total-price{ width:14%; }
 
 .pa-invoice-table .col-item{ width:31%; }
 .pa-invoice-table .col-brand-model{ width:20%; }
@@ -1206,6 +1211,63 @@ section h3{
 .mugnee-invoice-table td:nth-child(8){
   text-align:right !important;
   vertical-align:middle;
+}
+
+.invoice-wrap .invoice-table.mugnee-invoice-table tr > *{
+  text-align:center !important;
+  vertical-align:middle !important;
+}
+.invoice-wrap .invoice-table.mugnee-invoice-table .row-accent td:first-child{
+  text-align:center !important;
+}
+.invoice-wrap .invoice-table.mugnee-invoice-table .row-accent td.total-label{
+  text-align:right !important;
+  vertical-align:middle !important;
+}
+.mugnee-invoice-table .row-accent td.total-label .table-cell-fit{
+  justify-content:flex-end;
+  text-align:right;
+}
+.mugnee-invoice-table .table-cell-fit{
+  display:flex;
+  width:100%;
+  min-width:0;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  white-space:nowrap;
+  text-align:center;
+}
+.mugnee-invoice-table .table-cell-fit-text{
+  display:inline-block;
+  flex:0 0 auto;
+  max-width:none;
+  white-space:nowrap;
+  line-height:inherit;
+}
+.invoice-wrap .invoice-table.mugnee-invoice-table tbody tr:not(.row-accent) td:nth-child(2){
+  text-align:left !important;
+  vertical-align:middle !important;
+}
+.mugnee-invoice-table tbody tr:not(.row-accent) td:nth-child(2) .table-cell-fit{
+  justify-content:flex-start;
+  text-align:left;
+}
+.invoice-wrap .invoice-table.mugnee-invoice-table tbody tr:not(.row-accent) td:nth-child(7),
+.invoice-wrap .invoice-table.mugnee-invoice-table tbody tr:not(.row-accent) td:nth-child(8),
+.invoice-wrap .invoice-table.mugnee-invoice-table tbody .row-accent td:last-child{
+  text-align:right !important;
+  vertical-align:middle !important;
+}
+.mugnee-invoice-table tbody tr:not(.row-accent) td:nth-child(7) .table-cell-fit,
+.mugnee-invoice-table tbody tr:not(.row-accent) td:nth-child(8) .table-cell-fit,
+.mugnee-invoice-table tbody .row-accent td:last-child .table-cell-fit{
+  justify-content:flex-end;
+  text-align:right;
+}
+.mugnee-invoice-table .package-line{
+  width:100%;
+  min-width:0;
 }
 
 .pa-invoice-table th:nth-child(5),

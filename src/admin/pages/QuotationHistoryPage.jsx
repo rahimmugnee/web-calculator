@@ -3,6 +3,7 @@ import { get, patch, post, remove } from "../api";
 import { EmptyState, Notice, PageHeader } from "../AdminLayout";
 import { useCompany } from "../contexts";
 import { componentModelAndPrice } from "../../data/component-model-and-price.js";
+import PDFButton from "../../components/PDFButton.jsx";
 
 const money = (value) => `৳${Number(value || 0).toLocaleString("en-US")}`;
 const date = (value) => value ? new Date(value).toLocaleDateString("en-GB") : "—";
@@ -174,9 +175,11 @@ export function QuotationDetails({ titleId, row, onClose }) {
   const quality = form.tier?.label || form.tier?.id;
   const proposalTitle = quotationProposalTitle(form, row);
   const summary = quotationSummary(row);
+  const pdfTargetId = `quotation-pdf-${row.id}`;
+  const pdfFilename = `${String(row.quotation_number || "Quotation").replace(/[^a-z0-9._-]+/gi, "_")}.pdf`;
 
-  return <section className="quotation-details">
-    <header><div><h2 id={titleId}>Quotation Details</h2><span className="quotation-status">{row.status}</span></div><button onClick={onClose} title="Close quotation details" aria-label="Close quotation details">×</button></header>
+  return <section id={pdfTargetId} className="quotation-details quotation-pdf-target">
+    <header><div><h2 id={titleId}>Quotation Details</h2><span className="quotation-status">{row.status}</span></div><div className="quotation-header-actions quotation-pdf-excluded"><PDFButton targetId={pdfTargetId} filename={pdfFilename} includeCatalogues={false} label="Download PDF" className="quotation-pdf-button" /><button className="quotation-close-button" onClick={onClose} title="Close quotation details" aria-label="Close quotation details">×</button></div></header>
     <div className="quotation-ref"><div><small>Ref No.</small><strong>{row.quotation_number}</strong></div><div><small>Date</small><strong>{date(row.created_at)}</strong></div></div>
     <DetailSection title="Client Information" badge={quality ? `Quality: ${quality}` : null}><dl className="quotation-client-grid"><div><dt>Name:</dt><dd>{text(client.name)}</dd></div><div><dt>Designation:</dt><dd>{text(client.position || client.designation)}</dd></div><div><dt>Organization:</dt><dd>{text(client.company || client.organization)}</dd></div><div><dt>Mobile Number:</dt><dd>{text(client.mobile || client.phone)}</dd></div>{client.email ? <div><dt>Email:</dt><dd>{client.email}</dd></div> : null}<div><dt>Address:</dt><dd>{text(client.address)}</dd></div></dl></DetailSection>
     <section className="quotation-detail-section quotation-items-section">

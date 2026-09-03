@@ -1,7 +1,21 @@
+import { componentModelName } from "./itemNames.js";
+
 const cloneCatalog = (catalog) => JSON.parse(JSON.stringify(catalog || {}));
 const brandValue = (brand) => typeof brand === "string" ? brand : brand?.value;
 const basePriceComponents = new Set(["module", "controller", "cabinet", "power-supply"]);
 const basePriceTiers = new Set(["default", "gold"]);
+
+const databaseProductFields = (row, fallback = {}, internalId = "") => {
+  const rowModel = String(row.model || "").trim();
+  const modelIsInternalId = rowModel && internalId
+    && rowModel.toLowerCase() === String(internalId).trim().toLowerCase();
+  return {
+    itemName: row.name || fallback.itemName || "",
+    brand: row.brand_name || fallback.brand || "",
+    model: rowModel && !modelIsInternalId ? rowModel : fallback.model || "",
+    unit: row.unit || fallback.unit || "Pcs",
+  };
+};
 
 const basePriceIdentity = (row) => [
   row.component_type,
@@ -27,6 +41,9 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
   const catalog = cloneCatalog(baseCatalog);
   catalog.modelGroups ||= {};
   catalog.moduleBrandPrices ||= {};
+  catalog.moduleBrandLabels ||= {};
+  catalog.moduleBrandModelNames ||= {};
+  catalog.moduleBrandDetails ||= {};
   for (const locations of Object.values(catalog.modelGroups)) {
     for (const models of Object.values(locations || {})) {
       for (const model of models || []) {
@@ -47,6 +64,7 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
   const receivingCards = { ...(catalog.receivingCards || {}) };
   const cabinetOptions = [...(catalog.cabinetOptions || [])];
   const powerSupplyModels = { ...(catalog.powerSupplyModels || {}) };
+  const powerSupplyDetails = { ...(catalog.powerSupplyDetails || {}) };
   const powerSupplyPrices = Object.fromEntries(
     (catalog.powerSupplyBrands || []).map((brand) => [brandValue(brand), Number(catalog.powerSupplyPrice) || 0])
   );
@@ -77,31 +95,79 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
         ...(catalog.moduleBrandPrices[brand] || {}),
         [id]: { default: price },
       };
+      if (row.model) {
+        catalog.moduleBrandModelNames[brand] = {
+          ...(catalog.moduleBrandModelNames[brand] || {}),
+          [id]: row.model,
+        };
+      }
+      if (row.name) {
+        catalog.moduleBrandLabels[brand] = {
+          ...(catalog.moduleBrandLabels[brand] || {}),
+          [id]: row.name,
+        };
+      }
+      catalog.moduleBrandDetails[brand] = {
+        ...(catalog.moduleBrandDetails[brand] || {}),
+        [id]: databaseProductFields(row, {
+          itemName: catalog.moduleBrandLabels[brand]?.[id] || "LED Display Module",
+          brand,
+          model: catalog.moduleBrandModelNames[brand]?.[id] || model.name,
+          unit: "Pcs",
+        }),
+      };
       continue;
     }
 
     if (row.component_type === "controller" && (row.price_tier === "default" || row.price_tier === "gold")) {
       const controller = [...controllers, ...novastarControllers].find((item) => String(item.id) === String(id) || String(item.id) === String(row.model));
-      if (controller) controller.price = price;
+      if (controller) Object.assign(controller, databaseProductFields(row, {
+        itemName: "Controller",
+        model: componentModelName(controller.model, controller.label, controller.id),
+        unit: "Pcs",
+      }, controller.id), { price });
       continue;
     }
 
     if (row.component_type === "receiving-card") {
       const cardId = receivingCards[id] ? id : row.model;
       const card = receivingCards[cardId];
-      if (card) receivingCards[cardId] = row.price_tier === "cob" ? { ...card, cobUnitPrice: price } : { ...card, unitPrice: price };
+      if (card) {
+        const fields = databaseProductFields(row, {
+          itemName: "Receiving Card",
+          model: componentModelName(card.model, card.label, cardId),
+          unit: "Pcs",
+        }, cardId);
+        receivingCards[cardId] = row.price_tier === "cob"
+          ? { ...card, ...fields, cobUnitPrice: price }
+          : { ...card, ...fields, unitPrice: price };
+      }
       continue;
     }
 
     if (row.component_type === "cabinet" && (row.price_tier === "default" || row.price_tier === "gold")) {
       const index = cabinetOptions.findIndex((item) => String(item.id) === String(id) || String(item.id) === String(row.model));
-      if (index >= 0) cabinetOptions[index] = { ...cabinetOptions[index], price };
+      if (index >= 0) cabinetOptions[index] = {
+        ...cabinetOptions[index],
+        ...databaseProductFields(row, {
+          itemName: "Cabinet",
+          model: cabinetOptions[index].label || cabinetOptions[index].id,
+          unit: "Pcs",
+        }),
+        price,
+      };
       continue;
     }
 
     if (row.component_type === "power-supply" && (row.price_tier === "default" || row.price_tier === "gold")) {
       if (row.brand_name) powerSupplyPrices[row.brand_name] = price;
       if (row.brand_name && row.model) powerSupplyModels[row.brand_name] = row.model;
+      if (row.brand_name) powerSupplyDetails[row.brand_name] = databaseProductFields(row, {
+        itemName: "Power Supply",
+        brand: row.brand_name,
+        model: powerSupplyModels[row.brand_name] || "",
+        unit: "Pcs",
+      });
       const firstBrand = brandValue((catalog.powerSupplyBrands || [])[0]);
       if (!row.brand_name || row.brand_name === firstBrand) powerSupplyPrice = price;
     }
@@ -121,6 +187,9 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
     }
   }
   const databaseBrands = [...groupedBrands.values()];
+  const databasePowerSupplyBrands = [...new Set(rows
+    .filter((row) => row.component_type === "power-supply" && row.brand_name)
+    .map((row) => row.brand_name))];
 
   return {
     ...catalog,
@@ -132,6 +201,10 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = []) {
     cabinetOptions,
     powerSupplyPrice,
     powerSupplyPrices,
+    powerSupplyBrands: databasePowerSupplyBrands.length
+      ? databasePowerSupplyBrands.map((brand) => ({ value: brand, label: brand }))
+      : catalog.powerSupplyBrands,
     powerSupplyModels,
+    powerSupplyDetails,
   };
 }

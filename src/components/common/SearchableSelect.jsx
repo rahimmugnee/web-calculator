@@ -53,7 +53,7 @@ export default function SearchableSelect({ value, options, onChange, placeholder
         disabled={disabled}
         onClick={() => setOpen((next) => !next)}
       >
-        <span>{selected?.label || placeholder}</span>
+        <span className={selected ? "" : "custom-select-placeholder"}>{selected?.label || placeholder}</span>
       </button>
 
       {open ? (

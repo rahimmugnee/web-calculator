@@ -1,18 +1,55 @@
 // ===============================
 // src/components/Invoice.jsx
 // ===============================
-import { forwardRef, useMemo } from "react";
+import { forwardRef, useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import { useCatalog } from "../context/CatalogContext.jsx";
 import { toBDT, bdtToWords, generateRef } from "../lib/calc.js";
+import { componentModelName, powerSupplyItemName, withoutLedTechnology } from "../lib/itemNames.js";
 import RentalInvoice from "./RentalInvoice.jsx";
 import PAInvoice from "./PAInvoice.jsx";
 import ConferenceInvoice from "./ConferenceInvoice.jsx";
 import RenexInvoice from "./company-invoices/RenexInvoice.jsx";
 import SashaInvoice from "./company-invoices/SashaInvoice.jsx";
 
-const componentModelName = (value = "") => String(value)
-  .replace(/^(?:Controller|Receiving Card|Video Processor)\s*:\s*/i, "")
-  .trim();
+function AutoFitText({ children, className = "" }) {
+  const containerRef = useRef(null);
+  const textRef = useRef(null);
+
+  const fitText = useCallback(() => {
+    const container = containerRef.current;
+    const text = textRef.current;
+    if (!container || !text) return;
+
+    text.style.removeProperty("font-size");
+    const availableWidth = container.clientWidth;
+    const naturalWidth = text.scrollWidth;
+    if (!availableWidth || !naturalWidth || naturalWidth <= availableWidth) return;
+
+    const baseFontSize = Number.parseFloat(window.getComputedStyle(text).fontSize) || 12;
+    text.style.fontSize = `${Math.max(1, baseFontSize * (availableWidth / naturalWidth) * 0.98)}px`;
+  }, []);
+
+  useLayoutEffect(() => {
+    let cancelled = false;
+    const fit = () => {
+      if (!cancelled) fitText();
+    };
+    fit();
+    document.fonts?.ready?.then(fit);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(fit);
+    if (containerRef.current) observer?.observe(containerRef.current);
+    return () => {
+      cancelled = true;
+      observer?.disconnect();
+    };
+  }, [children, fitText]);
+
+  return (
+    <span ref={containerRef} className={`table-cell-fit ${className}`.trim()}>
+      <span ref={textRef} className="table-cell-fit-text">{children}</span>
+    </span>
+  );
+}
 
 const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Date(), quotationRef }, ref) {
   const { catalog, company } = useCatalog();
@@ -64,6 +101,12 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
     (items?.controllerId
       ? catalog.controllers.find((c) => c.id === items.controllerId)?.label || items.controllerId.replace(/^NS_/, "")
       : "");
+  const controllerPicked = items?.controllerPicked || {};
+  const receivingPicked = items?.receivingPicked || {};
+  const psuPicked = items?.psuPicked || {};
+  const controllerItemName = controllerPicked.itemName || controllerPicked.label || controllerLabel || "Controller";
+  const receivingItemName = receivingPicked.itemName || receivingPicked.label || "Receiving Card";
+  const psuItemName = powerSupplyItemName(psuPicked.itemName, psuPicked.model || psuPicked.label);
 
   // ---- Dynamic rows (SL auto) ----
   const rows = [];
@@ -81,22 +124,22 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
       unitPrice: totals.ledSetUnitTotal || 0,
       total: (totals.ledSetUnitTotal || 0) * irregularQty,
       packageLines: [
-        { name: "LED Display Module", brand: items.brands?.module, model: moduleModelName },
-        { name: "Power Supply", brand: items.brands?.psu, model: items.psuPicked?.label || items.psuPicked?.model || "" },
-        { name: "Receiving Card", brand: items.brands?.receiving, model: componentModelName(rcLabel) },
-        ...(items?.cabinetEnabled ? [{ name: "Cabinet", model: cabinetText }] : []),
+        { name: withoutLedTechnology(model.itemName || "LED Display Module"), brand: model.invoiceBrand || items.brands?.module, model: moduleModelName },
+        { name: psuItemName, brand: psuPicked.brand || items.brands?.psu, model: psuPicked.model || psuPicked.label || "" },
+        { name: receivingItemName, brand: receivingPicked.brand || items.brands?.receiving, model: componentModelName(receivingPicked.model, rcLabel, receivingPicked.id) },
+        ...(items?.cabinetEnabled ? [{ name: "Cabinet", brand: items.cabinet?.brand, model: items.cabinet?.model || cabinetText }] : []),
       ],
     });
   } else {
     rows.push({
       sl: sl++,
-      name: "LED Display Module",
+      name: withoutLedTechnology(model.itemName || "LED Display Module"),
       model: moduleModelName,
       unit: "Pcs",
       qty: items.modulesQty,
       unitPrice: unitModule,
       total: totals.totalModules,
-      brand: items.brands?.module,
+      brand: model.invoiceBrand || items.brands?.module,
     });
   }
 
@@ -104,13 +147,13 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
   if (items.controllerQty > 0 && items.controllerId) {
     rows.push({
       sl: sl++,
-      name: "Controller",
-      model: componentModelName(controllerLabel),
+      name: controllerItemName,
+      model: componentModelName(controllerPicked.model, controllerLabel, items.controllerId),
       unit: "Pcs",
       qty: items.controllerQty,
       unitPrice: unitCtrl,
       total: totals.controllerTotal,
-      brand: items.brands?.controller,
+      brand: controllerPicked.brand || items.brands?.controller,
     });
   }
 
@@ -118,25 +161,25 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
   if (!isIrregular) {
     rows.push({
       sl: sl++,
-      name: "Receiving Card",
-      model: componentModelName(rcLabel),
+      name: receivingItemName,
+      model: componentModelName(receivingPicked.model, rcLabel, receivingPicked.id),
       unit: "Pcs",
       qty: items.rcQty,
       unitPrice: unitRC,
       total: totals.totalRC,
-      brand: items.brands?.receiving,
+      brand: receivingPicked.brand || items.brands?.receiving,
     });
 
   // Power supply
     rows.push({
       sl: sl++,
-      name: "Power Supply",
-      model: items.psuPicked?.label || items.psuPicked?.model || "",
+      name: psuItemName,
+      model: psuPicked.model || psuPicked.label || "",
       unit: "Pcs",
       qty: items.psQty,
       unitPrice: unitPS,
       total: totals.totalPS,
-      brand: items.brands?.psu,
+      brand: psuPicked.brand || items.brands?.psu,
     });
   }
 
@@ -144,12 +187,13 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
   if (!isIrregular && items?.cabinetEnabled && (items?.cabinetQty || 0) > 0) {
     rows.push({
       sl: sl++,
-      name: "Cabinet",
-      model: cabinetText,
+      name: items.cabinet?.itemName || "Cabinet",
+      model: items.cabinet?.model || cabinetText,
       unit: "Pcs",
       qty: items.cabinetQty,
       unitPrice: unitCabinet,
       total: totals.totalCabinet || 0,
+      brand: items.cabinet?.brand || "",
     });
   }
 
@@ -170,17 +214,15 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
     });
   });
 
-  // Structure & Accessories (if any)
-  if (totals.accessories) {
-    rows.push({
-      sl: sl++,
-      name: "Structure & Accessories",
-      unit: "Lot",
-      qty: isIrregular ? irregularQty : 1,
-      unitPrice: totals.accessoriesUnit ?? unitPrices?.accessories ?? totals.accessories,
-      total: totals.accessories,
-    });
-  }
+  // Structure & Accessories remains visible even before a display size is entered.
+  rows.push({
+    sl: sl++,
+    name: "Structure & Accessories",
+    unit: "Lot",
+    qty: isIrregular ? irregularQty : 1,
+    unitPrice: totals.accessoriesUnit ?? unitPrices?.accessories ?? totals.accessories ?? 0,
+    total: totals.accessories ?? 0,
+  });
 
   // Installation
   rows.push({
@@ -291,70 +333,60 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
           </colgroup>
           <thead>
             <tr>
-              <th className="td-center">
-                SL.
-              </th>
-              <th className="td-center">Item Name</th>
-              <th className="td-center">Brand</th>
-              <th className="td-center">Model</th>
-              <th className="td-center">
-                Unit
-              </th>
-              <th className="td-center">
-                Qty
-              </th>
-              <th className="td-center">
-                Unit Price ৳
-              </th>
-              <th className="td-center">
-                Total Price ৳
-              </th>
+              <th><AutoFitText>SL.</AutoFitText></th>
+              <th><AutoFitText>Item Name</AutoFitText></th>
+              <th><AutoFitText>Brand</AutoFitText></th>
+              <th><AutoFitText>Model</AutoFitText></th>
+              <th><AutoFitText>Unit</AutoFitText></th>
+              <th><AutoFitText>Qty</AutoFitText></th>
+              <th><AutoFitText>Unit Price ৳</AutoFitText></th>
+              <th><AutoFitText>Total Price ৳</AutoFitText></th>
             </tr>
           </thead>
 
           <tbody>
             {rows.map((r) => (
               <tr key={r.sl} className={r.className || ""}>
-                <td className="td-center">{r.sl}</td>
+                <td><AutoFitText>{r.sl}</AutoFitText></td>
                 <td>
                   {r.type === "package" ? (
                     <div className="package-lines">
                       {r.packageLines.map((line, index) => (
                         <div key={`${r.sl}-${index}`} className="package-line">
-                          <div className="item-name">{line.name}</div>
+                          <AutoFitText className="item-name">{line.name}</AutoFitText>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="item-name">{r.name}</div>
+                    <AutoFitText className="item-name">{r.name}</AutoFitText>
                   )}
                 </td>
-                <td className="td-center">
+                <td>
                   {r.type === "package" ? (
                     <div className="package-lines">
                       {r.packageLines.map((line, index) => (
                         <div key={`${r.sl}-brand-${index}`} className="package-line">
-                          {line.brand || "—"}
+                          <AutoFitText>{line.brand || "—"}</AutoFitText>
                         </div>
                       ))}
                     </div>
-                  ) : r.brand || "—"}
+                  ) : <AutoFitText>{r.brand || "—"}</AutoFitText>}
                 </td>
                 <td>
                   {r.type === "package" ? (
                     <div className="package-lines">
                       {r.packageLines.map((line, index) => (
                         <div key={`${r.sl}-model-${index}`} className="package-line">
-                          {line.model || "—"}
+                          <AutoFitText>{line.model || "—"}</AutoFitText>
                         </div>
                       ))}
                     </div>
-                  ) : r.model || "—"}
+                  ) : <AutoFitText>{r.model || "—"}</AutoFitText>}
                 </td>
-                <td className="td-center">{r.unit}</td>
-                <td className="td-center">{r.qty}</td>
-                <td className="td-right">{toBDT(r.unitPrice)}</td>
-                <td className="td-right">{toBDT(r.total)}</td>
+                <td><AutoFitText>{r.unit}</AutoFitText></td>
+                <td><AutoFitText>{r.qty}</AutoFitText></td>
+                <td><AutoFitText>{toBDT(r.unitPrice)}</AutoFitText></td>
+                <td><AutoFitText>{toBDT(r.total)}</AutoFitText></td>
               </tr>
             ))}
 
@@ -362,32 +394,24 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
             {totals?.vatEnabled ? (
               <>
                 <tr className="row-accent">
-                  <td colSpan={7} className="td-right total-big">
-                    Subtotal =
-                  </td>
-                  <td className="td-right total-big">{toBDT(totals.totalBeforeVat)}</td>
+                  <td colSpan={7} className="total-big total-label"><AutoFitText>Subtotal =</AutoFitText></td>
+                  <td className="total-big"><AutoFitText>{toBDT(totals.totalBeforeVat)}</AutoFitText></td>
                 </tr>
 
                 <tr className="row-accent">
-                  <td colSpan={7} className="td-right total-big">
-                    Vat ({Math.round((totals.vatRate || 0.1) * 100)}%) =
-                  </td>
-                  <td className="td-right total-big">{toBDT(totals.vatAmount)}</td>
+                  <td colSpan={7} className="total-big total-label"><AutoFitText>Vat ({Math.round((totals.vatRate || 0.1) * 100)}%) =</AutoFitText></td>
+                  <td className="total-big"><AutoFitText>{toBDT(totals.vatAmount)}</AutoFitText></td>
                 </tr>
 
                 <tr className="row-accent">
-                  <td colSpan={7} className="td-right total-big">
-                    Grand Total =
-                  </td>
-                  <td className="td-right total-big">{toBDT(totals.grandTotal)}</td>
+                  <td colSpan={7} className="total-big total-label"><AutoFitText>Grand Total =</AutoFitText></td>
+                  <td className="total-big"><AutoFitText>{toBDT(totals.grandTotal)}</AutoFitText></td>
                 </tr>
               </>
             ) : (
               <tr className="row-accent">
-                <td colSpan={7} className="td-right total-big">
-                  Grand Total =
-                </td>
-                <td className="td-right total-big">{toBDT(totals.grandTotal)}</td>
+                <td colSpan={7} className="total-big total-label"><AutoFitText>Grand Total =</AutoFitText></td>
+                <td className="total-big"><AutoFitText>{toBDT(totals.grandTotal)}</AutoFitText></td>
               </tr>
             )}
 
@@ -395,17 +419,13 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
             {showDiscountBlock ? (
               <>
                 <tr className="row-accent">
-                  <td colSpan={7} className="td-right total-big">
-                    Special Discount =
-                  </td>
-                  <td className="td-right total-big">{toBDT(totals.discount || 0)}</td>
+                  <td colSpan={7} className="total-big total-label"><AutoFitText>Special Discount =</AutoFitText></td>
+                  <td className="total-big"><AutoFitText>{toBDT(totals.discount || 0)}</AutoFitText></td>
                 </tr>
 
                 <tr className="row-accent">
-                  <td colSpan={7} className="td-right total-big">
-                    Payable =
-                  </td>
-                  <td className="td-right total-big">{toBDT(totals.payable ?? totals.grandTotal)}</td>
+                  <td colSpan={7} className="total-big total-label"><AutoFitText>Payable =</AutoFitText></td>
+                  <td className="total-big"><AutoFitText>{toBDT(totals.payable ?? totals.grandTotal)}</AutoFitText></td>
                 </tr>
               </>
             ) : null}

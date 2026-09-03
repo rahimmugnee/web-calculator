@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { get } from "../api";
 import { PageHeader } from "../AdminLayout";
-import { useCompany } from "../contexts";
+import { useAuth, useCompany } from "../contexts";
+import { isPrivilegedAdmin } from "../access";
 
 const number = (value) => Number(value || 0);
 const money = (value) => `৳${number(value).toLocaleString("en-US")}`;
@@ -26,6 +27,7 @@ const CALCULATORS = [
 
 export default function DashboardPage() {
   const { companyId, company } = useCompany();
+  const { user } = useAuth();
   const [selectedMonth, setSelectedMonth] = useState(() => monthKey());
   const [data, setData] = useState({});
   const [loading, setLoading] = useState(false);
@@ -115,7 +117,7 @@ export default function DashboardPage() {
           <QuickAction href="/admin/quotations" tone="green" icon="▤" title="View Quotations" description="Browse all quotations" />
           <QuickAction href="/admin/customers" tone="violet" icon="+" title="Add Customer" description="Manage customers" />
           <QuickAction href="/admin/categories" tone="amber" icon="◆" title="Manage Products" description="Manage products & models" />
-          <QuickAction href="/admin/companies" tone="blue" icon="▥" title="Manage Companies" description="Company & branding" />
+          {isPrivilegedAdmin(user) ? <QuickAction href="/admin/companies" tone="blue" icon="▥" title="Manage Companies" description="Company & branding" /> : null}
           <QuickAction href="/admin/templates/terms" tone="pink" icon="T" title="Terms & Conditions" description="Manage terms templates" />
         </div>
       </DashboardPanel>

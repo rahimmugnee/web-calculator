@@ -25,6 +25,7 @@ import {
   novastarControllerPriceById,
   roundInt,
 } from "../lib/price-form-catalog-helpers.js";
+import { powerSupplyItemName, withoutLedTechnology } from "../lib/itemNames.js";
 import { calcAll } from "../lib/calc.js";
 
 /* =========================
@@ -442,13 +443,21 @@ export default function PriceForm({
     const models=techBlock?.[dispType] || [],allowed=catalog.moduleBrandModelIds?.[moduleBrand];
     const availableModels=Array.isArray(allowed)?models.filter((item)=>allowed.includes(item.id)):models;
     const brandModelNames=catalog.moduleBrandModelNames?.[moduleBrand] || {};
-    return availableModels.map((item) => ({
-      ...item,
-      pitchName: item.name,
-      name: item.name,
-      code: brandModelNames[item.id] || item.code || item.name,
-    }));
-  }, [technology, dispType, moduleBrand, catalog.modelGroups, catalog.moduleBrandModelIds, catalog.moduleBrandModelNames]);
+    const brandLabels=catalog.moduleBrandLabels?.[moduleBrand] || {};
+    const brandDetails=catalog.moduleBrandDetails?.[moduleBrand] || {};
+    return availableModels.map((item) => {
+      const details=brandDetails[item.id] || {};
+      return {
+        ...item,
+        pitchName: item.name,
+        name: item.name,
+        code: details.model || brandModelNames[item.id] || item.code || item.name,
+        itemName: withoutLedTechnology(details.itemName || brandLabels[item.id] || "LED Display Module"),
+        invoiceBrand: details.brand || moduleBrand,
+        invoiceUnit: details.unit || "Pcs",
+      };
+    });
+  }, [technology, dispType, moduleBrand, catalog.modelGroups, catalog.moduleBrandModelIds, catalog.moduleBrandModelNames, catalog.moduleBrandLabels, catalog.moduleBrandDetails]);
 
   const [modelId, setModelId] = useState(modelsForType[0]?.id || "");
   const modelSelectionManualRef = useRef(false);
@@ -704,6 +713,7 @@ export default function PriceForm({
     const selected = catalog.receivingCards?.[selectedId];
     if (!selected) return autoRcPicked;
     return {
+      ...selected,
       id: selectedId,
       label: selected.label || selectedId,
       unitPrice: selected.unitPrice ?? 0,
@@ -793,7 +803,16 @@ export default function PriceForm({
   }, [moduleBrand, moduleBrandOptions]);
 
   const psuModelLabel = catalog.powerSupplyModels?.[psuBrand] || catalog.psuModelLabel;
-  const psuPicked = useMemo(() => pickPSUModel(psuModelLabel), [psuModelLabel]);
+  const psuPicked = useMemo(() => {
+    const details = catalog.powerSupplyDetails?.[psuBrand] || {};
+    const pickedModel = details.model || psuModelLabel || "";
+    return {
+      ...pickPSUModel(psuModelLabel),
+      ...details,
+      itemName: powerSupplyItemName(details.itemName, pickedModel),
+      model: pickedModel,
+    };
+  }, [catalog.powerSupplyDetails, psuBrand, psuModelLabel]);
 
   // âœ… PSU unit price (auto + manual) â€” NEW
   const psUnitPriceAuto = useMemo(() => Number(catalog.powerSupplyPrices?.[psuBrand] ?? catalog.powerSupplyPrice ?? 0), [catalog.powerSupplyPrices, catalog.powerSupplyPrice, psuBrand]);
@@ -838,6 +857,12 @@ export default function PriceForm({
     }
     return catalog.controllers.find((c) => c.id === controllerId)?.label || controllerId;
   }, [ctrlSystemBrand, dispType, controllerId, catalog.novastarControllers, catalog.novastarCtrlCap, catalog.controllers]);
+
+  const controllerPicked = useMemo(() => {
+    if (!controllerId) return null;
+    const source = ctrlSystemBrand === "Novastar" ? catalog.novastarControllers : catalog.controllers;
+    return source.find((controller) => controller.id === controllerId) || null;
+  }, [controllerId, ctrlSystemBrand, catalog.controllers, catalog.novastarControllers]);
 
   const controllerPixelCapacity = useMemo(() => {
     if (!controllerId) return 0;
@@ -905,6 +930,7 @@ export default function PriceForm({
         controllerQty,
         controllerPrice,
         controllerLabel,
+        controllerPicked,
 
         receivingPicked: rcPicked,
         receivingUnitPrice: rcUnitPrice,
@@ -942,6 +968,10 @@ export default function PriceForm({
           variantCode: selectedCabinetSize?.variantCode || "",
           variantLabel: selectedCabinetSize?.variantLabel || "",
           invoiceLabel: buildCabinetInvoiceLabel(selectedCabinetSize),
+          itemName: selectedCabinetSize?.itemName || "Cabinet",
+          brand: selectedCabinetSize?.brand || "",
+          model: selectedCabinetSize?.model || buildCabinetInvoiceLabel(selectedCabinetSize),
+          unit: selectedCabinetSize?.unit || "Pcs",
           modulesPerCabinet: cabinetModulesPerCabinet,
         },
 
@@ -993,6 +1023,7 @@ export default function PriceForm({
       controllerQty,
       controllerPrice,
       controllerLabel,
+      controllerPicked,
       rcPicked,
       rcUnitPrice,
       psuPicked,

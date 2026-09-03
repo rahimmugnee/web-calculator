@@ -2,6 +2,20 @@ function product({ sourceKey, category, componentType, name, brand, model, unit 
   return { sourceKey, sku: sourceKey, category, componentType, name, brand, model, unit, currency, metadata, prices };
 }
 
+function moduleProductName(module, location) {
+  const pitch = String(module.name || "").replace(/^P\s*/i, "").trim();
+  return `P ${pitch} ${String(location).toLowerCase()} LED Display Module`;
+}
+
+function componentModelName(model, label, internalId) {
+  const clean = (value) => String(value || "")
+    .replace(/^(?:Controller|Receiving Card|Video Processor)\s*:\s*/i, "")
+    .trim();
+  const candidate = String(model || "").trim();
+  const isInternalId = candidate && candidate.toLowerCase() === String(internalId || "").trim().toLowerCase();
+  return isInternalId ? clean(label) : clean(candidate) || clean(label);
+}
+
 export function mapStaticCatalog({ ledCatalog, paProducts, conferenceProducts }) {
   const rows = [];
 
@@ -27,8 +41,8 @@ export function mapStaticCatalog({ ledCatalog, paProducts, conferenceProducts })
           if (!prices) continue;
           rows.push(product({
             sourceKey: `led:module:${brand.toLowerCase()}:${module.id}`,
-            category: "led-module", componentType: "module", name: `${brandModelName} ${technology.toUpperCase()} ${location} LED Module`,
-            brand, model: brandModelName, unit: "Module", metadata: { ...module, prices: undefined, technology, location }, prices,
+            category: "led-module", componentType: "module", name: moduleProductName(module, location),
+            brand, model: brandModelName, unit: "Pcs", metadata: { ...module, prices: undefined, technology, location }, prices,
           }));
         }
       }
@@ -37,22 +51,22 @@ export function mapStaticCatalog({ ledCatalog, paProducts, conferenceProducts })
 
   for (const controller of [...(ledCatalog.controllers || []), ...(ledCatalog.novastarControllers || [])]) {
     const brand = String(controller.id || "").startsWith("NS_") ? "Novastar" : "Huidu";
-    rows.push(product({ sourceKey: `led:controller:${controller.id}`, category: "led-controller", componentType: "controller", name: controller.label, brand, model: controller.id, metadata: controller, prices: { default: controller.price } }));
+    rows.push(product({ sourceKey: `led:controller:${controller.id}`, category: "led-controller", componentType: "controller", name: controller.label, brand, model: componentModelName(controller.model, controller.label, controller.id), unit: "Pcs", metadata: controller, prices: { default: controller.price } }));
   }
   for (const [id, card] of Object.entries(ledCatalog.receivingCards || {})) {
     const prices = { default: card.unitPrice };
     if (card.cobUnitPrice !== undefined) prices.cob = card.cobUnitPrice;
     const brand = String(id).startsWith("NS_") ? "Novastar" : "Huidu";
-    rows.push(product({ sourceKey: `led:receiving-card:${id}`, category: "receiving-card", componentType: "receiving-card", name: card.label, brand, model: id, metadata: card, prices }));
+    rows.push(product({ sourceKey: `led:receiving-card:${id}`, category: "receiving-card", componentType: "receiving-card", name: card.label, brand, model: componentModelName(card.model, card.label, id), unit: "Pcs", metadata: card, prices }));
   }
   for (const cabinet of ledCatalog.cabinetOptions || []) {
-    rows.push(product({ sourceKey: `led:cabinet:${cabinet.id}`, category: "led-cabinet", componentType: "cabinet", name: `${cabinet.materialLabel} ${cabinet.variantLabel || ""} ${cabinet.label}`.replace(/\s+/g, " ").trim(), model: cabinet.id, unit: "Cabinet", metadata: cabinet, prices: { default: cabinet.price } }));
+    rows.push(product({ sourceKey: `led:cabinet:${cabinet.id}`, category: "led-cabinet", componentType: "cabinet", name: `${cabinet.materialLabel} ${cabinet.variantLabel || ""} ${cabinet.label}`.replace(/\s+/g, " ").trim(), model: cabinet.id, unit: "Pcs", metadata: cabinet, prices: { default: cabinet.price } }));
   }
   for (const [index, brandOption] of (ledCatalog.powerSupplyBrands || ["Lampro"]).entries()) {
     const brand = typeof brandOption === "string" ? brandOption : brandOption.value;
     const sourceKey = index === 0 ? "led:power-supply:default" : `led:power-supply:${String(brand).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
     const model = ledCatalog.powerSupplyModels?.[brand] || ledCatalog.psuModelLabel || "LED Power Supply";
-    rows.push(product({ sourceKey, category: "power-supply", componentType: "power-supply", name: model, brand, model, metadata: { brand, model }, prices: { default: ledCatalog.powerSupplyPrices?.[brand] ?? ledCatalog.powerSupplyPrice } }));
+    rows.push(product({ sourceKey, category: "power-supply", componentType: "power-supply", name: `Power Supply: ${model}`, brand, model, unit: "Pcs", metadata: { brand, model }, prices: { default: ledCatalog.powerSupplyPrices?.[brand] ?? ledCatalog.powerSupplyPrice } }));
   }
 
   for (const item of paProducts || []) {

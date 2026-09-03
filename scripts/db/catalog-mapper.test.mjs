@@ -52,7 +52,8 @@ test("uses brand-specific module model names", () => {
 
   const lampro = products.find((item) => item.sourceKey === "led:module:lampro:smd-in-p2");
   assert.equal(lampro.model, "LC2P");
-  assert.match(lampro.name, /^LC2P SMD indoor LED Module$/);
+  assert.equal(lampro.name, "P 2 indoor LED Display Module");
+  assert.equal(lampro.unit, "Pcs");
 });
 
 test("uses the configured model for each power supply brand", () => {
@@ -67,7 +68,25 @@ test("uses the configured model for each power supply brand", () => {
     paProducts: [], conferenceProducts: [],
   });
 
+  assert.equal(products.find((item) => item.brand === "Lampro").name, "Power Supply: LD-200");
   assert.equal(products.find((item) => item.brand === "Lampro").model, "LD-200");
+  assert.equal(products.find((item) => item.brand === "Lampro").unit, "Pcs");
   assert.equal(products.find((item) => item.brand === "Mean well").model, "LRS-200");
   assert.equal(products.find((item) => item.brand === "G-Energy").model, "N200V5-A");
+});
+
+test("maps component models separately from Novastar internal ids", () => {
+  const products = mapStaticCatalog({
+    ledCatalog: {
+      modelGroups: {}, controllers: [], cabinetOptions: [], powerSupplyBrands: [], powerSupplyPrice: 0,
+      novastarControllers: [{ id: "NS_TU15PRO", model: "TU-15 Pro", label: "Controller: TU-15 Pro", price: 150000 }],
+      receivingCards: { NS_NV3210: { model: "NV3210", label: "Receiving Card: NV3210", unitPrice: 4000 } },
+    },
+    paProducts: [], conferenceProducts: [],
+  });
+
+  assert.equal(products.find((item) => item.sourceKey === "led:controller:NS_TU15PRO").model, "TU-15 Pro");
+  assert.equal(products.find((item) => item.sourceKey === "led:receiving-card:NS_NV3210").model, "NV3210");
+  assert.equal(products.find((item) => item.sourceKey === "led:controller:NS_TU15PRO").unit, "Pcs");
+  assert.equal(products.find((item) => item.sourceKey === "led:receiving-card:NS_NV3210").unit, "Pcs");
 });

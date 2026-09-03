@@ -1,4 +1,9 @@
-import { getCataloguePaths, normalizePdfText } from "./PDFButton";
+import {
+  fitPdfTextSize,
+  fitRoundedCornerRadius,
+  getCataloguePaths,
+  normalizePdfText,
+} from "./PDFButton";
 
 const cabinetCataloguePath = "Mugnee Product data sheet/Cabinet 640 X 480.pdf";
 const structureCataloguePath =
@@ -69,4 +74,14 @@ test.each(["Mean well", "Mean Well", "Mean-Well", "mean_well"])(
 test("normalizes quotation text for the editable native PDF layer", () => {
   expect(normalizePdfText("Grand Total ৳1,500 — Size 8 × 4 ft"))
     .toBe("Grand Total ৳1,500 - Size 8 x 4 ft");
+});
+
+test("shrinks native PDF text that is wider than its table cell", () => {
+  expect(fitPdfTextSize(10, 72, 60)).toBeCloseTo(8.333, 3);
+  expect(fitPdfTextSize(10, 58, 60)).toBe(10);
+});
+
+test("scales a very large rounded corner into a capsule instead of an ellipse", () => {
+  expect(fitRoundedCornerRadius(170, 44, 999, 999)).toEqual({ x: 22, y: 22 });
+  expect(fitRoundedCornerRadius(170, 44, 10, 10)).toEqual({ x: 10, y: 10 });
 });

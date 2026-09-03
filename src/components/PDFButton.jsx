@@ -32,6 +32,14 @@ function isVisible(style, rect) {
   return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity) !== 0 && rect.width > 0 && rect.height > 0;
 }
 
+export function fitPdfTextSize(fontSize, measuredWidth, availableWidth) {
+  const size = Number(fontSize) || 0;
+  const textWidth = Number(measuredWidth) || 0;
+  const maxWidth = Number(availableWidth) || 0;
+  if (size <= 0 || textWidth <= 0 || maxWidth <= 0 || textWidth <= maxWidth) return size;
+  return Math.max(1, size * (maxWidth / textWidth));
+}
+
 function cumulativeScale(element, root) {
   let scale = 1;
   let current = element;
@@ -47,6 +55,36 @@ function cumulativeScale(element, root) {
     current = current.parentElement;
   }
   return scale;
+}
+
+function wrappedTextFragments(node, start, end) {
+  const fragments = [];
+  for (let index = start; index < end; index += 1) {
+    const range = document.createRange();
+    range.setStart(node, index);
+    range.setEnd(node, index + 1);
+    const rect = range.getBoundingClientRect();
+    range.detach?.();
+    if (!rect.width || !rect.height) continue;
+
+    const text = normalizePdfText(node.nodeValue?.slice(index, index + 1) || "");
+    if (!text) continue;
+    const previous = fragments[fragments.length - 1];
+    if (previous && Math.abs(previous.rect.top - rect.top) < 1.5) {
+      previous.text += text;
+      previous.rect = {
+        left: Math.min(previous.rect.left, rect.left),
+        top: Math.min(previous.rect.top, rect.top),
+        right: Math.max(previous.rect.right, rect.right),
+        bottom: Math.max(previous.rect.bottom, rect.bottom),
+        width: Math.max(previous.rect.right, rect.right) - Math.min(previous.rect.left, rect.left),
+        height: Math.max(previous.rect.bottom, rect.bottom) - Math.min(previous.rect.top, rect.top),
+      };
+    } else {
+      fragments.push({ text, rect });
+    }
+  }
+  return fragments;
 }
 
 function toRoman(value) {
@@ -109,34 +147,40 @@ function collectEditableTextRuns(el) {
           range.setStart(node, match.index);
           range.setEnd(node, match.index + match[0].length);
           const rect = range.getBoundingClientRect();
+          const clientRects = Array.from(range.getClientRects?.() || []);
           range.detach?.();
           if (!rect.width || !rect.height) continue;
           if (rect.bottom <= rootRect.top || rect.top >= rootRect.bottom) continue;
-          const nextRun = {
-            text,
-            x: rect.left - rootRect.left,
-            y: rect.top - rootRect.top,
-            width: rect.width,
-            height: rect.height,
-            fontSize: Number.parseFloat(style.fontSize) || 12,
-            domScale: cumulativeScale(parent, el),
-            bold: style.fontWeight === "bold" || Number.parseInt(style.fontWeight, 10) >= 600,
-            italic: style.fontStyle === "italic" || style.fontStyle === "oblique",
-            color: parseCssColor(style.color),
-            textAlign: alignmentStyle.textAlign,
-            containerX: alignmentRect.left - rootRect.left,
-            containerWidth: alignmentRect.width,
-            paddingLeft: Number.parseFloat(alignmentStyle.paddingLeft) || 0,
-            paddingRight: Number.parseFloat(alignmentStyle.paddingRight) || 0,
-            alignWithinContainer: Boolean(tableCell),
-            container: alignmentContainer,
-          };
-          if (lineRun && Math.abs(lineRun.y - nextRun.y) < 1.5) {
-            lineRun.text += nextRun.text;
-            lineRun.width = Math.max(lineRun.width, (nextRun.x + nextRun.width) - lineRun.x);
-          } else {
-            lineRun = nextRun;
-            runs.push(lineRun);
+          const fragments = clientRects.length > 1
+            ? wrappedTextFragments(node, match.index, match.index + match[0].length)
+            : [{ text, rect }];
+          for (const fragment of fragments) {
+            const nextRun = {
+              text: fragment.text,
+              x: fragment.rect.left - rootRect.left,
+              y: fragment.rect.top - rootRect.top,
+              width: fragment.rect.width,
+              height: fragment.rect.height,
+              fontSize: Number.parseFloat(style.fontSize) || 12,
+              domScale: cumulativeScale(parent, el),
+              bold: style.fontWeight === "bold" || Number.parseInt(style.fontWeight, 10) >= 600,
+              italic: style.fontStyle === "italic" || style.fontStyle === "oblique",
+              color: parseCssColor(style.color),
+              textAlign: alignmentStyle.textAlign,
+              containerX: alignmentRect.left - rootRect.left,
+              containerWidth: alignmentRect.width,
+              paddingLeft: Number.parseFloat(alignmentStyle.paddingLeft) || 0,
+              paddingRight: Number.parseFloat(alignmentStyle.paddingRight) || 0,
+              alignWithinContainer: Boolean(tableCell),
+              container: alignmentContainer,
+            };
+            if (lineRun && Math.abs(lineRun.y - nextRun.y) < 1.5) {
+              lineRun.text += nextRun.text;
+              lineRun.width = Math.max(lineRun.width, (nextRun.x + nextRun.width) - lineRun.x);
+            } else {
+              lineRun = nextRun;
+              runs.push(lineRun);
+            }
           }
         }
       }
@@ -248,11 +292,20 @@ function drawEditableText(page, el, fonts) {
     const font = run.bold && run.italic ? fonts.boldItalic : run.bold ? fonts.bold : run.italic ? fonts.italic : fonts.regular;
     try {
       const text = run.text.trimEnd();
-      const fontSize = Math.max(4, run.fontSize * (run.domScale || 1) * scaleY);
-      const segments = splitCurrencyText(text, font, fonts.currency, fontSize);
-      const measuredWidth = segments.reduce((total, segment) => total + segment.width, 0);
       const contentLeft = ((run.containerX ?? run.x) + (run.paddingLeft || 0)) * scaleX;
       const contentRight = ((run.containerX ?? run.x) + (run.containerWidth ?? run.width) - (run.paddingRight || 0)) * scaleX;
+      const availableWidth = Math.max(0, contentRight - contentLeft) * 0.98;
+      const preferredFontSize = Math.max(4, run.fontSize * (run.domScale || 1) * scaleY);
+      let fontSize = preferredFontSize;
+      let segments = splitCurrencyText(text, font, fonts.currency, fontSize);
+      let measuredWidth = segments.reduce((total, segment) => total + segment.width, 0);
+      if (run.alignWithinContainer) {
+        fontSize = fitPdfTextSize(preferredFontSize, measuredWidth, availableWidth);
+        if (fontSize !== preferredFontSize) {
+          segments = splitCurrencyText(text, font, fonts.currency, fontSize);
+          measuredWidth = segments.reduce((total, segment) => total + segment.width, 0);
+        }
+      }
       let x = Math.max(0, run.x * scaleX);
       if (run.alignWithinContainer && (run.textAlign === "right" || run.textAlign === "end")) {
         x = Math.max(contentLeft, contentRight - measuredWidth);
@@ -294,6 +347,87 @@ function pdfBox(rect, rootRect, scaleX, scaleY) {
   };
 }
 
+function cssRadiusPart(value, reference) {
+  const token = String(value || "0").trim();
+  const amount = Number.parseFloat(token) || 0;
+  return token.endsWith("%") ? (amount / 100) * reference : amount;
+}
+
+export function fitRoundedCornerRadius(width, height, radiusX, radiusY) {
+  const safeWidth = Math.max(0, Number(width) || 0);
+  const safeHeight = Math.max(0, Number(height) || 0);
+  const rx = Math.max(0, Number(radiusX) || 0);
+  const ry = Math.max(0, Number(radiusY) || 0);
+  if (!safeWidth || !safeHeight || !rx || !ry) return { x: 0, y: 0 };
+
+  // CSS scales both axes by one factor when opposing radii exceed the box.
+  // This makes border-radius: 999px a capsule, rather than a wide ellipse.
+  const factor = Math.min(1, safeWidth / (2 * rx), safeHeight / (2 * ry));
+  return { x: rx * factor, y: ry * factor };
+}
+
+function uniformRoundedCorners(style, rect, box, scaleX, scaleY) {
+  const corners = [
+    style.borderTopLeftRadius,
+    style.borderTopRightRadius,
+    style.borderBottomRightRadius,
+    style.borderBottomLeftRadius,
+  ].map((value) => {
+    const [horizontal, vertical = horizontal] = String(value || "0").split(/\s+/);
+    return {
+      x: cssRadiusPart(horizontal, rect.width) * scaleX,
+      y: cssRadiusPart(vertical, rect.height) * scaleY,
+    };
+  });
+  const first = corners[0];
+  const isUniform = first.x > 0 && first.y > 0 && corners.every(
+    (corner) => Math.abs(corner.x - first.x) < 0.1 && Math.abs(corner.y - first.y) < 0.1,
+  );
+  if (!isUniform) return null;
+  return fitRoundedCornerRadius(box.width, box.height, first.x, first.y);
+}
+
+function roundedRectanglePath(width, height, radiusX, radiusY) {
+  const kappa = 0.5522847498;
+  const rx = Math.min(Math.max(0, radiusX), width / 2);
+  const ry = Math.min(Math.max(0, radiusY), height / 2);
+  const kx = rx * kappa;
+  const ky = ry * kappa;
+  return [
+    `M ${rx} 0`,
+    `L ${width - rx} 0`,
+    `C ${width - rx + kx} 0 ${width} ${ry - ky} ${width} ${ry}`,
+    `L ${width} ${height - ry}`,
+    `C ${width} ${height - ry + ky} ${width - rx + kx} ${height} ${width - rx} ${height}`,
+    `L ${rx} ${height}`,
+    `C ${rx - kx} ${height} 0 ${height - ry + ky} 0 ${height - ry}`,
+    `L 0 ${ry}`,
+    `C 0 ${ry - ky} ${rx - kx} 0 ${rx} 0`,
+    "Z",
+  ].join(" ");
+}
+
+function uniformBorder(style, scaleX, scaleY) {
+  const sides = ["Top", "Right", "Bottom", "Left"].map((side) => ({
+    style: style[`border${side}Style`],
+    width: Number.parseFloat(style[`border${side}Width`]) || 0,
+    colorValue: style[`border${side}Color`],
+    color: parseCssColor(style[`border${side}Color`]),
+  }));
+  const first = sides[0];
+  const isVisibleBorder = first.color && first.width > 0 && first.style !== "none" && first.style !== "hidden";
+  const isUniform = isVisibleBorder && sides.every(
+    (side) => side.style === first.style
+      && Math.abs(side.width - first.width) < 0.01
+      && side.colorValue === first.colorValue,
+  );
+  if (!isUniform) return null;
+  return {
+    ...first,
+    width: Math.max(0.35, first.width * ((scaleX + scaleY) / 2)),
+  };
+}
+
 function drawElementDecorations(page, element, rootRect, scaleX, scaleY) {
   const style = window.getComputedStyle(element);
   const rect = element.getBoundingClientRect();
@@ -303,7 +437,28 @@ function drawElementDecorations(page, element, rootRect, scaleX, scaleY) {
 
   const elementOpacity = Math.min(1, Math.max(0, Number(style.opacity) || 0));
   const background = parseCssColor(style.backgroundColor);
-  if (background) {
+  const roundedCorners = uniformRoundedCorners(style, rect, box, scaleX, scaleY);
+  const roundedBorder = roundedCorners ? uniformBorder(style, scaleX, scaleY) : null;
+
+  if (roundedCorners && (background || roundedBorder)) {
+    const pathOptions = {
+      x: box.x,
+      y: box.top,
+    };
+    if (background) {
+      pathOptions.color = background.color;
+      pathOptions.opacity = background.opacity * elementOpacity;
+    }
+    if (roundedBorder) {
+      pathOptions.borderColor = roundedBorder.color.color;
+      pathOptions.borderWidth = roundedBorder.width;
+      pathOptions.borderOpacity = roundedBorder.color.opacity * elementOpacity;
+    }
+    page.drawSvgPath(
+      roundedRectanglePath(box.width, box.height, roundedCorners.x, roundedCorners.y),
+      pathOptions,
+    );
+  } else if (background) {
     page.drawRectangle({
       x: box.x,
       y: box.y,
@@ -313,6 +468,8 @@ function drawElementDecorations(page, element, rootRect, scaleX, scaleY) {
       opacity: background.opacity * elementOpacity,
     });
   }
+
+  if (roundedBorder) return;
 
   const sides = [
     ["Top", box.x, box.top, box.right, box.top, scaleY],
@@ -533,7 +690,6 @@ function buildControllerCataloguePath({ displayType, controllerBrand, controller
   if (controllerBrand === "Novastar") {
     const novastarMap = {
       NS_TB1: null,
-      NS_TB2: "Mugnee Product data sheet/Processor and Controller/Novastar/TB-20 Plus.pdf",
       NS_TB40: "Mugnee Product data sheet/Processor and Controller/Novastar/Tb-40.pdf",
       NS_TB50: "Mugnee Product data sheet/Processor and Controller/Novastar/Tb-50.pdf",
       NS_TB60: "Mugnee Product data sheet/Processor and Controller/Novastar/Tb-60.pdf",
@@ -663,6 +819,9 @@ export default function PDFButton({
   filename = "Mugnee_Quotation.pdf",
   exportData = null,
   onBeforeDownload = null,
+  includeCatalogues = true,
+  label = "Download Quotation (PDF)",
+  className = "btn btn-primary",
 }) {
   const fitPdfContent = (el) => {
     const inner = el.querySelector(":scope > .invoice-inner");
@@ -698,12 +857,12 @@ export default function PDFButton({
     panel?.style.removeProperty("transform-origin");
     panel?.style.removeProperty("width");
     el.classList.remove("invoice--pdf-scale");
-    el.classList.add("preview-mode");
   };
 
   const handleDownload = async () => {
     const ids = Array.isArray(targetIds) && targetIds.length ? targetIds : [targetId];
     const els = ids.map((id) => document.getElementById(id)).filter(Boolean);
+    const previewStates = new Map(els.map((el) => [el, el.classList.contains("preview-mode")]));
 
     if (!els.length) return alert("Invoice root পাওয়া যায়নি!");
 
@@ -720,7 +879,7 @@ export default function PDFButton({
         await renderDomPage(pdf, el, textFonts);
       }
 
-      const cataloguePaths = getCataloguePaths(exportData);
+      const cataloguePaths = includeCatalogues ? getCataloguePaths(exportData) : [];
       for (const relativePath of cataloguePaths) {
         try {
           await appendPdfFromPublic(pdf, relativePath);
@@ -742,13 +901,16 @@ export default function PDFButton({
       console.error(err);
       alert("PDF তৈরি হয়নি। Console এ error দেখুন।");
     } finally {
-      els.forEach(revertPdfClasses);
+      els.forEach((el) => {
+        revertPdfClasses(el);
+        if (previewStates.get(el)) el.classList.add("preview-mode");
+      });
     }
   };
 
   return (
-    <button onClick={handleDownload} className="btn btn-primary" type="button">
-      Download Quotation (PDF)
+    <button onClick={handleDownload} className={className} type="button">
+      {label}
     </button>
   );
 }

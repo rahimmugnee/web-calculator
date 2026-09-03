@@ -13,23 +13,32 @@ test("overlays every LED component price without mutating factory defaults", () 
     powerSupplyPrice: 500,
   };
   const rows = [
-    { component_type: "module", source_key: "led:module:lampro:p1", brand_name: "Lampro", price_tier: "gold", unit_price: "110", technical_metadata: { id: "p1", technology: "smd", location: "indoor" } },
+    { component_type: "module", source_key: "led:module:lampro:p1", name: "P 1 SMD indoor LED Display Module", model: "LC1P", unit: "Box", brand_name: "Lampro", price_tier: "gold", unit_price: "110", technical_metadata: { id: "p1", technology: "smd", location: "indoor" } },
     { component_type: "module", source_key: "led:module:absen:p1", brand_name: "Absen", price_tier: "gold", unit_price: "120", technical_metadata: { id: "p1", technology: "smd", location: "indoor" } },
-    { component_type: "controller", model: "C1", price_tier: "default", unit_price: "210", technical_metadata: { id: "C1" } },
-    { component_type: "receiving-card", model: "R1", price_tier: "default", unit_price: "310", technical_metadata: { id: "R1" } },
-    { component_type: "cabinet", model: "CAB1", price_tier: "default", unit_price: "410", technical_metadata: { id: "CAB1" } },
-    { component_type: "power-supply", brand_name: "Lampro", price_tier: "default", unit_price: "510" },
+    { component_type: "controller", name: "Video Controller", model: "CTRL-DB", unit: "Set", brand_name: "ControlBrand", price_tier: "default", unit_price: "210", technical_metadata: { id: "C1" } },
+    { component_type: "receiving-card", name: "Data Receiver", model: "RC-DB", unit: "Card", brand_name: "ReceiverBrand", price_tier: "default", unit_price: "310", technical_metadata: { id: "R1" } },
+    { component_type: "cabinet", name: "LED Case", model: "CAB-DB", unit: "Case", brand_name: "CaseBrand", price_tier: "default", unit_price: "410", technical_metadata: { id: "CAB1" } },
+    { component_type: "power-supply", name: "LED PSU", model: "PSU-DB", unit: "Unit", brand_name: "Lampro", price_tier: "default", unit_price: "510" },
   ];
 
   const catalog = applyLedPriceRows(base, rows);
 
   expect(catalog.modelGroups.smd.indoor[0].prices).toEqual({ default: 110 });
   expect(catalog.moduleBrandPrices.Lampro.p1).toEqual({ default: 110 });
+  expect(catalog.moduleBrandLabels.Lampro.p1).toBe("P 1 SMD indoor LED Display Module");
+  expect(catalog.moduleBrandModelNames.Lampro.p1).toBe("LC1P");
+  expect(catalog.moduleBrandDetails.Lampro.p1).toEqual({
+    itemName: "P 1 SMD indoor LED Display Module", brand: "Lampro", model: "LC1P", unit: "Box",
+  });
   expect(catalog.moduleBrandPrices.Absen.p1).toEqual({ default: 120 });
   expect(catalog.controllers[0].price).toBe(210);
+  expect(catalog.controllers[0]).toMatchObject({ itemName: "Video Controller", brand: "ControlBrand", model: "CTRL-DB", unit: "Set" });
   expect(catalog.receivingCards.R1.unitPrice).toBe(310);
+  expect(catalog.receivingCards.R1).toMatchObject({ itemName: "Data Receiver", brand: "ReceiverBrand", model: "RC-DB", unit: "Card" });
   expect(catalog.cabinetOptions[0].price).toBe(410);
+  expect(catalog.cabinetOptions[0]).toMatchObject({ itemName: "LED Case", brand: "CaseBrand", model: "CAB-DB", unit: "Case" });
   expect(catalog.powerSupplyPrice).toBe(510);
+  expect(catalog.powerSupplyDetails.Lampro).toEqual({ itemName: "LED PSU", brand: "Lampro", model: "PSU-DB", unit: "Unit" });
   expect(base.modelGroups.smd.indoor[0].prices.gold).toBe(100);
 });
 
@@ -52,6 +61,23 @@ test("uses a legacy gold module price when no default row exists", () => {
   const catalog = applyLedPriceRows({}, [productionModuleRows[1]]);
 
   expect(catalog.moduleBrandPrices.Lampro["cob-in-p1_25"].default).toBe(12500);
+});
+
+test("keeps Novastar internal ids separate from invoice models", () => {
+  const base = {
+    controllers: [],
+    novastarControllers: [{ id: "NS_TU15PRO", model: "TU-15 Pro", label: "Controller: TU-15 Pro", price: 1 }],
+    receivingCards: { NS_NV3210: { model: "NV3210", label: "Receiving Card: NV3210", unitPrice: 1 } },
+  };
+  const rows = [
+    { component_type: "controller", model: "NS_TU15PRO", price_tier: "default", unit_price: 150000, technical_metadata: { id: "NS_TU15PRO" } },
+    { component_type: "receiving-card", model: "NS_NV3210", price_tier: "default", unit_price: 4000, technical_metadata: { id: "NS_NV3210" } },
+  ];
+
+  const catalog = applyLedPriceRows(base, rows);
+
+  expect(catalog.novastarControllers[0]).toMatchObject({ id: "NS_TU15PRO", model: "TU-15 Pro" });
+  expect(catalog.receivingCards.NS_NV3210).toMatchObject({ model: "NV3210" });
 });
 
 test.each([

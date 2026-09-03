@@ -34,5 +34,38 @@ test("renders protected dashboard navigation for an authenticated administrator"
   expect(screen.queryByRole("link", { name: /^Rental LED$/ })).not.toBeInTheDocument();
   expect(screen.queryByRole("link", { name: /^PA System$/ })).not.toBeInTheDocument();
   expect(screen.queryByRole("link", { name: /^Conference System$/ })).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Companies" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Users & Roles" })).toBeInTheDocument();
   expect((await screen.findAllByText("Mugnee Multiple Limited")).length).toBeGreaterThan(0);
+});
+
+test("hides privileged administration pages from non-admin roles", async () => {
+  window.history.replaceState({}, "", "/admin/dashboard");
+  global.fetch = jest.fn(async (url) => {
+    if (String(url).includes("/auth/me")) return { ok: true, status: 200, json: async () => ({ user: { id: 2, email: "sales@example.com", display_name: "Sales User", role: "sales", role_name: "Sales", permissions: ["manage_quotations"] } }) };
+    if (String(url).includes("/admin/companies")) return { ok: true, status: 200, json: async () => ([{ id: 1, name: "Mugnee Multiple Limited", code: "mugnee", is_default: true }]) };
+    return { ok: true, status: 200, json: async () => ({ products: 0, quotations: 0, invoices: 0, customers: 0 }) };
+  });
+
+  render(<AdminApp />);
+
+  expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "Companies" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "Users & Roles" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Manage Companies/ })).not.toBeInTheDocument();
+});
+
+test("redirects non-admin roles away from a privileged direct route", async () => {
+  window.history.replaceState({}, "", "/admin/users");
+  global.fetch = jest.fn(async (url) => {
+    if (String(url).includes("/auth/me")) return { ok: true, status: 200, json: async () => ({ user: { id: 2, email: "sales@example.com", display_name: "Sales User", role: "sales", role_name: "Sales", permissions: ["manage_quotations"] } }) };
+    if (String(url).includes("/admin/companies")) return { ok: true, status: 200, json: async () => ([{ id: 1, name: "Mugnee Multiple Limited", code: "mugnee", is_default: true }]) };
+    return { ok: true, status: 200, json: async () => ({ products: 0, quotations: 0, invoices: 0, customers: 0 }) };
+  });
+
+  render(<AdminApp />);
+
+  expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+  expect(window.location.pathname).toBe("/admin/dashboard");
+  expect(screen.queryByRole("heading", { name: "Users & Roles" })).not.toBeInTheDocument();
 });

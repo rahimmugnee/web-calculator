@@ -131,10 +131,12 @@ try {
          component_type=EXCLUDED.component_type, name=EXCLUDED.name, brand=EXCLUDED.brand, model=EXCLUDED.model,
          unit=EXCLUDED.unit, currency=EXCLUDED.currency, technical_metadata=EXCLUDED.technical_metadata,
          source_catalog=EXCLUDED.source_catalog, is_active=true
+       WHERE products.source_catalog <> 'admin'
        RETURNING id`,
       [item.sourceKey, item.sku, item.category, item.componentType, item.name, item.brand || null, item.model || null, item.unit || "Nos.", item.currency || "BDT", JSON.stringify(item.metadata || {})]
     );
-    await client.query("UPDATE products SET category_id=$1, brand_id=$2 WHERE id=$3", [categoryResult.rows[0].id, brandId, saved.rows[0].id]);
+    const productId = saved.rows[0]?.id || (await client.query("SELECT id FROM products WHERE source_key=$1", [item.sourceKey])).rows[0].id;
+    await client.query("UPDATE products SET category_id=$1, brand_id=$2 WHERE id=$3 AND source_catalog <> 'admin'", [categoryResult.rows[0].id, brandId, productId]);
     if (item.category === "led-module") {
       // Preserve admin edits, and promote a legacy-only gold value before using
       // the static catalog default. Fresh databases receive only the canonical
@@ -147,7 +149,7 @@ try {
          FROM company_product_prices
          WHERE company_id=$1 AND product_id=$2 AND price_tier='gold'
          ON CONFLICT(company_id,product_id,price_tier) DO NOTHING`,
-        [companyId, saved.rows[0].id]
+        [companyId, productId]
       );
     }
     const priceEntries = item.category === "led-module"
@@ -159,7 +161,7 @@ try {
         `INSERT INTO company_product_prices (company_id, product_id, price_tier, unit_price, currency, pricing_metadata, is_active)
          VALUES ($1,$2,$3,$4,$5,'{"source":"static-js"}'::jsonb,true)
          ON CONFLICT (company_id, product_id, price_tier) DO NOTHING`,
-        [companyId, saved.rows[0].id, tier, Number(rawPrice), item.currency || "BDT"]
+        [companyId, productId, tier, Number(rawPrice), item.currency || "BDT"]
       );
     }
   }
