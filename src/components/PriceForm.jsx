@@ -337,6 +337,8 @@ export default function PriceForm({
   const [cabinetMaterial, setCabinetMaterial] = useState("aluminium");
   const [cabinetVariant, setCabinetVariant] = useState("");
   const [cabinetSizeId, setCabinetSizeId] = useState("cabinet_indoor_aluminium_640x480");
+  const [cabinetBrand, setCabinetBrand] = useState("");
+  const [cabinetModelId, setCabinetModelId] = useState("");
 
   const cabinetAllOptions = useMemo(() => {
     const options = catalog.cabinetOptions?.length ? catalog.cabinetOptions : buildLegacyCabinetOptions(catalog);
@@ -391,7 +393,14 @@ export default function PriceForm({
         (!cabinetVariantOptions.length || option.variantCode === activeCabinetVariant)
     );
 
-    return filtered.length ? filtered : cabinetAllOptions.filter((option) => option.displayType === dispType);
+    const available = filtered.length ? filtered : cabinetAllOptions.filter((option) => option.displayType === dispType);
+    const bySize = new Map();
+    available.forEach((option) => {
+      const key = option.sizeKey || `${option.widthMm || ""}x${option.heightMm || ""}`;
+      const current = bySize.get(key);
+      if (!current || (current.catalogRole === "model" && option.catalogRole !== "model")) bySize.set(key, option);
+    });
+    return [...bySize.values()];
   }, [activeCabinetMaterial, activeCabinetVariant, cabinetAllOptions, cabinetVariantOptions.length, dispType]);
   const selectedCabinetSize = useMemo(
     () => cabinetSizeOptions.find((size) => size.id === cabinetSizeId) ?? cabinetSizeOptions[0],
@@ -404,6 +413,46 @@ export default function PriceForm({
       setCabinetSizeId(cabinetSizeOptions[0].id);
     }
   }, [cabinetSizeId, cabinetSizeOptions]);
+
+  const cabinetModelCandidates = useMemo(
+    () => cabinetAllOptions.filter((option) =>
+      option.catalogRole === "model" &&
+      String(option.model || "").trim() &&
+      option.displayType === dispType &&
+      option.materialCode === activeCabinetMaterial &&
+      String(option.variantCode || "") === String(activeCabinetVariant || "") &&
+      option.sizeKey === selectedCabinetSize?.sizeKey
+    ),
+    [activeCabinetMaterial, activeCabinetVariant, cabinetAllOptions, dispType, selectedCabinetSize?.sizeKey]
+  );
+  const cabinetBrandOptions = useMemo(
+    () => [
+      { value: "", label: "No Brand" },
+      ...uniqueCabinetOptions(cabinetModelCandidates, "brand", "brand"),
+    ],
+    [cabinetModelCandidates]
+  );
+  const cabinetModelOptions = useMemo(
+    () => [
+      { value: "", label: "No Model" },
+      ...cabinetModelCandidates
+        .filter((option) => String(option.brand || "") === cabinetBrand)
+        .map((option) => ({ value: option.id, label: option.model })),
+    ],
+    [cabinetBrand, cabinetModelCandidates]
+  );
+  const selectedCabinetModel = useMemo(
+    () => cabinetModelCandidates.find((option) => option.id === cabinetModelId) || null,
+    [cabinetModelCandidates, cabinetModelId]
+  );
+
+  useEffect(() => {
+    if (!cabinetBrandOptions.some((option) => option.value === cabinetBrand)) setCabinetBrand("");
+  }, [cabinetBrand, cabinetBrandOptions]);
+
+  useEffect(() => {
+    if (!cabinetModelOptions.some((option) => option.value === cabinetModelId)) setCabinetModelId("");
+  }, [cabinetModelId, cabinetModelOptions]);
 
   const cabinetSizeLabel = selectedCabinetSize?.label || "640mm x 480mm";
   const cabinetModulesPerCabinet = selectedCabinetSize?.modulesPerCabinet || catalog.modulesPerCabinet || 6;
@@ -618,8 +667,8 @@ export default function PriceForm({
 
   // âœ… Cabinet Unit Price (auto + manual) â€” NEW
   const cabinetUnitPriceAuto = useMemo(
-    () => Number(selectedCabinetSize?.price ?? catalog.cabinetCasePrice ?? 0),
-    [catalog.cabinetCasePrice, selectedCabinetSize?.price]
+    () => Number(selectedCabinetModel?.price ?? selectedCabinetSize?.price ?? catalog.cabinetCasePrice ?? 0),
+    [catalog.cabinetCasePrice, selectedCabinetModel?.price, selectedCabinetSize?.price]
   );
   useEffect(() => {
     // When cabinet toggles ON, reset to default auto
@@ -982,10 +1031,10 @@ export default function PriceForm({
           variantCode: selectedCabinetSize?.variantCode || "",
           variantLabel: selectedCabinetSize?.variantLabel || "",
           invoiceLabel: buildCabinetInvoiceLabel(selectedCabinetSize),
-          itemName: selectedCabinetSize?.itemName || "Cabinet",
-          brand: selectedCabinetSize?.brand || "",
-          model: selectedCabinetSize?.model || buildCabinetInvoiceLabel(selectedCabinetSize),
-          unit: selectedCabinetSize?.unit || "Pcs",
+          itemName: selectedCabinetModel?.itemName || selectedCabinetSize?.itemName || "Cabinet",
+          brand: cabinetBrand,
+          model: selectedCabinetModel?.model || "",
+          unit: selectedCabinetModel?.unit || selectedCabinetSize?.unit || "Pcs",
           modulesPerCabinet: cabinetModulesPerCabinet,
         },
 
@@ -1051,6 +1100,8 @@ export default function PriceForm({
       ctrlSystemBrand,
       cabinetSizeId,
       selectedCabinetSize,
+      selectedCabinetModel,
+      cabinetBrand,
       activeCabinetMaterial,
       cabinetSizeLabel,
       cabinetModulesPerCabinet,
@@ -1258,6 +1309,29 @@ export default function PriceForm({
           value={selectedCabinetSize?.id || ""}
           options={cabinetSizeOptions.map((size) => ({ value: size.id, label: size.label }))}
           onChange={setCabinetSizeId}
+        />
+      </label>
+
+      <label>
+        Cabinet Brand
+        <CustomSelect
+          ariaLabel="Cabinet Brand"
+          value={cabinetBrand}
+          options={cabinetBrandOptions}
+          onChange={(value) => {
+            setCabinetBrand(value);
+            setCabinetModelId("");
+          }}
+        />
+      </label>
+
+      <label>
+        Cabinet Model
+        <CustomSelect
+          ariaLabel="Cabinet Model"
+          value={cabinetModelId}
+          options={cabinetModelOptions}
+          onChange={setCabinetModelId}
         />
       </label>
     </>

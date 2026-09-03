@@ -89,10 +89,6 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
   const isIrregular = snapshot?.quotationMode === "irregular";
   const irregularQty = Math.max(1, Math.ceil(Number(snapshot?.irregular?.qty) || 1));
   const moduleModelName = model.code || model.name;
-  const cabinetText = items?.cabinetEnabled
-    ? `${items?.cabinet?.invoiceLabel || "Aluminium Cabinet"} (${items?.cabinet?.sizeLabel || "640 x 480mm"})`
-    : "Cabinet";
-
   const sizeStr = `${display.widthFt || "—"}ft × ${display.heightFt || "—"}ft`;
 
   // controller label human-readable (Huidu + Novastar)
@@ -127,7 +123,7 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
         { name: withoutLedTechnology(model.itemName || "LED Display Module"), brand: model.invoiceBrand || items.brands?.module, model: moduleModelName },
         { name: psuItemName, brand: psuPicked.brand || items.brands?.psu, model: psuPicked.model || psuPicked.label || "" },
         { name: receivingItemName, brand: receivingPicked.brand || items.brands?.receiving, model: componentModelName(receivingPicked.model, rcLabel, receivingPicked.id) },
-        ...(items?.cabinetEnabled ? [{ name: "Cabinet", brand: items.cabinet?.brand, model: items.cabinet?.model || cabinetText }] : []),
+        ...(items?.cabinetEnabled ? [{ name: "Cabinet", brand: items.cabinet?.brand, model: items.cabinet?.model || "" }] : []),
       ],
     });
   } else {
@@ -188,7 +184,7 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
     rows.push({
       sl: sl++,
       name: items.cabinet?.itemName || "Cabinet",
-      model: items.cabinet?.model || cabinetText,
+      model: items.cabinet?.model || "",
       unit: "Pcs",
       qty: items.cabinetQty,
       unitPrice: unitCabinet,

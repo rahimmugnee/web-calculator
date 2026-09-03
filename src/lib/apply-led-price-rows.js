@@ -198,6 +198,9 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = [], { auth
           model: cabinetOptions[index].label || cabinetOptions[index].id,
           unit: "Pcs",
         }),
+        sourceKey: row.source_key || cabinetOptions[index].sourceKey || "",
+        sourceCatalog: row.source_catalog || cabinetOptions[index].sourceCatalog || "",
+        catalogRole: row.source_catalog === "admin" ? "model" : "base",
         price,
       };
       continue;

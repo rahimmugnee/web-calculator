@@ -61,7 +61,7 @@ export async function syncCatalogFallback(client) {
   if (!company.rowCount) throw new Error("Mugnee pricing source is unavailable.");
 
   const [prices, brands] = await Promise.all([
-    client.query(`SELECT p.source_key,p.component_type,p.name,p.model,p.unit,p.technical_metadata,
+    client.query(`SELECT p.source_key,p.source_catalog,p.component_type,p.name,p.model,p.unit,p.technical_metadata,
         b.name brand_name,c.slug category_slug,cpp.price_tier,cpp.unit_price
       FROM products p
       JOIN company_product_prices cpp ON cpp.product_id=p.id AND cpp.company_id=$1 AND cpp.is_active

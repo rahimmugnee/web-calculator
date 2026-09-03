@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import CategoriesPage from "./CategoriesPage";
-import { get, remove } from "../api";
+import { get, post, put, remove } from "../api";
 
 jest.mock("../contexts", () => ({
   useCompany: () => ({ companyId: 1, company: { id: 1, pricing_multiplier: 1 } }),
@@ -27,6 +27,8 @@ beforeEach(() => {
     if (url.startsWith("/admin/products")) return Promise.resolve(products);
     return Promise.resolve([]);
   });
+  post.mockResolvedValue({ id: 101 });
+  put.mockResolvedValue({ id: 100 });
   remove.mockResolvedValue(undefined);
 });
 
@@ -73,4 +75,38 @@ test("uses the quotation delete design and confirmation for a selected brand", a
   await waitFor(() => expect(remove).toHaveBeenCalledWith("/admin/brands/10"));
   await waitFor(() => expect(screen.queryByRole("dialog", { name: "Delete brand?" })).not.toBeInTheDocument());
   expect(await screen.findByText("Lampro moved to Recycle Bin.")).toBeInTheDocument();
+});
+
+test("allows an existing model to be saved with No Brand", async () => {
+  render(<CategoriesPage />);
+
+  fireEvent.click(await screen.findByRole("button", { name: "Edit LD-200" }));
+  const dialog = screen.getByRole("dialog");
+  const brand = within(dialog).getByRole("combobox", { name: "Brand" });
+  expect(within(brand).getByRole("option", { name: "No Brand" })).toBeInTheDocument();
+
+  fireEvent.change(brand, { target: { value: "" } });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Save Changes" }));
+
+  await waitFor(() => expect(put).toHaveBeenCalledWith(
+    "/admin/products/100",
+    expect.objectContaining({ brand_id: null })
+  ));
+});
+
+test("saves an admin-selected brand on a new model", async () => {
+  render(<CategoriesPage />);
+
+  fireEvent.click(await screen.findByRole("button", { name: /Add Model/ }));
+  const dialog = screen.getByRole("dialog");
+  fireEvent.change(within(dialog).getByRole("textbox", { name: "Label" }), { target: { value: "Power Supply: TEST" } });
+  fireEvent.change(within(dialog).getByRole("textbox", { name: "Model" }), { target: { value: "TEST" } });
+  fireEvent.change(within(dialog).getByRole("combobox", { name: "Brand" }), { target: { value: "10" } });
+  fireEvent.change(within(dialog).getByRole("spinbutton", { name: "Default / Gold Price" }), { target: { value: "1000" } });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Add Model" }));
+
+  await waitFor(() => expect(post).toHaveBeenCalledWith(
+    "/admin/products",
+    expect.objectContaining({ brand_id: 10, model: "TEST" })
+  ));
 });
