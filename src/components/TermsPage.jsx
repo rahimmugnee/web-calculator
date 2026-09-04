@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import RentalTermsPage from "./RentalTermsPage.jsx";
+import { useCatalog } from "../context/CatalogContext.jsx";
 
 function renderPaymentTerms(paymentTermId, subjectLabel = "LED display system") {
   switch (paymentTermId) {
@@ -53,8 +54,15 @@ function renderPaymentTerms(paymentTermId, subjectLabel = "LED display system") 
 }
 
 const TermsPage = forwardRef(function TermsPage({ snapshot, calc }, ref) {
+  const { quotationSettings, company } = useCatalog();
+  const configuredTerms = Array.isArray(quotationSettings?.terms)
+    ? quotationSettings.terms.map((term) => typeof term === "string" ? term : term?.text || term?.label || "").filter(Boolean)
+    : [];
+  const validityDays = Number.isFinite(Number(quotationSettings?.default_validity_days))
+    ? Math.max(0, Number(quotationSettings.default_validity_days))
+    : 15;
   if (snapshot?.quotationType === "rental") {
-    return <RentalTermsPage ref={ref} calc={calc} snapshot={snapshot} />;
+    return <RentalTermsPage ref={ref} calc={calc} snapshot={snapshot} company={company} quotationSettings={quotationSettings} />;
   }
 
   const totals = calc?.totals;
@@ -74,7 +82,7 @@ const TermsPage = forwardRef(function TermsPage({ snapshot, calc }, ref) {
   const paymentTermId = snapshot?.paymentTermId || "PT_75_25";
   const deliveryDays = Number.isFinite(parseFloat(snapshot?.deliveryDays))
     ? Math.max(1, Math.round(parseFloat(snapshot.deliveryDays)))
-    : 30;
+    : Math.max(1, parseInt(quotationSettings?.default_delivery_period, 10) || 30);
   const subjectLabel =
     snapshot?.quotationType === "conference"
       ? "Conference System"
@@ -100,7 +108,7 @@ const TermsPage = forwardRef(function TermsPage({ snapshot, calc }, ref) {
                 The quoted price includes <b>complete system making, installation, testing, and commissioning</b> of the {subjectLabel}. There are no additional charges for these services.
               </li>
               <li>
-                This quotation is valid for a period of <b>15 (fifteen)</b> days from the date of issuance.
+                This quotation is valid for a period of <b>{validityDays} day(s)</b> from the date of issuance.
               </li>
               <li>
                 Delivery will be made within <b>{deliveryDays} days</b> from the date of the work order.
@@ -140,6 +148,14 @@ const TermsPage = forwardRef(function TermsPage({ snapshot, calc }, ref) {
               <li>Emergency support can be arranged on a priority basis depending on the issue.</li>
             </ol>
           </li>
+          {configuredTerms.length ? (
+            <li className="terms-section">
+              <div className="terms-h">Additional Terms</div>
+              <ol type="i" className="terms-sublist">
+                {configuredTerms.map((term, index) => <li key={`${index}-${term}`}>{term}</li>)}
+              </ol>
+            </li>
+          ) : null}
         </ol>
       </div>
     </div>

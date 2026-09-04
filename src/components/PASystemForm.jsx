@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import PAComponentCard from "./PAComponentCard.jsx";
-import { paProducts, paBrands } from "../data/paProducts.js";
+import { paProducts as staticPaProducts, paBrands as staticPaBrands } from "../data/paProducts.js";
 import { paApplicationTypes } from "../data/paApplicationTemplates.js";
 import {
   buildItemsFromTemplate,
@@ -16,8 +16,6 @@ import {
   resizeAutoRows,
 } from "../lib/paCalculationUtils.js";
 
-const supportedComponentTypes = new Set(paProducts.map((product) => product.componentType));
-
 function selectInputValue(event) {
   event.currentTarget.select();
 }
@@ -31,10 +29,16 @@ function TextField({ label, value, onChange, type = "text" }) {
   );
 }
 
-export default function PASystemForm({ onChange, onCalculated }) {
-  const [paInstallationType, setPaInstallationType] = useState("wired");
-  const [applicationType, setApplicationType] = useState("Office & Corporate Building");
-  const [preferredBrand, setPreferredBrand] = useState("CMX");
+export default function PASystemForm({
+  onChange,
+  onCalculated,
+  products = staticPaProducts,
+  brands = staticPaBrands,
+  settings = {},
+}) {
+  const [paInstallationType, setPaInstallationType] = useState(settings.installationType || "wired");
+  const [applicationType, setApplicationType] = useState(settings.applicationType || "Office & Corporate Building");
+  const [preferredBrand, setPreferredBrand] = useState(settings.preferredBrand || brands[0] || "CMX");
   const [customer, setCustomer] = useState({ name: "", position: "", company: "", mobile: "", email: "", address: "" });
   const [projectDetails, setProjectDetails] = useState({
     name: "",
@@ -42,14 +46,22 @@ export default function PASystemForm({ onChange, onCalculated }) {
     type: "Sound System Installation",
     preparedBy: "Mugnee Multiple Limited",
   });
-  const [vatEnabled, setVatEnabled] = useState(false);
+  const [vatEnabled, setVatEnabled] = useState(Boolean(settings.vatEnabled));
   const [discountEnabled, setDiscountEnabled] = useState(false);
   const [discountTk, setDiscountTk] = useState(0);
-  const [paymentTermId, setPaymentTermId] = useState("PT_75_25");
-  const [deliveryDays, setDeliveryDays] = useState(30);
+  const [paymentTermId, setPaymentTermId] = useState(settings.paymentTermId || "PT_75_25");
+  const [deliveryDays, setDeliveryDays] = useState(settings.deliveryDays ?? settings.defaultDeliveryDays ?? 30);
   const [customWarranty, setCustomWarranty] = useState("");
   const [items, setItems] = useState([]);
   const [newComponentGroup, setNewComponentGroup] = useState("amplifier");
+  const settingDirty = useRef(new Set());
+  const supportedComponentTypes = useMemo(() => new Set(products.map((product) => product.componentType)), [products]);
+  const productsRef = useRef(products);
+  const supportedComponentTypesRef = useRef(supportedComponentTypes);
+  const installationTypeRef = useRef(paInstallationType);
+  productsRef.current = products;
+  supportedComponentTypesRef.current = supportedComponentTypes;
+  installationTypeRef.current = paInstallationType;
 
   const preferredBrandRef = useRef(preferredBrand);
   useEffect(() => {
@@ -62,20 +74,58 @@ export default function PASystemForm({ onChange, onCalculated }) {
         applicationType,
         installationType: paInstallationType,
         brand: preferredBrandRef.current,
-        products: paProducts,
-      }).filter((item) => supportedComponentTypes.has(item.componentType))
+        products: productsRef.current,
+      }).filter((item) => supportedComponentTypesRef.current.has(item.componentType))
     );
   }, [applicationType, paInstallationType]);
 
+  useEffect(() => {
+    const dirty = settingDirty.current;
+    if (!dirty.has("installationType") && settings.installationType) setPaInstallationType(settings.installationType);
+    if (!dirty.has("applicationType") && settings.applicationType) setApplicationType(settings.applicationType);
+    if (!dirty.has("preferredBrand") && settings.preferredBrand) setPreferredBrand(settings.preferredBrand);
+    if (!dirty.has("vatEnabled") && typeof settings.vatEnabled === "boolean") setVatEnabled(settings.vatEnabled);
+    if (!dirty.has("paymentTermId") && settings.paymentTermId) setPaymentTermId(settings.paymentTermId);
+    const nextDelivery = settings.deliveryDays ?? settings.defaultDeliveryDays;
+    if (!dirty.has("deliveryDays") && nextDelivery !== undefined) setDeliveryDays(nextDelivery);
+  }, [settings]);
+
+  useEffect(() => {
+    if (brands.includes(preferredBrand)) return;
+    setPreferredBrand(brands[0] || "");
+  }, [brands, preferredBrand]);
+
+  useEffect(() => {
+    setItems((current) => {
+      const reconciled = current.map((row) => {
+        if (row.selectionMode === "custom") return row;
+        const latest = findProductById(products, row.productId)
+          || resolveBrandDefaultProduct({ products, brand: preferredBrandRef.current, installationType: installationTypeRef.current, componentType: row.componentType })
+          || getCandidateProducts({ products, brand: null, installationType: installationTypeRef.current, componentType: row.componentType })[0];
+        if (!latest) return { ...row, productId: null, brand: "", model: "", unitPrice: row.unitPriceOverridden ? row.unitPrice : 0 };
+        const applied = applyProductToRow(row, latest);
+        return {
+          ...applied,
+          qty: row.qty,
+          selectionMode: row.selectionMode,
+          autoSized: row.autoSized,
+          unitPrice: row.unitPriceOverridden ? row.unitPrice : applied.unitPrice,
+          unitPriceOverridden: Boolean(row.unitPriceOverridden),
+        };
+      });
+      return resizeAutoRows(reconciled, { products, brand: preferredBrandRef.current, installationType: installationTypeRef.current });
+    });
+  }, [products]);
+
   const availableComponentTypes = useMemo(() => {
     const set = new Set();
-    paProducts.forEach((product) => {
+    products.forEach((product) => {
       if (product.installationType === paInstallationType || product.installationType === "both") {
         set.add(product.componentType);
       }
     });
     return [...set].sort();
-  }, [paInstallationType]);
+  }, [paInstallationType, products]);
 
   const componentTypeGroups = useMemo(
     () => ({
@@ -108,13 +158,14 @@ export default function PASystemForm({ onChange, onCalculated }) {
   const mutateItems = (updater) => {
     setItems((prev) => {
       const next = updater(prev);
-      return resizeAutoRows(next, { products: paProducts, brand: preferredBrand, installationType: paInstallationType });
+      return resizeAutoRows(next, { products, brand: preferredBrand, installationType: paInstallationType });
     });
   };
 
   const handleBrandChange = (nextBrand) => {
     setPreferredBrand(nextBrand);
-    setItems((prev) => applyBrandChange({ items: prev, products: paProducts, newBrand: nextBrand, installationType: paInstallationType }));
+    settingDirty.current.add("preferredBrand");
+    setItems((prev) => applyBrandChange({ items: prev, products, newBrand: nextBrand, installationType: paInstallationType }));
   };
 
   const updateItem = (id, patch) => {
@@ -125,7 +176,12 @@ export default function PASystemForm({ onChange, onCalculated }) {
         // taking manual control of the switch count; everything else (qty
         // on speakers/amplifiers, power tap, price) leaves selectionMode as-is.
         const optOutOfAutoSizing = "qty" in patch && row.componentType === "poe-switch";
-        return { ...row, ...patch, autoSized: optOutOfAutoSizing ? false : row.autoSized };
+        return {
+          ...row,
+          ...patch,
+          autoSized: optOutOfAutoSizing ? false : row.autoSized,
+          unitPriceOverridden: "unitPrice" in patch ? true : row.unitPriceOverridden,
+        };
       })
     );
   };
@@ -134,18 +190,18 @@ export default function PASystemForm({ onChange, onCalculated }) {
     mutateItems((prev) =>
       prev.map((row) => {
         if (row.id !== id) return row;
-        const product = findProductById(paProducts, productId);
+        const product = findProductById(products, productId);
         if (!product) return row;
         const applied = applyProductToRow({ ...row, selectionMode: "manual", autoSized: false }, product);
-        return { ...applied, warnings: (row.warnings || []).filter((warning) => warning.code !== "MANUAL_PRO_AMP") };
+        return { ...applied, unitPriceOverridden: false, warnings: (row.warnings || []).filter((warning) => warning.code !== "MANUAL_PRO_AMP") };
       })
     );
   };
 
   const selectTypeForItem = (id, componentType) => {
     const product =
-      resolveBrandDefaultProduct({ products: paProducts, brand: preferredBrand, installationType: paInstallationType, componentType }) ||
-      getCandidateProducts({ products: paProducts, brand: null, installationType: paInstallationType, componentType })[0];
+      resolveBrandDefaultProduct({ products, brand: preferredBrand, installationType: paInstallationType, componentType }) ||
+      getCandidateProducts({ products, brand: null, installationType: paInstallationType, componentType })[0];
     if (!product) return;
     mutateItems((prev) =>
       prev.map((row) =>
@@ -174,10 +230,10 @@ export default function PASystemForm({ onChange, onCalculated }) {
     const newComponentType = componentTypeGroups[newComponentGroup]?.[0];
     if (!newComponentType) return;
     const product =
-      resolveBrandDefaultProduct({ products: paProducts, brand: preferredBrand, installationType: paInstallationType, componentType: newComponentType }) ||
-      getCandidateProducts({ products: paProducts, brand: null, installationType: paInstallationType, componentType: newComponentType })[0] ||
+      resolveBrandDefaultProduct({ products, brand: preferredBrand, installationType: paInstallationType, componentType: newComponentType }) ||
+      getCandidateProducts({ products, brand: null, installationType: paInstallationType, componentType: newComponentType })[0] ||
       null;
-    mutateItems((prev) => [...prev, buildManualComponentRow({ componentType: newComponentType, productId: product?.id, products: paProducts })]);
+    mutateItems((prev) => [...prev, buildManualComponentRow({ componentType: newComponentType, productId: product?.id, products })]);
   };
 
   const addCustomItem = () => {
@@ -198,7 +254,7 @@ export default function PASystemForm({ onChange, onCalculated }) {
       paymentTermId,
       deliveryDays: Number(deliveryDays) || 30,
       customWarranty,
-      defaultWarrantyYears: 1,
+      defaultWarrantyYears: Number(settings.defaultWarrantyYears) || 1,
       items,
     }),
     [
@@ -213,11 +269,12 @@ export default function PASystemForm({ onChange, onCalculated }) {
       paymentTermId,
       deliveryDays,
       customWarranty,
+      settings.defaultWarrantyYears,
       items,
     ]
   );
 
-  const calcResult = useMemo(() => calculatePASystemQuotation(snapshot, paProducts), [snapshot]);
+  const calcResult = useMemo(() => calculatePASystemQuotation(snapshot, products), [snapshot, products]);
 
   useEffect(() => {
     onChange?.(snapshot);
@@ -231,7 +288,10 @@ export default function PASystemForm({ onChange, onCalculated }) {
         <div className="form-row">
           <label>
             Installation Type
-            <select className="select" value={paInstallationType} onChange={(event) => setPaInstallationType(event.target.value)}>
+            <select className="select" value={paInstallationType} onChange={(event) => {
+              settingDirty.current.add("installationType");
+              setPaInstallationType(event.target.value);
+            }}>
               <option value="wired">Wired PA System</option>
               <option value="ip">IP-Based PA System</option>
             </select>
@@ -239,7 +299,10 @@ export default function PASystemForm({ onChange, onCalculated }) {
 
           <label>
             Application Type
-            <select className="select" value={applicationType} onChange={(event) => setApplicationType(event.target.value)}>
+            <select className="select" value={applicationType} onChange={(event) => {
+              settingDirty.current.add("applicationType");
+              setApplicationType(event.target.value);
+            }}>
               {paApplicationTypes.map((type) => (
                 <option key={type} value={type}>
                   {type}
@@ -251,7 +314,7 @@ export default function PASystemForm({ onChange, onCalculated }) {
           <label>
             Preferred Brand
             <select className="select" value={preferredBrand} onChange={(event) => handleBrandChange(event.target.value)}>
-              {paBrands.map((brand) => (
+              {brands.map((brand) => (
                 <option key={brand} value={brand}>
                   {brand}
                 </option>
@@ -273,7 +336,7 @@ export default function PASystemForm({ onChange, onCalculated }) {
             <PAComponentCard
               key={item.id}
               item={item}
-              products={paProducts}
+              products={products}
               installationType={paInstallationType}
               warnings={calcResult.rowWarnings?.[item.id] || []}
               componentTypeOptions={typeOptionsFor(item.componentType)}
@@ -315,11 +378,17 @@ export default function PASystemForm({ onChange, onCalculated }) {
         <h3>VAT</h3>
         <div className="inline" style={{ gap: 18 }}>
           <label className="inline">
-            <input className="radio" type="radio" checked={!vatEnabled} onChange={() => setVatEnabled(false)} />
+            <input className="radio" type="radio" checked={!vatEnabled} onChange={() => {
+              settingDirty.current.add("vatEnabled");
+              setVatEnabled(false);
+            }} />
             <span>Without VAT</span>
           </label>
           <label className="inline">
-            <input className="radio" type="radio" checked={vatEnabled} onChange={() => setVatEnabled(true)} />
+            <input className="radio" type="radio" checked={vatEnabled} onChange={() => {
+              settingDirty.current.add("vatEnabled");
+              setVatEnabled(true);
+            }} />
             <span>With VAT (15%)</span>
           </label>
         </div>
@@ -349,14 +418,20 @@ export default function PASystemForm({ onChange, onCalculated }) {
         <div className="form-row">
           <label>
             Payment Terms
-            <select className="select" value={paymentTermId} onChange={(event) => setPaymentTermId(event.target.value)}>
+            <select className="select" value={paymentTermId} onChange={(event) => {
+              settingDirty.current.add("paymentTermId");
+              setPaymentTermId(event.target.value);
+            }}>
               <option value="PT_75_25">75% Advance / 25% on Arrival</option>
               <option value="PT_50_50">50% Advance / 50% on Arrival</option>
               <option value="PT_100">100% Advance</option>
               <option value="PT_NO_ADV_7D">No Advance / 7 Days After Delivery</option>
             </select>
           </label>
-          <TextField label="Delivery (Days)" value={deliveryDays} onChange={setDeliveryDays} type="number" />
+          <TextField label="Delivery (Days)" value={deliveryDays} onChange={(value) => {
+            settingDirty.current.add("deliveryDays");
+            setDeliveryDays(value);
+          }} type="number" />
           <TextField label="Custom Warranty (Years)" value={customWarranty} onChange={setCustomWarranty} type="number" />
         </div>
       </section>

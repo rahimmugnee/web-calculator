@@ -16,6 +16,7 @@ WITH cabinet_models AS (
     )) AS normalized_model
   FROM products
   WHERE component_type='cabinet'
+    AND source_catalog <> 'admin'
 ), updated AS (
   UPDATE products p
   SET model=c.normalized_model,

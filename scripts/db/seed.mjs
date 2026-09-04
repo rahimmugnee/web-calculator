@@ -8,7 +8,7 @@ import { syncCatalogFallback } from "../../server/services/catalogFallback.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const catalogPath = join(root, "database", "generated", "mugnee-static-catalog.json");
-if (!existsSync(catalogPath)) await import("./export-static-catalog.mjs");
+await import("./export-static-catalog.mjs");
 const catalog = JSON.parse(readFileSync(catalogPath, "utf8"));
 const client = new pg.Client(databaseConfig());
 

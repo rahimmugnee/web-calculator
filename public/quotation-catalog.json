@@ -1043,7 +1043,7 @@
       "unit": "Pcs",
       "brand": "",
       "label": "640mm x 480mm",
-      "model": "AL640X480",
+      "model": "",
       "price": 8000,
       "sizeKey": "640x480",
       "widthMm": 640,
@@ -1054,14 +1054,38 @@
       "materialCode": "aluminium",
       "variantLabel": "",
       "materialLabel": "Aluminium",
-      "modulesPerCabinet": 6
+      "modulesPerCabinet": 6,
+      "sourceKey": "led:cabinet:cabinet_indoor_aluminium_640x480",
+      "sourceCatalog": "admin",
+      "catalogRole": "base"
+    },
+    {
+      "id": "led:cabinet:cabinet_indoor_aluminium_640x480",
+      "unit": "Pcs",
+      "brand": "ABC",
+      "label": "640mm x 480mm",
+      "model": "",
+      "price": 8000,
+      "sizeKey": "640x480",
+      "widthMm": 640,
+      "heightMm": 480,
+      "itemName": "Aluminium 640mm x 480mm",
+      "displayType": "indoor",
+      "variantCode": "",
+      "materialCode": "aluminium",
+      "variantLabel": "",
+      "materialLabel": "Aluminium",
+      "modulesPerCabinet": 6,
+      "sourceKey": "led:cabinet:cabinet_indoor_aluminium_640x480",
+      "sourceCatalog": "admin",
+      "catalogRole": "model"
     },
     {
       "id": "cabinet_indoor_aluminium_640x640",
       "unit": "Pcs",
       "brand": "",
       "label": "640mm x 640mm",
-      "model": "AL640X640",
+      "model": "",
       "price": 8000,
       "sizeKey": "640x640",
       "widthMm": 640,
@@ -1072,14 +1096,17 @@
       "materialCode": "aluminium",
       "variantLabel": "",
       "materialLabel": "Aluminium",
-      "modulesPerCabinet": 8
+      "modulesPerCabinet": 8,
+      "sourceKey": "led:cabinet:cabinet_indoor_aluminium_640x640",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_mild_steel_open_640x480",
       "unit": "Pcs",
       "brand": "",
       "label": "640mm x 480mm",
-      "model": "MS640X480",
+      "model": "",
       "price": 8000,
       "sizeKey": "640x480",
       "widthMm": 640,
@@ -1090,14 +1117,17 @@
       "materialCode": "mild_steel",
       "variantLabel": "Open",
       "materialLabel": "Mild Steel",
-      "modulesPerCabinet": 6
+      "modulesPerCabinet": 6,
+      "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_open_640x480",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_mild_steel_open_640x640",
       "unit": "Pcs",
       "brand": "",
       "label": "640mm x 640mm",
-      "model": "MS640X640",
+      "model": "",
       "price": 8000,
       "sizeKey": "640x640",
       "widthMm": 640,
@@ -1108,14 +1138,17 @@
       "materialCode": "mild_steel",
       "variantLabel": "Open",
       "materialLabel": "Mild Steel",
-      "modulesPerCabinet": 8
+      "modulesPerCabinet": 8,
+      "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_open_640x640",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_mild_steel_open_960x960",
       "unit": "Pcs",
       "brand": "",
       "label": "960mm x 960mm",
-      "model": "MS960X960",
+      "model": "",
       "price": 8000,
       "sizeKey": "960x960",
       "widthMm": 960,
@@ -1126,14 +1159,17 @@
       "materialCode": "mild_steel",
       "variantLabel": "Open",
       "materialLabel": "Mild Steel",
-      "modulesPerCabinet": 18
+      "modulesPerCabinet": 18,
+      "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_open_960x960",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_mild_steel_open_1280x1280",
       "unit": "Pcs",
       "brand": "",
       "label": "1280mm x 1280mm",
-      "model": "MS1280X1280",
+      "model": "",
       "price": 8000,
       "sizeKey": "1280x1280",
       "widthMm": 1280,
@@ -1144,14 +1180,17 @@
       "materialCode": "mild_steel",
       "variantLabel": "Open",
       "materialLabel": "Mild Steel",
-      "modulesPerCabinet": 32
+      "modulesPerCabinet": 32,
+      "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_open_1280x1280",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_mild_steel_backdoor_640x480",
       "unit": "Pcs",
       "brand": "",
       "label": "640mm x 480mm",
-      "model": "MS640X480",
+      "model": "",
       "price": 8000,
       "sizeKey": "640x480",
       "widthMm": 640,
@@ -1162,14 +1201,17 @@
       "materialCode": "mild_steel",
       "variantLabel": "Backdoor",
       "materialLabel": "Mild Steel",
-      "modulesPerCabinet": 6
+      "modulesPerCabinet": 6,
+      "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_backdoor_640x480",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_mild_steel_backdoor_640x640",
       "unit": "Pcs",
       "brand": "",
       "label": "640mm x 640mm",
-      "model": "MS640X640",
+      "model": "",
       "price": 8000,
       "sizeKey": "640x640",
       "widthMm": 640,
@@ -1180,14 +1222,17 @@
       "materialCode": "mild_steel",
       "variantLabel": "Backdoor",
       "materialLabel": "Mild Steel",
-      "modulesPerCabinet": 8
+      "modulesPerCabinet": 8,
+      "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_backdoor_640x640",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_mild_steel_backdoor_960x960",
       "unit": "Pcs",
       "brand": "",
       "label": "960mm x 960mm",
-      "model": "MS960X960",
+      "model": "",
       "price": 8000,
       "sizeKey": "960x960",
       "widthMm": 960,
@@ -1198,14 +1243,17 @@
       "materialCode": "mild_steel",
       "variantLabel": "Backdoor",
       "materialLabel": "Mild Steel",
-      "modulesPerCabinet": 18
+      "modulesPerCabinet": 18,
+      "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_backdoor_960x960",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_mild_steel_backdoor_1280x1280",
       "unit": "Pcs",
       "brand": "",
       "label": "1280mm x 1280mm",
-      "model": "MS1280X1280",
+      "model": "",
       "price": 8000,
       "sizeKey": "1280x1280",
       "widthMm": 1280,
@@ -1216,14 +1264,17 @@
       "materialCode": "mild_steel",
       "variantLabel": "Backdoor",
       "materialLabel": "Mild Steel",
-      "modulesPerCabinet": 32
+      "modulesPerCabinet": 32,
+      "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_backdoor_1280x1280",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_magnesium_640x480",
       "unit": "Pcs",
       "brand": "",
       "label": "640mm x 480mm",
-      "model": "MG640X480",
+      "model": "",
       "price": 8000,
       "sizeKey": "640x480",
       "widthMm": 640,
@@ -1234,14 +1285,17 @@
       "materialCode": "magnesium",
       "variantLabel": "",
       "materialLabel": "Magnesium",
-      "modulesPerCabinet": 6
+      "modulesPerCabinet": 6,
+      "sourceKey": "led:cabinet:cabinet_outdoor_magnesium_640x480",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_magnesium_640x640",
       "unit": "Pcs",
       "brand": "",
       "label": "640mm x 640mm",
-      "model": "MG640X640",
+      "model": "",
       "price": 8000,
       "sizeKey": "640x640",
       "widthMm": 640,
@@ -1252,14 +1306,17 @@
       "materialCode": "magnesium",
       "variantLabel": "",
       "materialLabel": "Magnesium",
-      "modulesPerCabinet": 8
+      "modulesPerCabinet": 8,
+      "sourceKey": "led:cabinet:cabinet_outdoor_magnesium_640x640",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_magnesium_960x960",
       "unit": "Pcs",
       "brand": "",
       "label": "960mm x 960mm",
-      "model": "MG960X960",
+      "model": "",
       "price": 8000,
       "sizeKey": "960x960",
       "widthMm": 960,
@@ -1270,14 +1327,17 @@
       "materialCode": "magnesium",
       "variantLabel": "",
       "materialLabel": "Magnesium",
-      "modulesPerCabinet": 18
+      "modulesPerCabinet": 18,
+      "sourceKey": "led:cabinet:cabinet_outdoor_magnesium_960x960",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_magnesium_1280x1280",
       "unit": "Pcs",
       "brand": "",
       "label": "1280mm x 1280mm",
-      "model": "MG1280X1280",
+      "model": "",
       "price": 8000,
       "sizeKey": "1280x1280",
       "widthMm": 1280,
@@ -1288,14 +1348,17 @@
       "materialCode": "magnesium",
       "variantLabel": "",
       "materialLabel": "Magnesium",
-      "modulesPerCabinet": 32
+      "modulesPerCabinet": 32,
+      "sourceKey": "led:cabinet:cabinet_outdoor_magnesium_1280x1280",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_aluminium_640x480",
       "unit": "Pcs",
       "brand": "",
       "label": "640mm x 480mm",
-      "model": "AL640X480",
+      "model": "",
       "price": 8000,
       "sizeKey": "640x480",
       "widthMm": 640,
@@ -1306,14 +1369,17 @@
       "materialCode": "aluminium",
       "variantLabel": "",
       "materialLabel": "Aluminium",
-      "modulesPerCabinet": 6
+      "modulesPerCabinet": 6,
+      "sourceKey": "led:cabinet:cabinet_outdoor_aluminium_640x480",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_aluminium_640x640",
       "unit": "Pcs",
       "brand": "",
       "label": "640mm x 640mm",
-      "model": "AL640X640",
+      "model": "",
       "price": 8000,
       "sizeKey": "640x640",
       "widthMm": 640,
@@ -1324,14 +1390,17 @@
       "materialCode": "aluminium",
       "variantLabel": "",
       "materialLabel": "Aluminium",
-      "modulesPerCabinet": 8
+      "modulesPerCabinet": 8,
+      "sourceKey": "led:cabinet:cabinet_outdoor_aluminium_640x640",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_aluminium_960x960",
       "unit": "Pcs",
       "brand": "",
       "label": "960mm x 960mm",
-      "model": "AL960X960",
+      "model": "",
       "price": 8000,
       "sizeKey": "960x960",
       "widthMm": 960,
@@ -1342,14 +1411,17 @@
       "materialCode": "aluminium",
       "variantLabel": "",
       "materialLabel": "Aluminium",
-      "modulesPerCabinet": 18
+      "modulesPerCabinet": 18,
+      "sourceKey": "led:cabinet:cabinet_outdoor_aluminium_960x960",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     },
     {
       "id": "cabinet_outdoor_aluminium_1280x1280",
       "unit": "Pcs",
       "brand": "",
       "label": "1280mm x 1280mm",
-      "model": "AL1280X1280",
+      "model": "",
       "price": 8000,
       "sizeKey": "1280x1280",
       "widthMm": 1280,
@@ -1360,7 +1432,10 @@
       "materialCode": "aluminium",
       "variantLabel": "",
       "materialLabel": "Aluminium",
-      "modulesPerCabinet": 32
+      "modulesPerCabinet": 32,
+      "sourceKey": "led:cabinet:cabinet_outdoor_aluminium_1280x1280",
+      "sourceCatalog": "static-js",
+      "catalogRole": "base"
     }
   ],
   "cabinetSizes": [
@@ -2125,5 +2200,8 @@
         "unit": "Pcs"
       }
     }
-  }
+  },
+  "cabinetBrands": [
+    "ABC"
+  ]
 }

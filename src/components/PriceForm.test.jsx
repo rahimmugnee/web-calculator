@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import PriceForm from "./PriceForm";
 import { CatalogProvider } from "../context/CatalogContext";
 
-function renderPriceForm() {
+function renderPriceForm({ onChange = jest.fn(), onCalculated = jest.fn() } = {}) {
   function Harness() {
     const [sizePick, setSizePick] = useState(null);
     const [activeSize, setActiveSize] = useState({});
@@ -15,8 +15,8 @@ function renderPriceForm() {
         <PriceForm
           displayType={displayType}
           technology={technology}
-          onChange={jest.fn()}
-          onCalculated={jest.fn()}
+          onChange={onChange}
+          onCalculated={onCalculated}
           sizePick={sizePick}
           onSizeSelectionChange={setActiveSize}
         />
@@ -128,6 +128,232 @@ test("uses dropdowns for display structure choices", () => {
   expect(screen.getByRole("button", { name: "Payment Terms" })).toHaveTextContent("75% Advance, 25% before Installation");
 });
 
+test("uses No Brand and No Model for a cabinet until an admin model is selected", async () => {
+  const cabinetRow = {
+    source_key: "admin:1:cab-x",
+    source_catalog: "admin",
+    component_type: "cabinet",
+    name: "Premium Aluminium Cabinet",
+    model: "CAB-X",
+    unit: "Pcs",
+    brand_name: "CaseCo",
+    price_tier: "default",
+    unit_price: 9500,
+    technical_metadata: {
+      id: "cab-x",
+      displayType: "indoor",
+      materialCode: "aluminium",
+      materialLabel: "Aluminium",
+      variantCode: "",
+      variantLabel: "",
+      sizeKey: "640x480",
+      widthMm: 640,
+      heightMm: 480,
+      modulesPerCabinet: 6,
+      label: "640mm x 480mm",
+    },
+  };
+  const brandOnlyCabinetRow = {
+    ...cabinetRow,
+    source_key: "admin:1:brand-only",
+    name: "BrandOnly Aluminium Cabinet",
+    model: "",
+    brand_name: "BrandOnly",
+    unit_price: 9100,
+    technical_metadata: { ...cabinetRow.technical_metadata, id: "brand-only" },
+  };
+  global.fetch.mockImplementation((input) => {
+    const url = String(input);
+    if (url.includes("/public/companies")) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([{ id: 1, name: "Mugnee", code: "mugnee", is_default: true, assets: {} }]),
+      });
+    }
+    if (url.includes("/led-prices")) return Promise.resolve({ ok: true, json: () => Promise.resolve([cabinetRow, brandOnlyCabinetRow]) });
+    if (url.includes("/led-module/brands")) return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+    if (url.includes("/cabinets/brands")) return Promise.resolve({ ok: true, json: () => Promise.resolve([
+      { id: 20, name: "BrandOnly" },
+      { id: 21, name: "CaseCo" },
+    ]) });
+    return Promise.resolve({ ok: false });
+  });
+  const onChange = jest.fn();
+  renderPriceForm({ onChange });
+
+  fireEvent.click(screen.getByRole("button", { name: "Display Structure" }));
+  fireEvent.click(screen.getByRole("option", { name: "With Cabinet" }));
+
+  expect(screen.getByRole("button", { name: "Cabinet Brand" })).toHaveTextContent("No Brand");
+  expect(screen.getByRole("button", { name: "Cabinet Model" })).toHaveTextContent("No Model");
+  await waitFor(() => expect(onChange.mock.calls.at(-1)[0].items.cabinet).toMatchObject({ brand: "", model: "" }));
+
+  fireEvent.click(screen.getByRole("button", { name: "Cabinet Brand" }));
+  fireEvent.click(await screen.findByRole("option", { name: "BrandOnly" }));
+  expect(screen.getByRole("button", { name: "Cabinet Model" })).toHaveTextContent("No Model");
+  await waitFor(() => expect(onChange.mock.calls.at(-1)[0].items).toMatchObject({
+    cabinetUnitPrice: 9100,
+    cabinet: { brand: "BrandOnly", model: "", itemName: "BrandOnly Aluminium Cabinet" },
+  }));
+
+  fireEvent.click(screen.getByRole("button", { name: "Cabinet Brand" }));
+  fireEvent.click(await screen.findByRole("option", { name: "CaseCo" }));
+  fireEvent.click(screen.getByRole("button", { name: "Cabinet Model" }));
+  fireEvent.click(screen.getByRole("option", { name: "CAB-X" }));
+
+  await waitFor(() => expect(onChange.mock.calls.at(-1)[0].items).toMatchObject({
+    cabinetUnitPrice: 9500,
+    cabinet: { brand: "CaseCo", model: "CAB-X" },
+  }));
+});
+
+test("does not apply a custom-only cabinet price until its product is selected", async () => {
+  const cabinetRow = {
+    source_key: "admin:1:custom-only",
+    source_catalog: "admin",
+    component_type: "cabinet",
+    name: "Custom Only Cabinet",
+    model: "CAB-ONLY",
+    unit: "Pcs",
+    brand_name: "CaseCo",
+    price_tier: "default",
+    unit_price: 12500,
+    technical_metadata: {
+      displayType: "indoor",
+      materialCode: "aluminium",
+      materialLabel: "Aluminium",
+      variantCode: "",
+      variantLabel: "",
+      sizeKey: "640x480",
+      widthMm: 640,
+      heightMm: 480,
+      modulesPerCabinet: 6,
+      label: "640mm x 480mm",
+    },
+  };
+  global.fetch.mockImplementation((input) => {
+    const url = String(input);
+    if (url.includes("/public/companies")) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([{ id: 1, name: "Mugnee", code: "mugnee", is_default: true, assets: {} }]),
+      });
+    }
+    if (url.includes("/led-prices")) return Promise.resolve({ ok: true, json: () => Promise.resolve([cabinetRow]) });
+    if (url.includes("/led-module/brands")) return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+    if (url.includes("/cabinets/brands")) return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 1, name: "CaseCo" }]) });
+    return Promise.resolve({ ok: false });
+  });
+  const onChange = jest.fn();
+  renderPriceForm({ onChange });
+  await waitFor(() => expect(global.fetch.mock.calls.filter(([url]) => String(url).includes("/led-prices"))).toHaveLength(1));
+
+  fireEvent.click(screen.getByRole("button", { name: "Display Structure" }));
+  fireEvent.click(screen.getByRole("option", { name: "With Cabinet" }));
+  await waitFor(() => expect(onChange.mock.calls.at(-1)[0].items.cabinetUnitPrice).toBe(0));
+
+  fireEvent.click(screen.getByRole("button", { name: "Cabinet Brand" }));
+  fireEvent.click(screen.getByRole("option", { name: "CaseCo" }));
+  fireEvent.click(screen.getByRole("button", { name: "Cabinet Model" }));
+  fireEvent.click(screen.getByRole("option", { name: "CAB-ONLY" }));
+
+  await waitFor(() => expect(onChange.mock.calls.at(-1)[0].items).toMatchObject({
+    cabinetUnitPrice: 12500,
+    cabinet: { brand: "CaseCo", model: "CAB-ONLY" },
+  }));
+});
+
+test("keeps a selected database-only cabinet and updates its price after an admin change without reload", async () => {
+  const cabinetRow = {
+    source_key: "admin:1:cab-live",
+    source_catalog: "admin",
+    component_type: "cabinet",
+    name: "Live Aluminium Cabinet",
+    model: "CAB-LIVE",
+    unit: "Pcs",
+    brand_name: "CaseCo",
+    price_tier: "default",
+    unit_price: 9500,
+    technical_metadata: {
+      displayType: "indoor",
+      materialCode: "aluminium",
+      materialLabel: "Aluminium",
+      variantCode: "",
+      variantLabel: "",
+      sizeKey: "640x480",
+      widthMm: 640,
+      heightMm: 480,
+      modulesPerCabinet: 6,
+      label: "640mm x 480mm",
+    },
+  };
+  let ledPriceRequestCount = 0;
+  let resolveRefreshRows;
+
+  global.fetch.mockImplementation((input) => {
+    const url = String(input);
+    if (url.includes("/public/companies")) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([{ id: 1, name: "Mugnee", code: "mugnee", is_default: true, assets: {} }]),
+      });
+    }
+    if (url.includes("/led-prices")) {
+      ledPriceRequestCount += 1;
+      if (ledPriceRequestCount === 1) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([cabinetRow]) });
+      }
+      return new Promise((resolve) => {
+        resolveRefreshRows = () => resolve({
+          ok: true,
+          json: () => Promise.resolve([{ ...cabinetRow, unit_price: 11200 }]),
+        });
+      });
+    }
+    if (url.includes("/led-module/brands")) return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+    if (url.includes("/cabinets/brands")) {
+      return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 1, name: "CaseCo" }]) });
+    }
+    return Promise.resolve({ ok: false });
+  });
+
+  const onChange = jest.fn();
+  renderPriceForm({ onChange });
+
+  fireEvent.click(screen.getByRole("button", { name: "Display Structure" }));
+  fireEvent.click(screen.getByRole("option", { name: "With Cabinet" }));
+  fireEvent.click(screen.getByRole("button", { name: "Cabinet Brand" }));
+  fireEvent.click(await screen.findByRole("option", { name: "CaseCo" }));
+  fireEvent.click(screen.getByRole("button", { name: "Cabinet Model" }));
+  fireEvent.click(screen.getByRole("option", { name: "CAB-LIVE" }));
+
+  await waitFor(() => expect(onChange.mock.calls.at(-1)[0].items).toMatchObject({
+    cabinetUnitPrice: 9500,
+    cabinet: { brand: "CaseCo", model: "CAB-LIVE" },
+  }));
+
+  act(() => window.dispatchEvent(new Event("calculator-admin-change")));
+  await waitFor(() => {
+    expect(ledPriceRequestCount).toBe(2);
+    expect(resolveRefreshRows).toEqual(expect.any(Function));
+  });
+  await act(async () => {
+    await Promise.resolve();
+  });
+  await act(async () => {
+    resolveRefreshRows();
+  });
+
+  await waitFor(() => {
+    expect(screen.getByRole("button", { name: "Cabinet Brand" })).toHaveTextContent("CaseCo");
+    expect(screen.getByRole("button", { name: "Cabinet Model" })).toHaveTextContent("CAB-LIVE");
+    expect(onChange.mock.calls.at(-1)[0].items).toMatchObject({
+      cabinetUnitPrice: 11200,
+      cabinet: { brand: "CaseCo", model: "CAB-LIVE" },
+    });
+  });
+});
+
 test("Leyard COB P1.25 keeps the regular module quotation format", async () => {
   renderPriceForm();
 
@@ -205,14 +431,15 @@ test("manual component selections survive tab focus and live catalog refreshes",
         json: () => Promise.resolve([{ id: 1, name: "Mugnee", code: "mugnee", is_default: true, assets: {} }]),
       });
     }
-    if (url.includes("/led-prices") || url.includes("/led-module/brands")) {
+    if (url.includes("/led-prices")) return Promise.resolve({ ok: false });
+    if (url.includes("/led-module/brands")) {
       return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
     }
     return Promise.resolve({ ok: false });
   });
 
   renderPriceForm();
-  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(4));
+  await waitFor(() => expect(global.fetch.mock.calls.filter(([url]) => String(url).includes("/led-prices"))).toHaveLength(1));
 
   fireEvent.click(screen.getByRole("button", { name: "Pixel Pitch" }));
   fireEvent.click(screen.getByRole("option", { name: "P2" }));
@@ -227,12 +454,13 @@ test("manual component selections survive tab focus and live catalog refreshes",
   fireEvent.click(screen.getByRole("option", { name: "G-Energy" }));
   await waitFor(() => expect(screen.getByRole("button", { name: "Power Supply Model" })).toHaveTextContent("N200V5-A"));
 
-  const fetchCountBeforeFocus = global.fetch.mock.calls.length;
+  const ledPriceCountBeforeFocus = global.fetch.mock.calls.filter(([url]) => String(url).includes("/led-prices")).length;
   fireEvent.focus(window);
-  expect(global.fetch).toHaveBeenCalledTimes(fetchCountBeforeFocus);
+  await waitFor(() => expect(global.fetch.mock.calls.filter(([url]) => String(url).includes("/led-prices"))).toHaveLength(ledPriceCountBeforeFocus + 1));
 
-  window.dispatchEvent(new Event("calculator-admin-change"));
-  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(fetchCountBeforeFocus + 4));
+  const ledPriceCountAfterFocus = global.fetch.mock.calls.filter(([url]) => String(url).includes("/led-prices")).length;
+  act(() => window.dispatchEvent(new Event("calculator-admin-change")));
+  await waitFor(() => expect(global.fetch.mock.calls.filter(([url]) => String(url).includes("/led-prices"))).toHaveLength(ledPriceCountAfterFocus + 1));
 
   await waitFor(() => {
     expect(screen.getByRole("button", { name: "Pixel Pitch" })).toHaveTextContent("P2");

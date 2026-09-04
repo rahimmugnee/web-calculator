@@ -58,11 +58,15 @@ function WorkspaceLoadingScreen() {
 }
 
 export default function App() {
-  const { catalog, company, companies, selectedCompanyId, setSelectedCompanyId } = useCatalog();
+  const { catalog, company, companies, quotationSettings, invoiceSettings, selectedCompanyId, setSelectedCompanyId } = useCatalog();
   const branding = company?.assets || {};
   const selectedCompanyCode = String(company?.code || "mugnee").toLowerCase();
-  const invoiceFormatCode = selectedCompanyCode === "mugnee-multiple" ? "mugnee" : selectedCompanyCode;
+  const configuredInvoiceFormat = String(invoiceSettings?.template_key || "").split("-")[0].toLowerCase();
+  const invoiceFormatCode = ["mugnee", "renex", "sasha"].includes(configuredInvoiceFormat)
+    ? configuredInvoiceFormat
+    : selectedCompanyCode === "mugnee-multiple" ? "mugnee" : selectedCompanyCode;
   const invoiceFormatClass = `invoice-format-${invoiceFormatCode}`;
+  const quotationPrefix = quotationSettings?.quotation_prefix || "";
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [loginLoading, setLoginLoading] = useState(false);
@@ -258,22 +262,23 @@ export default function App() {
       && quotationConfigurationRef.current !== nextConfiguration;
     if (nextConfiguration !== null) quotationConfigurationRef.current = nextConfiguration;
     setQuotationRef((prev) => {
-      if (meta?.userSubmit || configurationChanged) return generateRef(company?.code);
-      return prev ?? generateRef(company?.code);
+      if (meta?.userSubmit || configurationChanged) return generateRef(company?.code, undefined, new Date(), quotationPrefix);
+      return prev ?? generateRef(company?.code, undefined, new Date(), quotationPrefix);
     });
-  }, [company?.code]);
+  }, [company?.code, quotationPrefix]);
 
   useEffect(() => {
     const code = String(company?.code || "mugnee").toLowerCase();
+    const identity = `${code}|${quotationPrefix}`;
     if (quotationCompanyCodeRef.current === null) {
-      quotationCompanyCodeRef.current = code;
+      quotationCompanyCodeRef.current = identity;
       return;
     }
-    if (quotationCompanyCodeRef.current !== code) {
-      quotationCompanyCodeRef.current = code;
-      if (calc && snapshot) setQuotationRef(generateRef(code));
+    if (quotationCompanyCodeRef.current !== identity) {
+      quotationCompanyCodeRef.current = identity;
+      if (calc && snapshot) setQuotationRef(generateRef(code, undefined, new Date(), quotationPrefix));
     }
-  }, [company?.code, calc, snapshot]);
+  }, [company?.code, quotationPrefix, calc, snapshot]);
 
   if (authLoading) {
     return <WorkspaceLoadingScreen />;

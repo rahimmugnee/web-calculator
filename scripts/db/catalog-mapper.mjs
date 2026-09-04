@@ -60,6 +60,7 @@ export function mapStaticCatalog({ ledCatalog, paProducts, conferenceProducts })
     rows.push(product({ sourceKey: `led:receiving-card:${id}`, category: "receiving-card", componentType: "receiving-card", name: card.label, brand, model: componentModelName(card.model, card.label, id), unit: "Pcs", metadata: card, prices }));
   }
   for (const cabinet of ledCatalog.cabinetOptions || []) {
+    if (cabinet.catalogRole === "model" || (cabinet.sourceCatalog === "admin" && cabinet.catalogRole !== "base")) continue;
     rows.push(product({ sourceKey: `led:cabinet:${cabinet.id}`, category: "led-cabinet", componentType: "cabinet", name: `${cabinet.materialLabel} ${cabinet.variantLabel || ""} ${cabinet.label}`.replace(/\s+/g, " ").trim(), model: cabinet.model || null, unit: "Pcs", metadata: { ...cabinet, model: cabinet.model || "" }, prices: { default: cabinet.price } }));
   }
   for (const supply of ledCatalog.powerSupplies || []) {

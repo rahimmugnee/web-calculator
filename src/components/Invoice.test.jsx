@@ -176,6 +176,41 @@ test("renders Mugnee item, brand and model in separate table columns", () => {
   expect(screen.queryByText(/Proposal for LC1\.25P/)).not.toBeInTheDocument();
 });
 
+test.each([
+  ["No Brand / No Model", "", "", "—", "—"],
+  ["selected brand only", "CaseCo", "", "CaseCo", "—"],
+  ["unbranded model", "", "CAB-NB", "—", "CAB-NB"],
+  ["selected cabinet", "CaseCo", "CAB-X", "CaseCo", "CAB-X"],
+])("renders cabinet brand and model columns for %s", (_label, brand, model, expectedBrand, expectedModel) => {
+  const snapshot = buildSnapshot({ enabled: false, name: "", price: 0 });
+  snapshot.items = {
+    ...snapshot.items,
+    cabinetEnabled: true,
+    cabinetQty: 1,
+    cabinet: { itemName: "Aluminium 640mm x 480mm", brand, model, unit: "Pcs" },
+  };
+  const calc = calcAll({
+    modulesQty: 1,
+    unitModule: 100,
+    cabinetQty: 1,
+    unitCabinet: 8000,
+    accessoriesMode: "manual",
+    accessoriesValue: 0,
+    installMode: "manual",
+    installValue: 0,
+  });
+
+  render(
+    <CatalogProvider>
+      <Invoice calc={calc} snapshot={snapshot} quotationRef="TEST-CABINET-COLUMNS" />
+    </CatalogProvider>
+  );
+
+  const cells = within(screen.getByText("Aluminium 640mm x 480mm").closest("tr")).getAllByRole("cell");
+  expect(cells[2]).toHaveTextContent(expectedBrand);
+  expect(cells[3]).toHaveTextContent(expectedModel);
+});
+
 test("never renders Novastar internal ids in the model column", () => {
   const snapshot = buildSnapshot({ enabled: false, name: "", price: 0 });
   snapshot.items = {

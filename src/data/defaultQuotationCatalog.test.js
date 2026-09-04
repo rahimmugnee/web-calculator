@@ -1,9 +1,11 @@
 import { defaultQuotationCatalog, getCabinetFootprintFt } from "./defaultQuotationCatalog";
+import publicQuotationCatalog from "../../public/quotation-catalog.json";
 
 test("cabinet catalog exposes indoor and outdoor material/size options", () => {
   const options = defaultQuotationCatalog.cabinetOptions;
-  const indoor = options.filter((option) => option.displayType === "indoor");
-  const outdoor = options.filter((option) => option.displayType === "outdoor");
+  const baseOptions = options.filter((option) => option.catalogRole !== "model");
+  const indoor = baseOptions.filter((option) => option.displayType === "indoor");
+  const outdoor = baseOptions.filter((option) => option.displayType === "outdoor");
 
   expect(indoor.map((option) => option.sizeKey)).toEqual(["640x480", "640x640"]);
   expect(indoor.every((option) => option.materialCode === "aluminium")).toBe(true);
@@ -20,11 +22,12 @@ test("cabinet catalog exposes indoor and outdoor material/size options", () => {
     "backdoor",
     "backdoor",
   ]);
-  expect(options.every((option) => option.price === 8000)).toBe(true);
-  expect(options.every((option) => /^(?:AL|MS|MG)\d+X\d+$/.test(option.model))).toBe(true);
-  expect(options.find((option) => option.materialCode === "mild_steel" && option.sizeKey === "640x480").model).toBe("MS640X480");
-  expect(options.find((option) => option.materialCode === "aluminium" && option.sizeKey === "640x480").model).toBe("AL640X480");
-  expect(options.find((option) => option.materialCode === "magnesium" && option.sizeKey === "640x480").model).toBe("MG640X480");
+  expect(baseOptions.every((option) => option.price === 8000)).toBe(true);
+  const publicBaseOptions = publicQuotationCatalog.cabinetOptions.filter(
+    (option) => option.catalogRole !== "model"
+  );
+  expect(baseOptions.every((option) => option.brand === "" && option.model === "")).toBe(true);
+  expect(publicBaseOptions.every((option) => option.brand === "" && option.model === "")).toBe(true);
 });
 
 test("cabinet footprint uses selected option dimensions", () => {

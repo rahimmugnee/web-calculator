@@ -5,6 +5,7 @@ test("generates company-specific yearly quotation references", () => {
   expect(generateRef("mugnee", 1, date)).toBe("MUG-2026-0001");
   expect(generateRef("renex", 1, date)).toBe("REN-2026-0001");
   expect(generateRef("sasha", 1, date)).toBe("SAS-2026-0001");
+  expect(generateRef("mugnee", 7, date, "LIVE-Q")).toBe("LIVE-Q-2026-0007");
 });
 
 test("adds enabled custom item price to totals", () => {

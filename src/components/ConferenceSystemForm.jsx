@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ConferenceComponentCard from "./ConferenceComponentCard.jsx";
-import { conferenceBrands, conferenceProducts } from "../data/conferenceProducts.js";
+import { conferenceBrands as staticConferenceBrands, conferenceProducts as staticConferenceProducts } from "../data/conferenceProducts.js";
 import {
   applyConferenceProductToRow,
   buildConferenceCustomRow,
@@ -20,9 +20,15 @@ function TextField({ label, value, onChange, type = "text" }) {
   );
 }
 
-export default function ConferenceSystemForm({ onChange, onCalculated }) {
-  const [systemType, setSystemType] = useState("wired");
-  const [preferredBrand, setPreferredBrand] = useState("Spoon");
+export default function ConferenceSystemForm({
+  onChange,
+  onCalculated,
+  products = staticConferenceProducts,
+  brands = staticConferenceBrands,
+  settings = {},
+}) {
+  const [systemType, setSystemType] = useState(settings.systemType || "wired");
+  const [preferredBrand, setPreferredBrand] = useState(settings.preferredBrand || brands[0] || "Spoon");
   const [customer, setCustomer] = useState({ name: "", position: "", company: "", mobile: "", email: "", address: "" });
   const [projectDetails, setProjectDetails] = useState({
     name: "",
@@ -30,26 +36,60 @@ export default function ConferenceSystemForm({ onChange, onCalculated }) {
     type: "Conference System Installation",
     preparedBy: "Mugnee Multiple Limited",
   });
-  const [vatEnabled, setVatEnabled] = useState(false);
+  const [vatEnabled, setVatEnabled] = useState(Boolean(settings.vatEnabled));
   const [discountEnabled, setDiscountEnabled] = useState(false);
   const [discountTk, setDiscountTk] = useState(0);
-  const [paymentTermId, setPaymentTermId] = useState("PT_75_25");
-  const [deliveryDays, setDeliveryDays] = useState(30);
+  const [paymentTermId, setPaymentTermId] = useState(settings.paymentTermId || "PT_75_25");
+  const [deliveryDays, setDeliveryDays] = useState(settings.deliveryDays ?? settings.defaultDeliveryDays ?? 30);
   const [customWarranty, setCustomWarranty] = useState("");
   const [items, setItems] = useState([]);
   const [newComponentType, setNewComponentType] = useState("");
+  const settingDirty = useRef(new Set());
+  const productsRef = useRef(products);
+  productsRef.current = products;
 
   useEffect(() => {
-    setItems(buildConferenceItemsFromTemplate({ systemType, brand: preferredBrand, products: conferenceProducts }));
+    setItems(buildConferenceItemsFromTemplate({ systemType, brand: preferredBrand, products: productsRef.current }));
   }, [systemType, preferredBrand]);
+
+  useEffect(() => {
+    const dirty = settingDirty.current;
+    if (!dirty.has("systemType") && settings.systemType) setSystemType(settings.systemType);
+    if (!dirty.has("preferredBrand") && settings.preferredBrand) setPreferredBrand(settings.preferredBrand);
+    if (!dirty.has("vatEnabled") && typeof settings.vatEnabled === "boolean") setVatEnabled(settings.vatEnabled);
+    if (!dirty.has("paymentTermId") && settings.paymentTermId) setPaymentTermId(settings.paymentTermId);
+    const nextDelivery = settings.deliveryDays ?? settings.defaultDeliveryDays;
+    if (!dirty.has("deliveryDays") && nextDelivery !== undefined) setDeliveryDays(nextDelivery);
+  }, [settings]);
+
+  useEffect(() => {
+    if (brands.includes(preferredBrand)) return;
+    setPreferredBrand(brands[0] || "");
+  }, [brands, preferredBrand]);
+
+  useEffect(() => {
+    setItems((current) => current.map((row) => {
+      if (row.selectionMode === "custom") return row;
+      const latest = findConferenceProductById(products, row.productId);
+      if (!latest) return { ...row, productId: null, brand: "", model: "", unitPrice: row.unitPriceOverridden ? row.unitPrice : 0 };
+      const applied = applyConferenceProductToRow(row, latest);
+      return {
+        ...applied,
+        qty: row.qty,
+        selectionMode: row.selectionMode,
+        unitPrice: row.unitPriceOverridden ? row.unitPrice : applied.unitPrice,
+        unitPriceOverridden: Boolean(row.unitPriceOverridden),
+      };
+    }));
+  }, [products]);
 
   const componentTypes = useMemo(() => {
     const set = new Set();
-    conferenceProducts.forEach((product) => {
+    products.forEach((product) => {
       if (product.systemType === systemType || product.systemType === "both") set.add(product.componentType);
     });
     return [...set].sort();
-  }, [systemType]);
+  }, [systemType, products]);
 
   useEffect(() => {
     if (!newComponentType && componentTypes.length) setNewComponentType(componentTypes[0]);
@@ -59,8 +99,8 @@ export default function ConferenceSystemForm({ onChange, onCalculated }) {
     setItems((prev) =>
       prev.map((row) => {
         if (row.id !== id) return row;
-        const product = findConferenceProductById(conferenceProducts, productId);
-        return product ? applyConferenceProductToRow(row, product) : row;
+        const product = findConferenceProductById(products, productId);
+        return product ? { ...applyConferenceProductToRow(row, product), unitPriceOverridden: false } : row;
       })
     );
   };
@@ -78,10 +118,10 @@ export default function ConferenceSystemForm({ onChange, onCalculated }) {
       paymentTermId,
       deliveryDays: Number(deliveryDays) || 30,
       customWarranty,
-      defaultWarrantyYears: 1,
+      defaultWarrantyYears: Number(settings.defaultWarrantyYears) || 1,
       items,
     }),
-    [systemType, preferredBrand, customer, projectDetails, vatEnabled, discountEnabled, discountTk, paymentTermId, deliveryDays, customWarranty, items]
+    [systemType, preferredBrand, customer, projectDetails, vatEnabled, discountEnabled, discountTk, paymentTermId, deliveryDays, customWarranty, settings.defaultWarrantyYears, items]
   );
 
   const calcResult = useMemo(() => calculateConferenceQuotation(snapshot), [snapshot]);
@@ -98,7 +138,10 @@ export default function ConferenceSystemForm({ onChange, onCalculated }) {
         <div className="form-row">
           <label>
             System Type
-            <select className="select" value={systemType} onChange={(event) => setSystemType(event.target.value)}>
+            <select className="select" value={systemType} onChange={(event) => {
+              settingDirty.current.add("systemType");
+              setSystemType(event.target.value);
+            }}>
               <option value="wired">Wired Conference System</option>
               <option value="wireless">Wireless Conference System</option>
             </select>
@@ -106,8 +149,11 @@ export default function ConferenceSystemForm({ onChange, onCalculated }) {
 
           <label>
             Preferred Brand
-            <select className="select" value={preferredBrand} onChange={(event) => setPreferredBrand(event.target.value)}>
-              {conferenceBrands.map((brand) => (
+            <select className="select" value={preferredBrand} onChange={(event) => {
+              settingDirty.current.add("preferredBrand");
+              setPreferredBrand(event.target.value);
+            }}>
+              {brands.map((brand) => (
                 <option key={brand} value={brand}>
                   {brand}
                 </option>
@@ -125,10 +171,14 @@ export default function ConferenceSystemForm({ onChange, onCalculated }) {
           <ConferenceComponentCard
             key={item.id}
             item={item}
-            products={conferenceProducts}
+            products={products}
             systemType={systemType}
             onSelectProduct={(productId) => selectProductForItem(item.id, productId)}
-            onUpdate={(patch) => setItems((prev) => prev.map((row) => (row.id === item.id ? { ...row, ...patch } : row)))}
+            onUpdate={(patch) => setItems((prev) => prev.map((row) => (row.id === item.id ? {
+              ...row,
+              ...patch,
+              unitPriceOverridden: "unitPrice" in patch ? true : row.unitPriceOverridden,
+            } : row)))}
             onDuplicate={() =>
               setItems((prev) => {
                 const index = prev.findIndex((row) => row.id === item.id);
@@ -152,7 +202,7 @@ export default function ConferenceSystemForm({ onChange, onCalculated }) {
           <button
             type="button"
             className="btn btn-light"
-            onClick={() => setItems((prev) => [...prev, buildConferenceRow({ componentType: newComponentType, qty: 1, products: conferenceProducts, brand: preferredBrand, systemType })])}
+            onClick={() => setItems((prev) => [...prev, buildConferenceRow({ componentType: newComponentType, qty: 1, products, brand: preferredBrand, systemType })])}
           >
             Add Item
           </button>
@@ -166,11 +216,17 @@ export default function ConferenceSystemForm({ onChange, onCalculated }) {
         <h3>VAT</h3>
         <div className="inline" style={{ gap: 18 }}>
           <label className="inline">
-            <input className="radio" type="radio" checked={!vatEnabled} onChange={() => setVatEnabled(false)} />
+            <input className="radio" type="radio" checked={!vatEnabled} onChange={() => {
+              settingDirty.current.add("vatEnabled");
+              setVatEnabled(false);
+            }} />
             <span>Without VAT</span>
           </label>
           <label className="inline">
-            <input className="radio" type="radio" checked={vatEnabled} onChange={() => setVatEnabled(true)} />
+            <input className="radio" type="radio" checked={vatEnabled} onChange={() => {
+              settingDirty.current.add("vatEnabled");
+              setVatEnabled(true);
+            }} />
             <span>With VAT (15%)</span>
           </label>
         </div>
@@ -196,14 +252,20 @@ export default function ConferenceSystemForm({ onChange, onCalculated }) {
         <div className="form-row">
           <label>
             Payment Terms
-            <select className="select" value={paymentTermId} onChange={(event) => setPaymentTermId(event.target.value)}>
+            <select className="select" value={paymentTermId} onChange={(event) => {
+              settingDirty.current.add("paymentTermId");
+              setPaymentTermId(event.target.value);
+            }}>
               <option value="PT_75_25">75% Advance / 25% on Arrival</option>
               <option value="PT_50_50">50% Advance / 50% on Arrival</option>
               <option value="PT_100">100% Advance</option>
               <option value="PT_NO_ADV_7D">No Advance / 7 Days After Delivery</option>
             </select>
           </label>
-          <TextField label="Delivery (Days)" value={deliveryDays} onChange={setDeliveryDays} type="number" />
+          <TextField label="Delivery (Days)" value={deliveryDays} onChange={(value) => {
+            settingDirty.current.add("deliveryDays");
+            setDeliveryDays(value);
+          }} type="number" />
           <TextField label="Custom Warranty (Years)" value={customWarranty} onChange={setCustomWarranty} type="number" />
         </div>
       </section>

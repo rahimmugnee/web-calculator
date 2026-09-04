@@ -39,8 +39,19 @@ function SectionTitle({ icon, children }) {
   );
 }
 
-const RentalTermsPage = forwardRef(function RentalTermsPage({ calc }, ref) {
+const RentalTermsPage = forwardRef(function RentalTermsPage({ calc, company, quotationSettings }, ref) {
   const vatText = calc?.totals?.vatEnabled ? "inclusive of VAT & Tax" : "exclusive of VAT & Tax";
+  const validityDays = Number.isFinite(Number(quotationSettings?.default_validity_days))
+    ? Math.max(0, Number(quotationSettings.default_validity_days))
+    : 3;
+  const configuredTerms = Array.isArray(quotationSettings?.terms)
+    ? quotationSettings.terms.map((term) => typeof term === "string" ? term : term?.text || term?.label || "").filter(Boolean)
+    : [];
+  const liveTerms = [
+    `Quotation validity: ${validityDays} day(s) from the date of issue.`,
+    ...termsItems.slice(1),
+    ...configuredTerms,
+  ];
 
   return (
     <div ref={ref} className="rental-terms-page">
@@ -97,8 +108,8 @@ const RentalTermsPage = forwardRef(function RentalTermsPage({ calc }, ref) {
           <section className="rental-terms-block">
             <SectionTitle icon="TC">Terms & Conditions</SectionTitle>
             <ol className="rental-number-list">
-              {termsItems.map((item, index) => (
-                <li key={item}>
+              {liveTerms.map((item, index) => (
+                <li key={`${index}-${item}`}>
                   <span>{index + 1}</span>
                   {item.replace("{vatText}", vatText)}
                 </li>
@@ -110,11 +121,10 @@ const RentalTermsPage = forwardRef(function RentalTermsPage({ calc }, ref) {
             <SectionTitle icon="CI">Contact Information</SectionTitle>
             <div className="rental-contact-grid">
               <div className="rental-contact-lines">
-                <div><b>Phone:</b> +8801711927445</div>
-                <div><b>Phone:</b> +8801711927446</div>
-                <div><b>Email:</b> info@mugnee.com</div>
-                <div><b>Website:</b> www.mugnee.com</div>
-                <div><b>Address:</b> 6-37 Umesh Datta Road, Bakshibazar, Dhaka - 1211</div>
+                <div><b>Phone:</b> {company?.phone || company?.signatory_phone || "+8801711927445"}</div>
+                <div><b>Email:</b> {company?.email || company?.signatory_email || "info@mugnee.com"}</div>
+                <div><b>Website:</b> {company?.website || "www.mugnee.com"}</div>
+                <div><b>Address:</b> {company?.address || "6-37 Umesh Datta Road, Bakshibazar, Dhaka - 1211"}</div>
               </div>
             </div>
           </section>

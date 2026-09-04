@@ -49,7 +49,9 @@ export default function CategoriesPage(){
   const brandCounts=useMemo(()=>Object.fromEntries(assignedBrands.map((brand)=>[brand.id,products.filter((product)=>String(product.brand_id)===String(brand.id)).length])),[assignedBrands,products]);
   const filteredProducts=useMemo(()=>products.filter((product)=>{
     const query=modelSearch.trim().toLowerCase();
-    const matchesLocation=selected?.slug!=="led-module"||String(product.technical_metadata?.location||"indoor").toLowerCase()===locationFilter;
+    const locationCategory=selected?.slug==="led-module"||selected?.slug==="cabinets";
+    const productLocation=selected?.slug==="cabinets"?product.technical_metadata?.displayType:product.technical_metadata?.location;
+    const matchesLocation=!locationCategory||String(productLocation||"indoor").toLowerCase()===locationFilter;
     const matchesTechnology=selected?.slug!=="led-module"||!technologyFilter||String(product.technical_metadata?.technology||"").toLowerCase()===technologyFilter;
     const matchesBrand=!brandFilter||(brandFilter===NO_BRAND_FILTER?!product.brand_id:String(product.brand_id)===String(brandFilter));
     return matchesLocation&&matchesTechnology&&matchesBrand&&(!statusFilter||String(product.is_active)===statusFilter)&&(!query||[product.model,product.name,product.sku,product.unit].some((value)=>String(value||"").toLowerCase().includes(query)));
@@ -96,7 +98,8 @@ export default function CategoriesPage(){
       const cabinetSize=String(form.get("cabinet_size")||"640x480");
       const cabinetMaterial=String(form.get("cabinet_material")||"aluminium");
       const cabinetLocation=String(form.get("cabinet_location")||"indoor");
-      const cabinetVariant=cabinetLocation==="outdoor"?String(form.get("cabinet_variant")||""):"";
+      const cabinetVariant=cabinetLocation==="outdoor"&&cabinetMaterial==="mild_steel"?String(form.get("cabinet_variant")||"open"):"";
+      const cabinetCatalogRole=String(editing?.technical_metadata?.catalogRole||"")||(String(editing?.source_key||"").startsWith("led:cabinet:")?"base":"model");
       const metadata={
         ...(editing?.technical_metadata||{}),
         ...(moduleCategory?{technology:String(form.get("technology")||"").toLowerCase()}:{}),
@@ -106,6 +109,7 @@ export default function CategoriesPage(){
           materialLabel:CABINET_MATERIAL_LABELS[cabinetMaterial]||cabinetMaterial,
           variantCode:cabinetVariant,
           variantLabel:CABINET_VARIANT_LABELS[cabinetVariant]||"",
+          catalogRole:cabinetCatalogRole,
           sizeKey:cabinetSize,
           ...CABINET_SIZES[cabinetSize],
           label:`${cabinetSize.replace("x","mm x ")}mm`,
@@ -178,8 +182,8 @@ export default function CategoriesPage(){
 }
 
 function ModelsSection({selected,products,total,allCount,modelSearch,setModelSearch,statusFilter,setStatusFilter,locationFilter,setLocationFilter,page,pages,setPage,onAddBrand,onAdd,onEdit,onDelete}){
-  const ledModules=selected.slug==="led-module";
-  return <section className="models-section">{ledModules?<div className="model-location-tabs"><div className="model-location-options"><button type="button" className={locationFilter==="indoor"?"active":""} onClick={()=>setLocationFilter("indoor")}>Indoor Models</button><button type="button" className={locationFilter==="outdoor"?"active":""} onClick={()=>setLocationFilter("outdoor")}>Outdoor Models</button></div><div className="model-top-actions"><label className="compact-search">⌕<input value={modelSearch} onChange={(e)=>setModelSearch(e.target.value)} placeholder="Search model..." aria-label="Search model"/></label><select value={statusFilter} onChange={(e)=>setStatusFilter(e.target.value)} aria-label="Status filter"><option value="">All Statuses</option><option value="true">Active</option><option value="false">Inactive</option></select>{selected.uses_brand?<button className="admin-button secondary" type="button" onClick={onAddBrand}>＋ Add Brand</button>:null}<button className="admin-button primary" type="button" onClick={onAdd}>＋ Add Model</button></div></div>:<div className="models-heading"><h3>Models ({total})</h3><div><label className="compact-search">⌕<input value={modelSearch} onChange={(e)=>setModelSearch(e.target.value)} placeholder="Search model..." aria-label="Search model"/></label><select value={statusFilter} onChange={(e)=>setStatusFilter(e.target.value)} aria-label="Status filter"><option value="">All Statuses</option><option value="true">Active</option><option value="false">Inactive</option></select>{selected.uses_brand?<button className="admin-button secondary" type="button" onClick={onAddBrand}>＋ Add Brand</button>:null}<button className="admin-button primary" type="button" onClick={onAdd}>＋ Add Model</button></div></div>}
+  const locationModels=selected.slug==="led-module"||selected.slug==="cabinets";
+  return <section className="models-section">{locationModels?<div className="model-location-tabs"><div className="model-location-options"><button type="button" className={locationFilter==="indoor"?"active":""} onClick={()=>setLocationFilter("indoor")}>Indoor Models</button><button type="button" className={locationFilter==="outdoor"?"active":""} onClick={()=>setLocationFilter("outdoor")}>Outdoor Models</button></div><div className="model-top-actions"><label className="compact-search">⌕<input value={modelSearch} onChange={(e)=>setModelSearch(e.target.value)} placeholder="Search model..." aria-label="Search model"/></label><select value={statusFilter} onChange={(e)=>setStatusFilter(e.target.value)} aria-label="Status filter"><option value="">All Statuses</option><option value="true">Active</option><option value="false">Inactive</option></select>{selected.uses_brand?<button className="admin-button secondary" type="button" onClick={onAddBrand}>＋ Add Brand</button>:null}<button className="admin-button primary" type="button" onClick={onAdd}>＋ Add Model</button></div></div>:<div className="models-heading"><h3>Models ({total})</h3><div><label className="compact-search">⌕<input value={modelSearch} onChange={(e)=>setModelSearch(e.target.value)} placeholder="Search model..." aria-label="Search model"/></label><select value={statusFilter} onChange={(e)=>setStatusFilter(e.target.value)} aria-label="Status filter"><option value="">All Statuses</option><option value="true">Active</option><option value="false">Inactive</option></select>{selected.uses_brand?<button className="admin-button secondary" type="button" onClick={onAddBrand}>＋ Add Brand</button>:null}<button className="admin-button primary" type="button" onClick={onAdd}>＋ Add Model</button></div></div>}
     {products.length?<div className="admin-table-wrap"><table className="admin-table catalog-model-table"><thead><tr><th>SL No.</th><th>Label</th><th>Model</th><th>Brand</th><th>Unit</th><th>Technology</th><th>Price</th><th aria-label="Actions"/></tr></thead><tbody>{products.map((product,index)=>{const price=calculatorModulePrice(product),model=selected.slug==="cabinets"?product.model:(product.model||product.name),actionName=model||product.name||"model";return <tr key={product.id}><td>{(page-1)*PAGE_SIZE+index+1}</td><td>{product.name||"—"}</td><td><b>{model||"—"}</b></td><td>{product.brand_name||"—"}</td><td>{product.unit||"—"}</td><td>{String(product.technical_metadata?.technology||"—").toUpperCase()}</td><td>{price!==null?`৳ ${price.toLocaleString()}`:"—"}</td><td><div className="catalog-row-actions"><button className="row-action" type="button" onClick={()=>onEdit(product)} aria-label={`Edit ${actionName}`}>✎</button><button className="quotation-delete-button" type="button" onClick={()=>onDelete(product)} aria-label={`Delete ${actionName}`}>Delete</button></div></td></tr>;})}</tbody></table></div>:<EmptyState title="No models match these filters" description="Add a model or change the current filters."/>}
     <footer className="models-footer"><span>Showing {total?((page-1)*PAGE_SIZE)+1:0} to {Math.min(page*PAGE_SIZE,total)} of {total} models{total!==allCount?" (filtered)":""}</span><div><button disabled={page===1} onClick={()=>setPage(page-1)}>‹</button>{Array.from({length:pages},(_,index)=>index+1).slice(Math.max(0,page-3),Math.max(5,page+2)).map((number)=><button key={number} className={page===number?"active":""} onClick={()=>setPage(number)}>{number}</button>)}<button disabled={page===pages} onClick={()=>setPage(page+1)}>›</button></div></footer>
   </section>;
@@ -188,6 +192,8 @@ function ModelsSection({selected,products,total,allCount,modelSearch,setModelSea
 function BrandModal({category,onClose,onSave}){return <Modal title="Add Brand" subtitle={`Add a new brand to ${category.name}.`} onClose={onClose}><form onSubmit={onSave}><label>Brand Name<input name="name" required maxLength="255" autoFocus placeholder="Enter brand name"/></label><ModalActions onClose={onClose} label="Add Brand"/></form></Modal>;}
 function ProductModal({category,brands,product,priceReadOnly,onClose,onSave}){
   const metadata=product?.technical_metadata||{},cabinet=category.slug==="cabinets",moduleCategory=category.slug==="led-module";
+  const [cabinetLocation,setCabinetLocation]=useState(metadata.displayType||"indoor");
+  const [cabinetMaterial,setCabinetMaterial]=useState(metadata.materialCode||"aluminium");
   return <Modal title={product?.id?"Edit Model":"Add Model"} subtitle={`${systemLabels[category.system_type]} · ${category.name}`} onClose={onClose} wide><form onSubmit={onSave}><div className="admin-form-grid">
     <label>Label<input name="name" required defaultValue={product?.name||""}/></label>
     <label>Model<input name="model" required={!cabinet} defaultValue={product?.model||""} placeholder={cabinet?"Leave blank for No Model":"Example: P1.53"}/>{cabinet?<small>Leave blank to use No Model.</small>:null}</label>
@@ -195,9 +201,9 @@ function ProductModal({category,brands,product,priceReadOnly,onClose,onSave}){
     <label>Unit<input name="unit" required defaultValue={product?.unit||"Pcs"} placeholder="Example: Pcs"/></label>
     {moduleCategory?<label>Technology<select name="technology" required defaultValue={String(metadata.technology||"smd").toLowerCase()}><option value="smd">SMD</option><option value="gob">GOB</option><option value="cob">COB</option></select></label>:null}
     {cabinet?<>
-      <label>Cabinet Location<select name="cabinet_location" defaultValue={metadata.displayType||"indoor"}><option value="indoor">Indoor</option><option value="outdoor">Outdoor</option></select></label>
-      <label>Cabinet Material<select name="cabinet_material" defaultValue={metadata.materialCode||"aluminium"}><option value="aluminium">Aluminium</option><option value="magnesium">Magnesium</option><option value="mild_steel">Mild Steel</option></select></label>
-      <label>Cabinet Type<select name="cabinet_variant" defaultValue={metadata.variantCode||""}><option value="">No Type</option><option value="open">Open</option><option value="backdoor">Backdoor</option></select></label>
+      <label>Cabinet Location<select name="cabinet_location" value={cabinetLocation} onChange={(event)=>setCabinetLocation(event.target.value)}><option value="indoor">Indoor</option><option value="outdoor">Outdoor</option></select></label>
+      <label>Cabinet Material<select name="cabinet_material" value={cabinetMaterial} onChange={(event)=>setCabinetMaterial(event.target.value)}><option value="aluminium">Aluminium</option><option value="magnesium">Magnesium</option><option value="mild_steel">Mild Steel</option></select></label>
+      {cabinetLocation==="outdoor"&&cabinetMaterial==="mild_steel"?<label>Cabinet Type<select name="cabinet_variant" defaultValue={metadata.variantCode||"open"}><option value="open">Open</option><option value="backdoor">Backdoor</option></select></label>:null}
       <label>Cabinet Size<select name="cabinet_size" defaultValue={metadata.sizeKey||"640x480"}>{Object.keys(CABINET_SIZES).map((size)=><option key={size} value={size}>{size.replace("x","mm x ")}mm</option>)}</select></label>
     </>:null}
     <label>Default / Gold Price<input name="price_gold" type="number" min="0" step="0.01" required={!priceReadOnly} disabled={priceReadOnly} defaultValue={calculatorTierPrice(product,"default")??""}/>{priceReadOnly?<small>Calculated automatically from Mugnee pricing.</small>:null}</label>

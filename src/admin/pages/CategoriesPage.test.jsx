@@ -110,3 +110,115 @@ test("saves an admin-selected brand on a new model", async () => {
     expect.objectContaining({ brand_id: 10, model: "TEST" })
   ));
 });
+
+test("shows No Model for base cabinets and saves metadata for selectable cabinet models", async () => {
+  const cabinetCategories = [
+    categories[0],
+    { id: 3, parent_id: 1, system_type: "led-display", slug: "cabinets", name: "Cabinets", uses_brand: true, is_active: true, brand_count: 1, model_count: 1 },
+  ];
+  const cabinetBrands = [{ id: 20, name: "CaseCo", slug: "caseco", is_active: true, categories: [{ id: 3 }] }];
+  const cabinetProducts = [{
+    id: 200,
+    name: "Aluminium 640mm x 480mm",
+    model: "",
+    brand_name: null,
+    brand_id: null,
+    unit: "Pcs",
+    component_type: "cabinet",
+    technical_metadata: { displayType: "indoor", materialCode: "aluminium", sizeKey: "640x480" },
+    prices: { default: 8000 },
+  }];
+  get.mockImplementation((url) => {
+    if (url.startsWith("/admin/categories")) return Promise.resolve(cabinetCategories);
+    if (url.startsWith("/admin/brands")) return Promise.resolve(cabinetBrands);
+    if (url.startsWith("/admin/products")) return Promise.resolve(cabinetProducts);
+    return Promise.resolve([]);
+  });
+
+  render(<CategoriesPage />);
+  const cabinetRow = (await screen.findByText("Aluminium 640mm x 480mm")).closest("tr");
+  const cabinetCells = within(cabinetRow).getAllByRole("cell");
+  expect(cabinetCells[2]).toHaveTextContent("—");
+  expect(cabinetCells[3]).toHaveTextContent("—");
+  fireEvent.click(screen.getByRole("button", { name: /Add Model/ }));
+  const dialog = screen.getByRole("dialog");
+  const modelInput = within(dialog).getByRole("textbox", { name: /^Model/ });
+  expect(modelInput).not.toBeRequired();
+  expect(modelInput).toHaveAttribute("placeholder", "Leave blank for No Model");
+
+  fireEvent.change(within(dialog).getByRole("textbox", { name: "Label" }), { target: { value: "Premium Cabinet" } });
+  fireEvent.change(modelInput, { target: { value: "CAB-X" } });
+  fireEvent.change(within(dialog).getByRole("combobox", { name: "Brand" }), { target: { value: "20" } });
+  fireEvent.change(within(dialog).getByRole("combobox", { name: "Cabinet Location" }), { target: { value: "outdoor" } });
+  fireEvent.change(within(dialog).getByRole("combobox", { name: "Cabinet Material" }), { target: { value: "magnesium" } });
+  fireEvent.change(within(dialog).getByRole("combobox", { name: "Cabinet Size" }), { target: { value: "960x960" } });
+  fireEvent.change(within(dialog).getByRole("spinbutton", { name: "Default / Gold Price" }), { target: { value: "9000" } });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Add Model" }));
+
+  await waitFor(() => expect(post).toHaveBeenCalledWith(
+    "/admin/products",
+    expect.objectContaining({
+      brand_id: 20,
+      model: "CAB-X",
+      technical_metadata: expect.objectContaining({
+        displayType: "outdoor",
+        materialCode: "magnesium",
+        catalogRole: "model",
+        sizeKey: "960x960",
+        widthMm: 960,
+        heightMm: 960,
+      }),
+    })
+  ));
+});
+
+test("filters cabinet models by indoor and outdoor display type", async () => {
+  const cabinetCategories = [
+    categories[0],
+    { id: 3, parent_id: 1, system_type: "led-display", slug: "cabinets", name: "Cabinets", uses_brand: true, is_active: true, brand_count: 0, model_count: 2 },
+  ];
+  const cabinetProducts = [
+    {
+      id: 201,
+      name: "Indoor Cabinet",
+      model: "CAB-IN",
+      brand_name: null,
+      brand_id: null,
+      unit: "Pcs",
+      component_type: "cabinet",
+      technical_metadata: { displayType: "indoor", materialCode: "aluminium", sizeKey: "640x480" },
+      prices: { default: 8000 },
+    },
+    {
+      id: 202,
+      name: "Outdoor Cabinet",
+      model: "CAB-OUT",
+      brand_name: null,
+      brand_id: null,
+      unit: "Pcs",
+      component_type: "cabinet",
+      technical_metadata: { displayType: "outdoor", materialCode: "mild_steel", sizeKey: "640x480" },
+      prices: { default: 9000 },
+    },
+  ];
+  get.mockImplementation((url) => {
+    if (url.startsWith("/admin/categories")) return Promise.resolve(cabinetCategories);
+    if (url.startsWith("/admin/brands")) return Promise.resolve([]);
+    if (url.startsWith("/admin/products")) return Promise.resolve(cabinetProducts);
+    return Promise.resolve([]);
+  });
+
+  render(<CategoriesPage />);
+
+  const indoorFilter = await screen.findByRole("button", { name: "Indoor Models" });
+  const outdoorFilter = screen.getByRole("button", { name: "Outdoor Models" });
+  expect(indoorFilter).toHaveClass("active");
+  expect(await screen.findByText("Indoor Cabinet")).toBeInTheDocument();
+  expect(screen.queryByText("Outdoor Cabinet")).not.toBeInTheDocument();
+
+  fireEvent.click(outdoorFilter);
+
+  expect(outdoorFilter).toHaveClass("active");
+  expect(await screen.findByText("Outdoor Cabinet")).toBeInTheDocument();
+  expect(screen.queryByText("Indoor Cabinet")).not.toBeInTheDocument();
+});

@@ -78,7 +78,7 @@ test("uses the configured model for each power supply brand", () => {
   assert.equal(products.find((item) => item.brand === "G-Energy").metadata.label, "Power Supply: N200V5-A");
 });
 
-test("builds cabinet models from two-letter material codes and cabinet size", () => {
+test("keeps base cabinet models empty until an admin model is selected", () => {
   const products = mapStaticCatalog({
     ledCatalog: {
       modelGroups: {}, controllers: [], novastarControllers: [], receivingCards: {}, powerSupplies: [],
@@ -91,8 +91,23 @@ test("builds cabinet models from two-letter material codes and cabinet size", ()
     paProducts: [], conferenceProducts: [],
   });
 
-  assert.deepEqual(products.map((item) => item.model), ["MS640X480", "AL640X640", "MG960X960"]);
-  assert.deepEqual(products.map((item) => item.metadata.model), ["MS640X480", "AL640X640", "MG960X960"]);
+  assert.deepEqual(products.map((item) => item.model), [null, null, null]);
+  assert.deepEqual(products.map((item) => item.metadata.model), ["", "", ""]);
+});
+
+test("does not turn live admin cabinet models into static seed products", () => {
+  const products = mapStaticCatalog({
+    ledCatalog: {
+      modelGroups: {}, controllers: [], novastarControllers: [], receivingCards: {}, powerSupplies: [],
+      cabinetOptions: [
+        { id: "base", catalogRole: "base", sourceCatalog: "admin", materialLabel: "Aluminium", sizeKey: "640x480", label: "640mm x 480mm", price: 1 },
+        { id: "admin:1:cab-x", catalogRole: "model", sourceCatalog: "admin", materialLabel: "Aluminium", sizeKey: "640x480", label: "640mm x 480mm", model: "CAB-X", price: 2 },
+      ],
+    },
+    paProducts: [], conferenceProducts: [],
+  });
+
+  assert.deepEqual(products.filter((item) => item.componentType === "cabinet").map((item) => item.sourceKey), ["led:cabinet:base"]);
 });
 
 test("maps component models separately from Novastar internal ids", () => {

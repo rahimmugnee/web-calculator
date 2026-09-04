@@ -114,3 +114,25 @@ test("stores readable Novastar models instead of internal ids", () => {
     expect.objectContaining({ name: "Receiving Card: NV3210", model: "NV3210" }),
   ]));
 });
+
+test("keeps an unselected cabinet brand and model empty for quotation hyphens", () => {
+  const payload = quotationHistoryPayload({
+    company: { id: 1 },
+    quotationRef: "MUG-2026-CABINET-NONE",
+    snapshot: {
+      quotationType: "fixed",
+      customer: {}, model: {}, display: {},
+      items: {
+        cabinetEnabled: true,
+        cabinetQty: 1,
+        cabinet: { itemName: "Aluminium Cabinet", invoiceLabel: "Aluminium Cabinet", brand: "", model: "" },
+      },
+    },
+    calc: { totals: {}, unitPrices: {} },
+  });
+
+  expect(payload.items.find((item) => item.name === "Aluminium Cabinet")).toEqual(expect.objectContaining({
+    brand: "",
+    model: "",
+  }));
+});

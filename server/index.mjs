@@ -1,4 +1,5 @@
 import express from "express";
+import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { createSession, clearSessionCookies, parseCookies, SESSION_COOKIE, setSessionCookies, sha256 } from "./auth/session.mjs";
@@ -6,8 +7,10 @@ import { hashPassword, verifyPassword } from "./auth/password.mjs";
 import { getPool } from "./db/pool.mjs";
 import { requireAuth, requireCsrf, requirePermission } from "./middleware/auth.mjs";
 import { audit } from "./services/audit.mjs";
+import { buildCalculatorDataResponse } from "./services/calculatorData.mjs";
 import { syncCatalogFallback } from "./services/catalogFallback.mjs";
-import { emailValue, idValue, moneyValue, slugValue, textValue } from "./validation.mjs";
+import { announceCatalogChangeAfterResponse, currentCatalogVersion, handleCatalogEvents } from "./services/catalogLiveUpdates.mjs";
+import { emailValue, idValue, moneyValue, slugSegment, slugValue, textValue } from "./validation.mjs";
 
 const app = express();
 const pool = getPool();
@@ -80,7 +83,8 @@ const pricingProfile = async (companyId, client = pool) => {
 
 app.get("/api/public/company/default", asyncRoute(async (_req, res) => {
   const result = await pool.query(
-    `SELECT id,name,code,signatory_name,signatory_designation,signatory_company_name,signatory_phone,signatory_email,
+    `SELECT id,name,code,address,phone,email,website,currency,vat_defaults,
+       signatory_name,signatory_designation,signatory_company_name,signatory_phone,signatory_email,
        pricing_source_company_id,pricing_multiplier
      FROM companies WHERE is_default LIMIT 1`
   );
@@ -91,7 +95,8 @@ app.get("/api/public/company/default", asyncRoute(async (_req, res) => {
 
 app.get("/api/public/companies", asyncRoute(async (_req, res) => {
   const result = await pool.query(
-    `SELECT id,name,code,is_default,signatory_name,signatory_designation,signatory_company_name,signatory_phone,signatory_email,
+    `SELECT id,name,code,is_default,address,phone,email,website,currency,vat_defaults,
+       signatory_name,signatory_designation,signatory_company_name,signatory_phone,signatory_email,
        pricing_source_company_id,pricing_multiplier
      FROM companies WHERE is_active OR is_default ORDER BY is_default DESC,name`
   );
@@ -120,8 +125,41 @@ app.get("/api/public/company/:id/led-prices", asyncRoute(async (req, res) => {
     JOIN company_product_prices cpp ON cpp.product_id=p.id AND cpp.company_id=$1 AND cpp.is_active
     JOIN categories c ON c.id=p.category_id
     LEFT JOIN brands b ON b.id=p.brand_id
-    WHERE p.is_active AND p.deleted_at IS NULL AND c.is_active AND c.deleted_at IS NULL AND (b.id IS NULL OR b.deleted_at IS NULL) AND c.system_type='led-display'`,[pricing.pricing_company_id,pricing.pricing_multiplier]);
+    LEFT JOIN category_brands cb ON cb.category_id=p.category_id AND cb.brand_id=p.brand_id AND cb.is_active
+    WHERE p.is_active AND p.deleted_at IS NULL AND c.is_active AND c.deleted_at IS NULL
+      AND (p.brand_id IS NULL OR (b.is_active AND b.deleted_at IS NULL AND cb.brand_id IS NOT NULL))
+      AND c.system_type='led-display'`,[pricing.pricing_company_id,pricing.pricing_multiplier]);
   res.json(result.rows);
+}));
+
+app.get("/api/public/company/:id/calculator-data", asyncRoute(async (req, res) => {
+  const companyId = idValue(req.params.id);
+  const pricing = await pricingProfile(companyId);
+  const [products, calculatorSettings, quotationSettings, invoiceSettings, priceTiers] = await Promise.all([
+    pool.query(`SELECT p.id,p.source_key,p.source_catalog,p.component_type,p.name,p.model,p.unit,p.currency,p.technical_metadata,
+        b.name brand_name,c.system_type,c.slug category_slug,cpp.price_tier,
+        round(cpp.unit_price*$2::numeric,4) unit_price
+      FROM products p
+      JOIN company_product_prices cpp ON cpp.product_id=p.id AND cpp.company_id=$1 AND cpp.is_active
+      JOIN categories c ON c.id=p.category_id
+      LEFT JOIN brands b ON b.id=p.brand_id
+      LEFT JOIN category_brands cb ON cb.category_id=p.category_id AND cb.brand_id=p.brand_id AND cb.is_active
+      WHERE p.is_active AND p.deleted_at IS NULL AND c.is_active AND c.deleted_at IS NULL
+        AND (p.brand_id IS NULL OR (b.is_active AND b.deleted_at IS NULL AND cb.brand_id IS NOT NULL))
+      ORDER BY c.system_type,c.sort_order,p.name,cpp.price_tier`, [pricing.pricing_company_id, pricing.pricing_multiplier]),
+    pool.query("SELECT calculator_type,settings FROM calculator_settings WHERE company_id=$1 AND is_active ORDER BY calculator_type", [companyId]),
+    pool.query("SELECT * FROM quotation_settings WHERE company_id=$1", [companyId]),
+    pool.query("SELECT * FROM invoice_settings WHERE company_id=$1", [companyId]),
+    pool.query("SELECT code,name,description,warranty_years,sort_order FROM pricing_tiers WHERE is_active ORDER BY sort_order,name"),
+  ]);
+  res.setHeader("Cache-Control", "no-store, max-age=0");
+  res.json(buildCalculatorDataResponse({
+    products: products.rows,
+    calculatorSettings: calculatorSettings.rows,
+    quotationSettings: quotationSettings.rows[0],
+    invoiceSettings: invoiceSettings.rows[0],
+    priceTiers: priceTiers.rows,
+  }));
 }));
 
 app.get("/api/public/catalog/led-module/brands", asyncRoute(async (_req, res) => {
@@ -132,6 +170,22 @@ app.get("/api/public/catalog/led-module/brands", asyncRoute(async (_req, res) =>
     WHERE c.slug='led-module' AND c.is_active AND c.deleted_at IS NULL AND b.is_active AND b.deleted_at IS NULL ORDER BY b.name,p.name`);
   res.json(result.rows);
 }));
+
+app.get("/api/public/catalog/cabinets/brands", asyncRoute(async (_req, res) => {
+  const result=await pool.query(`SELECT DISTINCT b.id,b.name,b.slug FROM brands b
+    JOIN category_brands cb ON cb.brand_id=b.id AND cb.is_active
+    JOIN categories c ON c.id=cb.category_id
+    WHERE c.slug='cabinets' AND c.is_active AND c.deleted_at IS NULL
+      AND b.is_active AND b.deleted_at IS NULL
+    ORDER BY b.name`);
+  res.json(result.rows);
+}));
+
+app.get("/api/public/catalog-events", handleCatalogEvents);
+app.get("/api/public/catalog-version", (_req, res) => {
+  res.setHeader("Cache-Control", "no-store, max-age=0");
+  res.json({ version: currentCatalogVersion() });
+});
 
 app.get("/api/public/company/:id/assets/:type", asyncRoute(async (req, res) => {
   const id = idValue(req.params.id); const type = String(req.params.type || "");
@@ -268,6 +322,7 @@ app.post("/api/auth/logout", requireAuth, requireCsrf, asyncRoute(async (req, re
 app.get("/api/auth/me", requireAuth, (req, res) => res.json({ user: { id: req.user.id, email: req.user.email, display_name: req.user.display_name, role: req.user.role, role_name: req.user.role_name, permissions: req.user.permissions } }));
 
 app.use("/api/admin", requireAuth, requireCsrf);
+app.use("/api/admin", announceCatalogChangeAfterResponse);
 
 app.get("/api/admin/dashboard", asyncRoute(async (req, res) => {
   const companyId = req.query.companyId ? idValue(req.query.companyId) : null;
@@ -403,7 +458,7 @@ app.delete("/api/admin/brands/:id", requirePermission("manage_brands"), asyncRou
 
 app.get("/api/admin/products", asyncRoute(async(req,res)=>{const {limit,offset}=paging(req.query),params=[],where=["p.deleted_at IS NULL"];let priceSelect="'{}'::jsonb AS prices";if(req.query.companyId){const pricing=await pricingProfile(idValue(req.query.companyId,"Company"));params.push(pricing.pricing_company_id);const companyParam=params.length;params.push(pricing.pricing_multiplier);const multiplierParam=params.length;priceSelect=`(SELECT COALESCE(jsonb_object_agg(cpp.price_tier,round(cpp.unit_price*$${multiplierParam}::numeric,4)),'{}'::jsonb) FROM company_product_prices cpp WHERE cpp.product_id=p.id AND cpp.company_id=$${companyParam} AND cpp.is_active) AS prices`;}for(const [key,column] of [["system","c.system_type"],["categoryId","p.category_id"],["brandId","p.brand_id"],["active","p.is_active"]]) if(req.query[key]!==undefined&&req.query[key]!==""){params.push(req.query[key]);where.push(`${column}=$${params.length}`);} if(req.query.search){params.push(`%${req.query.search}%`);where.push(`(p.name ILIKE $${params.length} OR p.model ILIKE $${params.length} OR p.sku ILIKE $${params.length})`);} params.push(limit,offset);const result=await pool.query(`SELECT p.*,c.name category_name,c.system_type,b.name brand_name,${priceSelect} FROM products p LEFT JOIN categories c ON c.id=p.category_id LEFT JOIN brands b ON b.id=p.brand_id WHERE ${where.join(" AND ")} ORDER BY p.name LIMIT $${params.length-1} OFFSET $${params.length}`,params);res.json(result.rows);}));
 
-app.post("/api/admin/products", requirePermission("manage_products"), asyncRoute(async(req,res)=>{const b=req.body||{},categoryId=idValue(b.category_id,"Category");const category=await pool.query("SELECT uses_brand,system_type,slug FROM categories WHERE id=$1 AND deleted_at IS NULL",[categoryId]);if(!category.rowCount)throw Object.assign(new Error("Category not found."),{status:400});const hasBrand=b.brand_id!==null&&b.brand_id!==undefined&&b.brand_id!=="";const brandId=category.rows[0].uses_brand&&hasBrand?idValue(b.brand_id,"Brand"):null;const key=b.source_key||`admin:${Date.now()}:${slugValue(b.model||b.name,"Model")}`;const componentType=categoryComponentType(category.rows[0],b.component_type);const result=await pool.query(`INSERT INTO products(source_key,sku,category,component_type,name,brand,model,unit,currency,technical_metadata,source_catalog,is_active,category_id,brand_id) SELECT $1,$2,c.system_type,$3,$4,br.name,$5,$6,$7,$8::jsonb,'admin',$9,c.id,br.id FROM categories c LEFT JOIN brands br ON br.id=$10 AND br.deleted_at IS NULL WHERE c.id=$11 AND c.deleted_at IS NULL RETURNING *`,[key,b.sku||key,componentType,textValue(b.name,"Product name"),textValue(b.model,"Model",{required:false}),b.unit||"Nos.",b.currency||"BDT",JSON.stringify(b.technical_metadata||{}),b.is_active!==false,brandId,categoryId]);await audit(req,{action:"create",entityType:"product",entityId:result.rows[0].id,summary:`Created product ${result.rows[0].name}`});res.status(201).json(result.rows[0]);}));
+app.post("/api/admin/products", requirePermission("manage_products"), asyncRoute(async(req,res)=>{const b=req.body||{},categoryId=idValue(b.category_id,"Category");const category=await pool.query("SELECT uses_brand,system_type,slug FROM categories WHERE id=$1 AND deleted_at IS NULL",[categoryId]);if(!category.rowCount)throw Object.assign(new Error("Category not found."),{status:400});const hasBrand=b.brand_id!==null&&b.brand_id!==undefined&&b.brand_id!=="";const brandId=category.rows[0].uses_brand&&hasBrand?idValue(b.brand_id,"Brand"):null;const key=b.source_key||`admin:${randomUUID()}:${slugSegment(b.model||b.name)}`;const componentType=categoryComponentType(category.rows[0],b.component_type);const result=await pool.query(`INSERT INTO products(source_key,sku,category,component_type,name,brand,model,unit,currency,technical_metadata,source_catalog,is_active,category_id,brand_id) SELECT $1,$2,c.system_type,$3,$4,br.name,$5,$6,$7,$8::jsonb,'admin',$9,c.id,br.id FROM categories c LEFT JOIN brands br ON br.id=$10 AND br.deleted_at IS NULL WHERE c.id=$11 AND c.deleted_at IS NULL RETURNING *`,[key,b.sku||key,componentType,textValue(b.name,"Product name"),textValue(b.model,"Model",{required:false}),b.unit||"Nos.",b.currency||"BDT",JSON.stringify(b.technical_metadata||{}),b.is_active!==false,brandId,categoryId]);await audit(req,{action:"create",entityType:"product",entityId:result.rows[0].id,summary:`Created product ${result.rows[0].name}`});res.status(201).json(result.rows[0]);}));
 
 app.put("/api/admin/products/:id", requirePermission("manage_products"), asyncRoute(async(req,res)=>{const id=idValue(req.params.id),b=req.body||{},categoryId=idValue(b.category_id,"Category");const category=await pool.query("SELECT uses_brand,system_type,slug FROM categories WHERE id=$1 AND deleted_at IS NULL",[categoryId]);const hasBrand=b.brand_id!==null&&b.brand_id!==undefined&&b.brand_id!=="";const brandId=category.rows[0]?.uses_brand&&hasBrand?idValue(b.brand_id,"Brand"):null;const componentType=categoryComponentType(category.rows[0]||{},b.component_type);const result=await pool.query(`UPDATE products p SET name=$1,model=$2,sku=$3,unit=$4,currency=$5,technical_metadata=$6::jsonb,is_active=$7,component_type=$8,category_id=$9,brand_id=$10,brand=(SELECT name FROM brands WHERE id=$10 AND deleted_at IS NULL),source_catalog='admin' WHERE id=$11 AND deleted_at IS NULL RETURNING *`,[textValue(b.name,"Product name"),textValue(b.model,"Model",{required:false}),b.sku||null,b.unit||"Nos.",b.currency||"BDT",JSON.stringify(b.technical_metadata||{}),b.is_active!==false,componentType,categoryId,brandId,id]);await audit(req,{action:"update",entityType:"product",entityId:id,summary:`Updated product ${result.rows[0]?.name||id}`});res.json(result.rows[0]);}));
 

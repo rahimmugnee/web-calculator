@@ -329,7 +329,16 @@ export default function PriceForm({
   rentalSizePick,
   onRentalSizeSelectionChange,
 }) {
-  const { catalog } = useCatalog();
+  const {
+    catalog,
+    paProducts,
+    paBrands,
+    conferenceProducts,
+    conferenceBrands,
+    calculatorSettings,
+  } = useCatalog();
+  const fixedSettings = useMemo(() => calculatorSettings?.["fixed-led"] || {}, [calculatorSettings]);
+  const fixedSettingDirty = useRef(new Set());
   const loading = false;
   const error = null;
   const reload = () => {};
@@ -400,7 +409,14 @@ export default function PriceForm({
       const current = bySize.get(key);
       if (!current || (current.catalogRole === "model" && option.catalogRole !== "model")) bySize.set(key, option);
     });
-    return [...bySize.values()];
+    return [...bySize.values()].map((option) => option.catalogRole === "model" ? {
+      ...option,
+      itemName: buildCabinetInvoiceLabel(option),
+      brand: "",
+      model: "",
+      price: 0,
+      catalogRole: "base-placeholder",
+    } : option);
   }, [activeCabinetMaterial, activeCabinetVariant, cabinetAllOptions, cabinetVariantOptions.length, dispType]);
   const selectedCabinetSize = useMemo(
     () => cabinetSizeOptions.find((size) => size.id === cabinetSizeId) ?? cabinetSizeOptions[0],
@@ -417,7 +433,6 @@ export default function PriceForm({
   const cabinetModelCandidates = useMemo(
     () => cabinetAllOptions.filter((option) =>
       option.catalogRole === "model" &&
-      String(option.model || "").trim() &&
       option.displayType === dispType &&
       option.materialCode === activeCabinetMaterial &&
       String(option.variantCode || "") === String(activeCabinetVariant || "") &&
@@ -428,22 +443,29 @@ export default function PriceForm({
   const cabinetBrandOptions = useMemo(
     () => [
       { value: "", label: "No Brand" },
-      ...uniqueCabinetOptions(cabinetModelCandidates, "brand", "brand"),
+      ...uniqueCabinetOptions([
+        ...(catalog.cabinetBrands || []).map((brand) => ({ brand })),
+        ...cabinetModelCandidates,
+      ], "brand", "brand"),
     ],
-    [cabinetModelCandidates]
+    [cabinetModelCandidates, catalog.cabinetBrands]
   );
   const cabinetModelOptions = useMemo(
     () => [
       { value: "", label: "No Model" },
       ...cabinetModelCandidates
-        .filter((option) => String(option.brand || "") === cabinetBrand)
+        .filter((option) => String(option.brand || "") === cabinetBrand && String(option.model || "").trim())
         .map((option) => ({ value: option.id, label: option.model })),
     ],
     [cabinetBrand, cabinetModelCandidates]
   );
   const selectedCabinetModel = useMemo(
-    () => cabinetModelCandidates.find((option) => option.id === cabinetModelId) || null,
-    [cabinetModelCandidates, cabinetModelId]
+    () => cabinetModelCandidates.find((option) =>
+      option.id === cabinetModelId && String(option.brand || "") === cabinetBrand
+    ) || (!cabinetModelId && cabinetBrand ? cabinetModelCandidates.find((option) =>
+      String(option.brand || "") === cabinetBrand && !String(option.model || "").trim()
+    ) : null),
+    [cabinetBrand, cabinetModelCandidates, cabinetModelId]
   );
 
   useEffect(() => {
@@ -467,7 +489,7 @@ export default function PriceForm({
   const [irregularQty, setIrregularQty] = useState(1);
 
   // âœ… VAT (default OFF)
-  const [vatEnabled, setVatEnabled] = useState(false);
+  const [vatEnabled, setVatEnabled] = useState(Boolean(fixedSettings.vatEnabled));
 
   // âœ… Discount (default OFF)
   const [discountEnabled, setDiscountEnabled] = useState(false);
@@ -478,8 +500,8 @@ export default function PriceForm({
   const [customModuleBrandName, setCustomModuleBrandName] = useState("");
 
   // âœ… Payment Term (default 100%)
-  const [paymentTermId, setPaymentTermId] = useState("PT_100");
-  const [deliveryDays, setDeliveryDays] = useState(45);
+  const [paymentTermId, setPaymentTermId] = useState(fixedSettings.paymentTermId || "PT_100");
+  const [deliveryDays, setDeliveryDays] = useState(fixedSettings.deliveryDays ?? fixedSettings.defaultDeliveryDays ?? 45);
 
   // âœ… Outdoor à¦¹à¦²à§‡ force SMD
 
@@ -550,9 +572,22 @@ export default function PriceForm({
   const [transportEnabled, setTransportEnabled] = useState(false);
   const [transportValue, setTransportValue] = useState(0);
 
-  const [tierId, setTierId] = useState("gold");
+  const [tierId, setTierId] = useState(fixedSettings.tierId || fixedSettings.defaultTier || "gold");
   const hasCalculatedRef = useRef(false);
   const [customWarranty, setCustomWarranty] = useState("");
+
+  useEffect(() => {
+    const dirty = fixedSettingDirty.current;
+    if (!dirty.has("vatEnabled") && typeof fixedSettings.vatEnabled === "boolean") setVatEnabled(fixedSettings.vatEnabled);
+    if (!dirty.has("paymentTermId") && fixedSettings.paymentTermId) setPaymentTermId(fixedSettings.paymentTermId);
+    const nextDelivery = fixedSettings.deliveryDays ?? fixedSettings.defaultDeliveryDays;
+    if (!dirty.has("deliveryDays") && nextDelivery !== undefined) setDeliveryDays(nextDelivery);
+    const requestedTier = fixedSettings.tierId || fixedSettings.defaultTier;
+    setTierId((current) => {
+      if (!dirty.has("tierId") && requestedTier && catalog.priceTiers.some((tier) => tier.id === requestedTier)) return requestedTier;
+      return catalog.priceTiers.some((tier) => tier.id === current) ? current : (catalog.priceTiers[0]?.id || current);
+    });
+  }, [fixedSettings, catalog.priceTiers]);
 
   // âœ… Module Unit Price override
   const [modulePriceOverrideStr, setModulePriceOverrideStr] = useState("");
@@ -947,10 +982,8 @@ export default function PriceForm({
   }, [paymentTermId, catalog.paymentTerms]);
 
   const defaultWarrantyYears = useMemo(() => {
-    if (tierId === "diamond") return 3;
-    if (tierId === "platinum") return 2;
-    return 1;
-  }, [tierId]);
+    return Number(catalog.priceTiers.find((tier) => tier.id === tierId)?.warrantyYears) || 1;
+  }, [catalog.priceTiers, tierId]);
 
   // âœ… Snapshot
 	  const snapshot = useMemo(
@@ -1359,11 +1392,24 @@ export default function PriceForm({
 	          onCalculated={onCalculated}
 	          sizePick={rentalSizePick}
 	          onSizeSelectionChange={onRentalSizeSelectionChange}
+	          settings={calculatorSettings?.["rental-led"]}
 	        />
 		      ) : installationType === "pa" ? (
-		        <PASystemForm onChange={onChange} onCalculated={onCalculated} />
+		        <PASystemForm
+		          onChange={onChange}
+		          onCalculated={onCalculated}
+		          products={paProducts}
+		          brands={paBrands}
+		          settings={calculatorSettings?.["pa-system"]}
+		        />
 		      ) : installationType === "conference" ? (
-		        <ConferenceSystemForm onChange={onChange} onCalculated={onCalculated} />
+		        <ConferenceSystemForm
+		          onChange={onChange}
+		          onCalculated={onCalculated}
+		          products={conferenceProducts}
+		          brands={conferenceBrands}
+		          settings={calculatorSettings?.["conference-system"]}
+		        />
 		      ) : (
 	        <>
 	      <section>
@@ -1404,7 +1450,10 @@ export default function PriceForm({
                 value: tier.id,
                 label: tier.note ? `${tier.label} - ${tier.note}` : tier.label,
               }))}
-              onChange={setTierId}
+              onChange={(value) => {
+                fixedSettingDirty.current.add("tierId");
+                setTierId(value);
+              }}
             />
           </label>
 
@@ -2169,7 +2218,10 @@ export default function PriceForm({
             { value: "without", label: "Without VAT" },
             { value: "with", label: "With VAT (10%)" },
           ]}
-          onChange={(value) => setVatEnabled(value === "with")}
+          onChange={(value) => {
+            fixedSettingDirty.current.add("vatEnabled");
+            setVatEnabled(value === "with");
+          }}
         />
       </section>
 
@@ -2182,7 +2234,10 @@ export default function PriceForm({
           ariaLabel="Payment Terms"
           value={paymentTermId}
           options={catalog.paymentTerms.map((term) => ({ value: term.id, label: term.label }))}
-          onChange={setPaymentTermId}
+          onChange={(value) => {
+            fixedSettingDirty.current.add("paymentTermId");
+            setPaymentTermId(value);
+          }}
         />
       </section>
 
@@ -2193,7 +2248,10 @@ export default function PriceForm({
           aria-label="Delivery Time (days)"
           type="number"
           value={deliveryDays}
-          onChange={(e) => setDeliveryDays(e.target.value)}
+          onChange={(e) => {
+            fixedSettingDirty.current.add("deliveryDays");
+            setDeliveryDays(e.target.value);
+          }}
           placeholder="e.g. 45"
         />
       </section>

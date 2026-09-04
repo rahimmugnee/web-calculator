@@ -2,3 +2,27 @@
 Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 To eliminate this warning, add "type": "module" to F:\Web Calculator\Mugnee Calculator\package.json.
 (Use `node --trace-warnings ...` to show where the warning was created)
+Error: Brand is invalid.
+    at idValue (file:///F:/Web%20Calculator/Mugnee%20Calculator/server/validation.mjs:26:72)
+    at file:///F:/Web%20Calculator/Mugnee%20Calculator/server/index.mjs:400:348
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  status: 400
+}
+Error: Brand is invalid.
+    at idValue (file:///F:/Web%20Calculator/Mugnee%20Calculator/server/validation.mjs:26:72)
+    at file:///F:/Web%20Calculator/Mugnee%20Calculator/server/index.mjs:400:348
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  status: 400
+}
+Error: Brand is invalid.
+    at idValue (file:///F:/Web%20Calculator/Mugnee%20Calculator/server/validation.mjs:26:72)
+    at file:///F:/Web%20Calculator/Mugnee%20Calculator/server/index.mjs:400:348
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  status: 400
+}
+Error: Brand is invalid.
+    at idValue (file:///F:/Web%20Calculator/Mugnee%20Calculator/server/validation.mjs:26:72)
+    at file:///F:/Web%20Calculator/Mugnee%20Calculator/server/index.mjs:400:348
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  status: 400
+}

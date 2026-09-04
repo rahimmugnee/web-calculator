@@ -34,10 +34,146 @@ test("overlays every LED component price without mutating factory defaults", () 
   expect(catalog.controllers[0]).toMatchObject({ itemName: "Video Controller", brand: "ControlBrand", model: "CTRL-DB", unit: "Set" });
   expect(catalog.receivingCards.R1.unitPrice).toBe(310);
   expect(catalog.receivingCards.R1).toMatchObject({ itemName: "Data Receiver", brand: "ReceiverBrand", model: "RC-DB", unit: "Card" });
-  expect(catalog.cabinetOptions[0].price).toBe(410);
-  expect(catalog.cabinetOptions[0]).toMatchObject({ itemName: "LED Case", brand: "CaseBrand", model: "CAB-DB", unit: "Case" });
+  const cabinetModel = catalog.cabinetOptions.find((item) => item.catalogRole === "model");
+  expect(cabinetModel.price).toBe(410);
+  expect(cabinetModel).toMatchObject({ itemName: "LED Case", brand: "CaseBrand", model: "CAB-DB", unit: "Case" });
   expect(catalog.powerSupplies[0]).toEqual({ id: "PS1", label: "LED PSU", price: 510, itemName: "LED PSU", brand: "Lampro", model: "PSU-DB", unit: "Unit" });
   expect(base.modelGroups.smd.indoor[0].prices.gold).toBe(100);
+});
+
+test("keeps an admin cabinet with a blank model as No Model", () => {
+  const catalog = applyLedPriceRows({ cabinetOptions: [] }, [{
+    component_type: "cabinet",
+    source_key: "admin:1:no-model-cabinet",
+    source_catalog: "admin",
+    name: "Cabinet 640x480",
+    model: "",
+    price_tier: "default",
+    unit_price: 400,
+    technical_metadata: { id: "no-model-cabinet", displayType: "indoor", materialCode: "aluminium", sizeKey: "640x480" },
+  }]);
+
+  expect(catalog.cabinetOptions[0]).toMatchObject({
+    id: "admin:1:no-model-cabinet",
+    model: "",
+    catalogRole: "model",
+  });
+});
+
+test("keeps an edited seeded cabinet as a base while exposing its brand-only product", () => {
+  const catalog = applyLedPriceRows({}, [{
+    component_type: "cabinet",
+    source_key: "led:cabinet:aluminium-indoor-640x480",
+    source_catalog: "admin",
+    name: "Aluminium 640mm x 480mm",
+    model: "",
+    brand_name: "ABC",
+    price_tier: "default",
+    unit_price: 8000,
+    technical_metadata: {
+      id: "aluminium-indoor-640x480",
+      displayType: "indoor",
+      materialCode: "aluminium",
+      sizeKey: "640x480",
+    },
+  }], [], { authoritative: true });
+
+  expect(catalog.cabinetOptions).toHaveLength(2);
+  expect(catalog.cabinetOptions.find((item) => item.catalogRole === "base")).toMatchObject({
+    id: "aluminium-indoor-640x480",
+    sourceKey: "led:cabinet:aluminium-indoor-640x480",
+    sourceCatalog: "admin",
+    catalogRole: "base",
+    brand: "",
+    model: "",
+  });
+  expect(catalog.cabinetOptions.find((item) => item.catalogRole === "model")).toMatchObject({
+    id: "led:cabinet:aluminium-indoor-640x480",
+    brand: "ABC",
+    model: "",
+  });
+});
+
+test("applies database cabinet metadata edits to an existing base option", () => {
+  const catalog = applyLedPriceRows({ cabinetOptions: [{
+    id: "cabinet-base",
+    catalogRole: "base",
+    displayType: "indoor",
+    materialCode: "aluminium",
+    sizeKey: "640x480",
+    price: 8000,
+  }] }, [{
+    component_type: "cabinet",
+    source_key: "led:cabinet:cabinet-base",
+    source_catalog: "admin",
+    name: "Outdoor Magnesium Cabinet",
+    model: "",
+    price_tier: "default",
+    unit_price: 9200,
+    technical_metadata: {
+      id: "cabinet-base",
+      displayType: "outdoor",
+      materialCode: "magnesium",
+      sizeKey: "960x960",
+      widthMm: 960,
+      heightMm: 960,
+    },
+  }]);
+
+  expect(catalog.cabinetOptions).toEqual([expect.objectContaining({
+    id: "cabinet-base",
+    catalogRole: "base",
+    displayType: "outdoor",
+    materialCode: "magnesium",
+    sizeKey: "960x960",
+    widthMm: 960,
+    heightMm: 960,
+    price: 9200,
+  })]);
+});
+
+test("keeps same-named admin cabinet models as distinct selectable records", () => {
+  const collidingBaseId = "aluminium-indoor-640x480";
+  const sharedCustomModel = {
+    component_type: "cabinet",
+    source_catalog: "admin",
+    model: "CAB-X",
+    price_tier: "default",
+    unit_price: 400,
+    technical_metadata: {
+      id: collidingBaseId,
+      displayType: "indoor",
+      materialCode: "aluminium",
+      sizeKey: "640x480",
+    },
+  };
+  const catalog = applyLedPriceRows({}, [
+    {
+      component_type: "cabinet",
+      source_key: `led:cabinet:${collidingBaseId}`,
+      source_catalog: "static-js",
+      name: "Aluminium 640mm x 480mm",
+      model: "",
+      brand_name: "",
+      price_tier: "default",
+      unit_price: 8000,
+      technical_metadata: {
+        id: collidingBaseId,
+        displayType: "indoor",
+        materialCode: "aluminium",
+        sizeKey: "640x480",
+      },
+    },
+    { ...sharedCustomModel, source_key: "admin:1:cab-x", brand_name: "CaseCo" },
+    { ...sharedCustomModel, source_key: "admin:2:cab-x", brand_name: "OtherCo" },
+  ], [], { authoritative: true });
+
+  expect(catalog.cabinetOptions).toHaveLength(3);
+  expect(catalog.cabinetOptions).toEqual(expect.arrayContaining([
+    expect.objectContaining({ id: collidingBaseId, catalogRole: "base", brand: "", model: "" }),
+    expect.objectContaining({ id: "admin:1:cab-x", catalogRole: "model", brand: "CaseCo", model: "CAB-X" }),
+    expect.objectContaining({ id: "admin:2:cab-x", catalogRole: "model", brand: "OtherCo", model: "CAB-X" }),
+  ]));
 });
 
 const productionModuleRows = [
@@ -135,7 +271,7 @@ test("rebuilds restored LED components from authoritative database metadata", ()
 
   expect(catalog.controllers[0]).toMatchObject({ id: "C2", model: "C2", price: 200, pixels: 2000000 });
   expect(catalog.receivingCards.R2).toMatchObject({ id: "R2", model: "R2", unitPrice: 300 });
-  expect(catalog.cabinetOptions[0]).toMatchObject({ id: "CAB2", model: "CAB2", price: 400, widthMm: 640 });
+  expect(catalog.cabinetOptions[0]).toMatchObject({ id: "CAB2", model: "", catalogRole: "base", price: 400, widthMm: 640 });
   expect(catalog.powerSupplies[0]).toMatchObject({ id: "PS2", model: "PS2", price: 500 });
 });
 

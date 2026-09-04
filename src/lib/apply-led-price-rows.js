@@ -48,6 +48,49 @@ const modulePitchName = (id, fallback) => {
 
 const cabinetSortValue = (values, value) => values[String(value || "").toLowerCase()] ?? 99;
 
+const cabinetRole = (row) => {
+  const explicitRole = String(row.technical_metadata?.catalogRole || "").toLowerCase();
+  const sourceKey = String(row.source_key || "");
+  const baseSource = sourceKey.toLowerCase().startsWith("led:cabinet:");
+  const hasModel = Boolean(String(row.model || "").trim());
+  const hasProductIdentity = hasModel || Boolean(String(row.brand_name || "").trim());
+  const base = explicitRole === "base"
+    || baseSource
+    || (explicitRole !== "model" && row.source_catalog !== "admin" && !hasProductIdentity);
+  const model = explicitRole === "model"
+    || (!base && (row.source_catalog === "admin" || hasProductIdentity))
+    || (base && row.source_catalog === "admin" && hasProductIdentity);
+  return { base, model };
+};
+
+function upsertCabinetOption(cabinetOptions, row, id, role, price) {
+  if (!id) return;
+  const index = cabinetOptions.findIndex((item) =>
+    String(item.id) === String(id)
+    && (role === "model" ? item.catalogRole === "model" : item.catalogRole !== "model")
+  );
+  const current = index >= 0 ? cabinetOptions[index] : {};
+  const fields = databaseProductFields(row, {
+    itemName: current.itemName || "Cabinet",
+    model: "",
+    unit: current.unit || "Pcs",
+  });
+  const option = {
+    ...current,
+    ...(row.technical_metadata || {}),
+    id,
+    ...fields,
+    brand: role === "base" ? "" : fields.brand,
+    model: role === "base" ? "" : fields.model,
+    sourceKey: row.source_key || current.sourceKey || "",
+    sourceCatalog: row.source_catalog || current.sourceCatalog || "",
+    catalogRole: role,
+    price,
+  };
+  if (index >= 0) cabinetOptions[index] = option;
+  else cabinetOptions.push(option);
+}
+
 function sortAuthoritativeCatalog(catalog, cabinetOptions) {
   for (const locations of Object.values(catalog.modelGroups || {})) {
     for (const models of Object.values(locations || {})) {
@@ -108,7 +151,11 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = [], { auth
   const preferredBaseRows = preferredBasePriceRows(rows);
 
   for (const row of rows) {
-    const id = row.technical_metadata?.id || row.source_key?.split(":").pop();
+    const id = row.technical_metadata?.id || (
+      row.component_type === "cabinet" && row.source_catalog === "admin"
+        ? row.source_key
+        : row.source_key?.split(":").pop()
+    );
     const price = Number(row.unit_price);
     if (!Number.isFinite(price)) continue;
     if (basePriceComponents.has(row.component_type) && basePriceTiers.has(row.price_tier)
@@ -186,23 +233,11 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = [], { auth
     }
 
     if (row.component_type === "cabinet" && (row.price_tier === "default" || row.price_tier === "gold")) {
-      let index = cabinetOptions.findIndex((item) => String(item.id) === String(id) || String(item.id) === String(row.model));
-      if (index < 0 && id) {
-        cabinetOptions.push({ ...(row.technical_metadata || {}), id });
-        index = cabinetOptions.length - 1;
-      }
-      if (index >= 0) cabinetOptions[index] = {
-        ...cabinetOptions[index],
-        ...databaseProductFields(row, {
-          itemName: "Cabinet",
-          model: cabinetOptions[index].label || cabinetOptions[index].id,
-          unit: "Pcs",
-        }),
-        sourceKey: row.source_key || cabinetOptions[index].sourceKey || "",
-        sourceCatalog: row.source_catalog || cabinetOptions[index].sourceCatalog || "",
-        catalogRole: row.source_catalog === "admin" ? "model" : "base",
-        price,
-      };
+      const roles = cabinetRole(row);
+      const baseId = row.technical_metadata?.id || row.source_key?.split(":").pop() || row.model;
+      const modelId = row.source_key || row.technical_metadata?.id || row.model;
+      if (roles.base) upsertCabinetOption(cabinetOptions, row, baseId, "base", price);
+      if (roles.model) upsertCabinetOption(cabinetOptions, row, modelId, "model", price);
       continue;
     }
 
@@ -249,6 +284,12 @@ export function applyLedPriceRows(baseCatalog, rows = [], brandRows = [], { auth
     }
   }
   const databaseBrands = [...groupedBrands.values()];
+  const databaseCabinetBrands = [...new Set(rows
+    .filter((row) => row.component_type === "cabinet" && row.brand_name)
+    .map((row) => row.brand_name))];
+  catalog.cabinetBrands = authoritative
+    ? databaseCabinetBrands
+    : [...new Set([...(catalog.cabinetBrands || []), ...databaseCabinetBrands])];
   if (authoritative) sortAuthoritativeCatalog(catalog, cabinetOptions);
   return {
     ...catalog,

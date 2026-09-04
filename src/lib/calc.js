@@ -67,8 +67,9 @@ export function quotationCompanyPrefix(companyCode = "mugnee") {
   return "MUG";
 }
 
-export function generateRef(companyCode = "mugnee", requestedSequence, date = new Date()) {
-  const prefix = quotationCompanyPrefix(companyCode);
+export function generateRef(companyCode = "mugnee", requestedSequence, date = new Date(), requestedPrefix) {
+  const configuredPrefix = String(requestedPrefix || "").trim().replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "");
+  const prefix = configuredPrefix || quotationCompanyPrefix(companyCode);
   const year = date.getFullYear();
   let sequence = Number(requestedSequence);
   if (!Number.isInteger(sequence) || sequence < 1) {

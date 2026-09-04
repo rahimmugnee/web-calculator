@@ -16,6 +16,12 @@ export const slugValue = (value, field = "Code") => {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(text)) throw Object.assign(new Error(`${field} must use lowercase letters, numbers, and hyphens.`), { status: 400 });
   return text;
 };
+export const slugSegment = (value, fallback = "item") => {
+  const normalized = String(value ?? "").trim().toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return normalized || fallback;
+};
 export const moneyValue = (value, field = "Price") => {
   const number = Number(value);
   if (!Number.isFinite(number) || number < 0 || number > 999999999999) throw Object.assign(new Error(`${field} must be a valid non-negative amount.`), { status: 400 });

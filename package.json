@@ -28,7 +28,7 @@
     "db:seed": "node scripts/db/seed.mjs",
     "db:setup": "npm run db:migrate && npm run db:seed",
     "db:test": "node --test scripts/db/catalog-mapper.test.mjs",
-    "api:test": "node --test server/auth/password.test.mjs server/validation.test.mjs",
+    "api:test": "node --test server/auth/password.test.mjs server/services/calculatorData.test.mjs server/services/catalogLiveUpdates.test.mjs server/validation.test.mjs",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

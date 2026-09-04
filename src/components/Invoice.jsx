@@ -52,7 +52,7 @@ function AutoFitText({ children, className = "" }) {
 }
 
 const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Date(), quotationRef }, ref) {
-  const { catalog, company } = useCatalog();
+  const { catalog, company, invoiceSettings } = useCatalog();
   const fallbackRef = useMemo(() => generateRef(), []);
 
   if (snapshot?.quotationType === "rental") {
@@ -249,10 +249,14 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
 
   const showDiscountBlock = !!snapshot?.discountEnabled; // only when enabled
 
-  if (String(company?.code || "").toLowerCase() === "renex") {
+  const configuredTemplate = String(invoiceSettings?.template_key || "").split("-")[0].toLowerCase();
+  const invoiceCompanyCode = ["mugnee", "renex", "sasha"].includes(configuredTemplate)
+    ? configuredTemplate
+    : String(company?.code || "").toLowerCase();
+  if (invoiceCompanyCode === "renex") {
     return <RenexInvoice ref={ref} customer={customer} dateStr={dateStr} display={display} items={items} model={model} refNo={refNo} rows={rows} totals={totals} company={company} showDiscountBlock={showDiscountBlock} />;
   }
-  if (String(company?.code || "").toLowerCase() === "sasha") {
+  if (invoiceCompanyCode === "sasha") {
     return <SashaInvoice ref={ref} customer={customer} dateStr={dateStr} display={display} items={items} model={model} refNo={refNo} rows={rows} totals={totals} company={company} showDiscountBlock={showDiscountBlock} />;
   }
 

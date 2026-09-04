@@ -132,7 +132,10 @@ test('updates the quotation reference when pixel pitch or display size changes',
     if (value.includes('/public/companies')) {
       return Promise.resolve({ ok: true, status: 200, json: async () => [{ id: 1, name: 'Mugnee', code: 'mugnee', is_default: true, assets: {} }] });
     }
-    if (value.includes('/led-prices') || value.includes('/led-module/brands')) {
+    if (value.includes('/led-prices')) {
+      return Promise.resolve({ ok: false, status: 503, json: async () => ({}) });
+    }
+    if (value.includes('/led-module/brands')) {
       return Promise.resolve({ ok: true, status: 200, json: async () => [] });
     }
     return Promise.resolve({ ok: false, status: 404, json: async () => ({}) });

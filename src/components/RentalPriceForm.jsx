@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { calculateRentalQuotation } from "../lib/rentalCalc.js";
 
 function toNumber(value) {
@@ -132,7 +132,7 @@ function QuantityField({ label, value, onChange }) {
   );
 }
 
-export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSizeSelectionChange }) {
+export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSizeSelectionChange, settings = {} }) {
   const [client, setClient] = useState({
     company: "",
     attention: "",
@@ -145,21 +145,45 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
   });
   const [displaySizes, setDisplaySizes] = useState(() => [createDisplaySize(1)]);
   const [activeDisplaySizeId, setActiveDisplaySizeId] = useState(1);
-  const [sftRate, setSftRate] = useState(150);
-  const [structureRate, setStructureRate] = useState("");
-  const [soundPairs, setSoundPairs] = useState("");
-  const [soundRate, setSoundRate] = useState(0);
-  const [duration, setDuration] = useState(1);
-  const [transportValue, setTransportValue] = useState(0);
+  const [sftRate, setSftRate] = useState(settings.sftRate ?? 150);
+  const [structureRate, setStructureRate] = useState(settings.structureRate ?? "");
+  const [soundPairs, setSoundPairs] = useState(settings.soundPairs ?? "");
+  const [soundRate, setSoundRate] = useState(settings.soundRate ?? 0);
+  const [duration, setDuration] = useState(settings.duration ?? 1);
+  const [transportValue, setTransportValue] = useState(settings.transportValue ?? 0);
   const [includedQty, setIncludedQty] = useState({
-    mixer: 1,
-    processor: 1,
-    wirelessMic: 1,
-    wiredMic: 1,
-    laptop: 1,
-    technicalPerson: 1,
+    mixer: settings.includedQty?.mixer ?? 1,
+    processor: settings.includedQty?.processor ?? 1,
+    wirelessMic: settings.includedQty?.wirelessMic ?? 1,
+    wiredMic: settings.includedQty?.wiredMic ?? 1,
+    laptop: settings.includedQty?.laptop ?? 1,
+    technicalPerson: settings.includedQty?.technicalPerson ?? 1,
   });
-  const [vatEnabled, setVatEnabled] = useState(false);
+  const [vatEnabled, setVatEnabled] = useState(Boolean(settings.vatEnabled));
+  const settingDirty = useRef(new Set());
+
+  useEffect(() => {
+    const dirty = settingDirty.current;
+    if (!dirty.has("sftRate") && settings.sftRate !== undefined) setSftRate(settings.sftRate);
+    if (!dirty.has("structureRate") && settings.structureRate !== undefined) setStructureRate(settings.structureRate);
+    if (!dirty.has("soundPairs") && settings.soundPairs !== undefined) setSoundPairs(settings.soundPairs);
+    if (!dirty.has("soundRate") && settings.soundRate !== undefined) setSoundRate(settings.soundRate);
+    if (!dirty.has("duration") && settings.duration !== undefined) setDuration(settings.duration);
+    if (!dirty.has("transportValue") && settings.transportValue !== undefined) setTransportValue(settings.transportValue);
+    if (!dirty.has("vatEnabled") && typeof settings.vatEnabled === "boolean") setVatEnabled(settings.vatEnabled);
+    setIncludedQty((current) => {
+      const next = { ...current };
+      let changed = false;
+      for (const key of ["mixer", "processor", "wirelessMic", "wiredMic", "laptop", "technicalPerson"]) {
+        if (dirty.has(`includedQty.${key}`) || settings.includedQty?.[key] === undefined) continue;
+        if (next[key] !== settings.includedQty[key]) {
+          next[key] = settings.includedQty[key];
+          changed = true;
+        }
+      }
+      return changed ? next : current;
+    });
+  }, [settings]);
 
   const displaySizeRows = useMemo(
     () =>
@@ -415,24 +439,42 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
       <section>
         <h3>Rental Pricing</h3>
         <div className="form-row">
-          <MoneyField label="Display Rate / sft" value={sftRate} onChange={setSftRate} />
+          <MoneyField label="Display Rate / sft" value={sftRate} onChange={(value) => {
+            settingDirty.current.add("sftRate");
+            setSftRate(value);
+          }} />
           <MoneyField
             label="Structure Rate (Tk)"
             value={structureRate}
-            onChange={setStructureRate}
+            onChange={(value) => {
+              settingDirty.current.add("structureRate");
+              setStructureRate(value);
+            }}
             placeholder="3000"
             restoreEmptyToZero={false}
           />
-          <TextField label="Duration" value={duration} onChange={setDuration} type="number" placeholder="1" />
-          <TextField label="Sound System Pair" value={soundPairs} onChange={setSoundPairs} type="number" placeholder="1" />
-          <MoneyField label="Sound System Rate (Tk / Pair)" value={soundRate} onChange={setSoundRate} />
+          <TextField label="Duration" value={duration} onChange={(value) => {
+            settingDirty.current.add("duration");
+            setDuration(value);
+          }} type="number" placeholder="1" />
+          <TextField label="Sound System Pair" value={soundPairs} onChange={(value) => {
+            settingDirty.current.add("soundPairs");
+            setSoundPairs(value);
+          }} type="number" placeholder="1" />
+          <MoneyField label="Sound System Rate (Tk / Pair)" value={soundRate} onChange={(value) => {
+            settingDirty.current.add("soundRate");
+            setSoundRate(value);
+          }} />
         </div>
       </section>
 
 	      <section>
 	        <h3>Transport</h3>
 	        <div className="form-row">
-	          <MoneyField label="Transport Value (Tk)" value={transportValue} onChange={setTransportValue} />
+	          <MoneyField label="Transport Value (Tk)" value={transportValue} onChange={(value) => {
+	            settingDirty.current.add("transportValue");
+	            setTransportValue(value);
+	          }} />
 	        </div>
 	      </section>
 
@@ -442,32 +484,50 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
 	          <QuantityField
 	            label="Digital Audio Mixer"
 	            value={includedQty.mixer}
-	            onChange={(value) => setIncludedQty((prev) => ({ ...prev, mixer: value }))}
+            onChange={(value) => {
+              settingDirty.current.add("includedQty.mixer");
+              setIncludedQty((prev) => ({ ...prev, mixer: value }));
+            }}
 	          />
 	          <QuantityField
 	            label="Audio Processor"
 	            value={includedQty.processor}
-	            onChange={(value) => setIncludedQty((prev) => ({ ...prev, processor: value }))}
+            onChange={(value) => {
+              settingDirty.current.add("includedQty.processor");
+              setIncludedQty((prev) => ({ ...prev, processor: value }));
+            }}
 	          />
 	          <QuantityField
 	            label="Wireless Microphone"
 	            value={includedQty.wirelessMic}
-	            onChange={(value) => setIncludedQty((prev) => ({ ...prev, wirelessMic: value }))}
+            onChange={(value) => {
+              settingDirty.current.add("includedQty.wirelessMic");
+              setIncludedQty((prev) => ({ ...prev, wirelessMic: value }));
+            }}
 	          />
 	          <QuantityField
 	            label="Wired Microphone"
 	            value={includedQty.wiredMic}
-	            onChange={(value) => setIncludedQty((prev) => ({ ...prev, wiredMic: value }))}
+            onChange={(value) => {
+              settingDirty.current.add("includedQty.wiredMic");
+              setIncludedQty((prev) => ({ ...prev, wiredMic: value }));
+            }}
 	          />
 	          <QuantityField
 	            label="Laptop (Display Control)"
 	            value={includedQty.laptop}
-	            onChange={(value) => setIncludedQty((prev) => ({ ...prev, laptop: value }))}
+            onChange={(value) => {
+              settingDirty.current.add("includedQty.laptop");
+              setIncludedQty((prev) => ({ ...prev, laptop: value }));
+            }}
 	          />
 	          <QuantityField
 	            label="Technical Person"
 	            value={includedQty.technicalPerson}
-	            onChange={(value) => setIncludedQty((prev) => ({ ...prev, technicalPerson: value }))}
+            onChange={(value) => {
+              settingDirty.current.add("includedQty.technicalPerson");
+              setIncludedQty((prev) => ({ ...prev, technicalPerson: value }));
+            }}
 	          />
 	        </div>
 	      </section>
@@ -476,11 +536,17 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
 	        <h3>VAT</h3>
         <div className="inline" style={{ gap: 18 }}>
           <label className="inline">
-            <input className="radio" type="radio" checked={!vatEnabled} onChange={() => setVatEnabled(false)} />
+            <input className="radio" type="radio" checked={!vatEnabled} onChange={() => {
+              settingDirty.current.add("vatEnabled");
+              setVatEnabled(false);
+            }} />
             <span>Without VAT</span>
           </label>
           <label className="inline">
-            <input className="radio" type="radio" checked={vatEnabled} onChange={() => setVatEnabled(true)} />
+            <input className="radio" type="radio" checked={vatEnabled} onChange={() => {
+              settingDirty.current.add("vatEnabled");
+              setVatEnabled(true);
+            }} />
             <span>With VAT (15%)</span>
           </label>
         </div>
