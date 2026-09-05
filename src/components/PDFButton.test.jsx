@@ -59,6 +59,36 @@ test("adds the renamed structure catalogue", () => {
   expect(paths).not.toContain("Mugnee Product data sheet/Recieving Card, PSu and structure/Frame.pdf");
 });
 
+test("uses only the Renex catalogue folder for a Renex quotation", () => {
+  const exportData = buildExportData({
+    sizeId: "640x480",
+    optionId: "cabinet_indoor_aluminium_640x480",
+  });
+  exportData.catalogueCompanyCode = "renex";
+
+  const paths = getCataloguePaths(exportData);
+
+  expect(paths.length).toBeGreaterThan(0);
+  expect(paths.every((path) => path.startsWith("Renex Product data sheet/"))).toBe(true);
+  expect(paths).toContain("Renex Product data sheet/Cabinet 640 X 480.pdf");
+  expect(paths).toContain("Renex Product data sheet/Recieving Card, PSu and structure/Frame.pdf");
+  expect(paths.some((path) => path.startsWith("Mugnee Product data sheet/"))).toBe(false);
+});
+
+test.each([
+  ["indoor", "smd", "Renex Product data sheet/Module Catalogue/Indoor/Leyard/LUS Series Brochure-INDOOR MODULE SMD&GOB.pdf"],
+  ["indoor", "cob", "Renex Product data sheet/Module Catalogue/Indoor/Leyard/Leyard SV COB 20250812.pdf"],
+  ["outdoor", "smd", "Renex Product data sheet/Module Catalogue/Outdoor/Leyard/LVS Series - Outdoor Leyard.pdf"],
+])("uses the Renex Leyard brochure for %s %s", (displayType, technology, expectedPath) => {
+  const exportData = buildExportData({ sizeId: "960x960" });
+  exportData.catalogueCompanyCode = "Renex";
+  exportData.items.dispType = displayType;
+  exportData.items.technology = technology;
+  exportData.items.brands.module = "Leyard";
+
+  expect(getCataloguePaths(exportData)).toContain(expectedPath);
+});
+
 test.each(["Mean well", "Mean Well", "Mean-Well", "mean_well"])(
   "adds the Mean Well power-supply catalogue for brand label %s",
   (psuBrand) => {

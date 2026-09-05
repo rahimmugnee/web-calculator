@@ -480,7 +480,11 @@ export default function App() {
               <PDFButton
                 targetIds={["pdf-page-1", "pdf-page-2"]}
                 filename={snapshot ? quotationTitlePdfFilename(snapshot, quotationRef) : "Mugnee_Quotation.pdf"}
-                exportData={snapshot && quotationRef ? { ...snapshot, quotationRef } : snapshot}
+                exportData={snapshot ? {
+                  ...snapshot,
+                  ...(quotationRef ? { quotationRef } : {}),
+                  catalogueCompanyCode: company?.code,
+                } : snapshot}
                 onBeforeDownload={calc && snapshot && quotationRef ? () => saveQuotationHistory(quotationHistoryPayload({ company, quotationRef, snapshot, calc })) : null}
               />
             </div>

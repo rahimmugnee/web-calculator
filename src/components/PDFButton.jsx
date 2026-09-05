@@ -585,6 +585,43 @@ function normalizeBrand(raw = "") {
   return "lampro";
 }
 
+const MUGNEE_CATALOGUE_ROOT = "Mugnee Product data sheet";
+const RENEX_CATALOGUE_ROOT = "Renex Product data sheet";
+
+function isRenexCatalogue(exportData = {}) {
+  const companyCode = exportData.catalogueCompanyCode
+    || exportData.companyCode
+    || exportData.company?.code
+    || "";
+  return String(companyCode).trim().toLowerCase().includes("renex");
+}
+
+function useRenexCataloguePath(path) {
+  if (!path) return null;
+  if (path.startsWith(`${RENEX_CATALOGUE_ROOT}/`)) return path;
+  const relativePath = path.startsWith(`${MUGNEE_CATALOGUE_ROOT}/`)
+    ? path.slice(MUGNEE_CATALOGUE_ROOT.length + 1)
+    : path;
+
+  const renexFileOverrides = {
+    "Recieving Card, PSu and structure/Structure.pdf": "Recieving Card, PSu and structure/Frame.pdf",
+    "Recieving Card, PSu and structure/Mean_Well_LRS-200_5V_200W_Power_Supply.pdf": "Recieving Card, PSu and structure/power supply.pdf",
+  };
+
+  return `${RENEX_CATALOGUE_ROOT}/${renexFileOverrides[relativePath] || relativePath}`;
+}
+
+function buildRenexLeyardCataloguePath({ displayType, technology }) {
+  if (displayType === "outdoor") {
+    return `${RENEX_CATALOGUE_ROOT}/Module Catalogue/Outdoor/Leyard/LVS Series - Outdoor Leyard.pdf`;
+  }
+
+  const filename = technology === "cob"
+    ? "Leyard SV COB 20250812.pdf"
+    : "LUS Series Brochure-INDOOR MODULE SMD&GOB.pdf";
+  return `${RENEX_CATALOGUE_ROOT}/Module Catalogue/Indoor/Leyard/${filename}`;
+}
+
 function buildModuleCataloguePath({ displayType, technology, pitch, moduleBrand, cabinetSizeKey }) {
   const brand = normalizeBrand(moduleBrand);
 
@@ -781,10 +818,14 @@ export function getCataloguePaths(exportData) {
   const receivingCardId = exportData.items?.receivingPicked?.id || "";
   const pitch = extractPitch(exportData.model?.id || exportData.model?.name || "");
   const cabinetSizeKey = normalizeCabinetSizeKey(exportData.items?.cabinet);
+  const useRenexCatalogues = isRenexCatalogue(exportData);
 
   const paths = [];
   if (moduleBrandSelection !== "Custom") {
-    paths.push(buildModuleCataloguePath({ displayType, technology, pitch, moduleBrand, cabinetSizeKey }));
+    const modulePath = useRenexCatalogues && normalizeBrand(moduleBrand) === "leyard"
+      ? buildRenexLeyardCataloguePath({ displayType, technology })
+      : buildModuleCataloguePath({ displayType, technology, pitch, moduleBrand, cabinetSizeKey });
+    paths.push(modulePath);
   }
 
   if (exportData.items.cabinetEnabled && normalizeCabinetSizeKey(exportData.items.cabinet) === "640x480") {
@@ -798,7 +839,10 @@ export function getCataloguePaths(exportData) {
     "Mugnee Product data sheet/Recieving Card, PSu and structure/Structure.pdf"
   );
 
-  return [...new Set(paths.filter(Boolean))];
+  const companyPaths = useRenexCatalogues
+    ? paths.map(useRenexCataloguePath)
+    : paths;
+  return [...new Set(companyPaths.filter(Boolean))];
 }
 
 async function appendPdfFromPublic(pdf, relativePath) {
