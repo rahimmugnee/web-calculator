@@ -172,6 +172,7 @@ export function quotationTitlePdfFilename(snapshot) {
 }
 
 export function calcAll({
+  companyCode = "mugnee",
   quotationMode = "regular",
   irregularQty = 1,
   modulesQty = 0,
@@ -211,6 +212,12 @@ export function calcAll({
   discountTk = 0,
 }) {
   const area = parseFloat(sft) || 0;
+  const normalizedCompanyCode = String(companyCode || "").trim().toLowerCase();
+  const serviceCostMultiplier = normalizedCompanyCode.includes("renex")
+    ? 1.1
+    : normalizedCompanyCode.includes("sasha")
+      ? 1.13
+      : 1;
   const isIrregular = quotationMode === "irregular";
   const irregularQtyInt = isIrregular ? Math.max(1, ceilNonNeg(irregularQty)) : 1;
 
@@ -274,7 +281,9 @@ export function calcAll({
   }
 
   if (vatEnabled) accTkBase = ceilNonNeg(accTkBase * (1 + taxMarkupRate));
-  const accTk = ceilNonNeg(accTkBase * (isIrregular ? irregularQtyInt : 1));
+  const accTk = ceilNonNeg(
+    accTkBase * (isIrregular ? irregularQtyInt : 1) * serviceCostMultiplier
+  );
 
   let installTk = 0;
   const subTotalForInstall = goodsSubTotal + accTk;
@@ -300,6 +309,7 @@ export function calcAll({
   if (isIrregular && !(installMode === "manual" && installIsPercent)) {
     installTk = ceilNonNeg(installTk * irregularQtyInt);
   }
+  installTk = ceilNonNeg(installTk * serviceCostMultiplier);
 
   let transportTk = transportEnabled ? ceilNonNeg(transportValue) : 0;
   if (vatEnabled) transportTk = ceilNonNeg(transportTk * (1 + taxMarkupRate));

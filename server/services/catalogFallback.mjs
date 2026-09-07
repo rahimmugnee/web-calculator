@@ -1,6 +1,5 @@
-import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { componentModelAndPrice } from "../../src/data/component-model-and-price.js";
 import { applyLedPriceRows } from "../../src/lib/apply-led-price-rows.js";
@@ -79,7 +78,6 @@ export async function syncCatalogFallback(client) {
   ]);
 
   const catalog = orderCatalogSections(applyLedPriceRows(componentModelAndPrice, prices.rows, brands.rows, { authoritative: true }));
-  const json = `${JSON.stringify(catalog, null, 2)}\n`;
   const componentSource = `/**
  * LED component catalog synchronized from the Mugnee price database.
  * Admin price updates replace the values in this object automatically.
@@ -100,12 +98,6 @@ export function getCabinetFootprintFt(physical, cabinetSizeId = "cabinet_indoor_
   return { w: p.ft320 * 2, h: p.ft160 * 3 };
 }
 `;
-  const writes = [
-    writeFile(join(root, "src", "data", "component-model-and-price.js"), componentSource, "utf8"),
-    writeFile(join(root, "public", "quotation-catalog.json"), json, "utf8"),
-  ];
-  const builtCatalog = join(root, "build", "quotation-catalog.json");
-  if (existsSync(dirname(builtCatalog))) writes.push(writeFile(builtCatalog, json, "utf8"));
-  await Promise.all(writes);
-  return { products: prices.rowCount, targets: writes.length };
+  await writeFile(join(root, "src", "data", "component-model-and-price.js"), componentSource, "utf8");
+  return { products: prices.rowCount, targets: 1 };
 }

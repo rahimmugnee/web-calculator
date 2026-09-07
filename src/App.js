@@ -440,6 +440,7 @@ export default function App() {
 	            </section>
 
 	            <PriceForm
+	              companyCode={company?.code}
 	              installationType={installationType}
 	              displayType={displayType}
 	              technology={technology}

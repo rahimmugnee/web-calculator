@@ -4,7 +4,6 @@ import { conferenceProducts as staticConferenceProducts } from "../data/conferen
 import { paProducts as staticPaProducts } from "../data/paProducts.js";
 import { applyLedPriceRows } from "../lib/apply-led-price-rows.js";
 import { applyRuntimeProductRows } from "../lib/apply-runtime-product-rows.js";
-import { loadQuotationCatalog } from "../lib/load-quotation-catalog.js";
 import { normalizeRuntimeSettings } from "../lib/runtime-settings.js";
 
 const CatalogContext = createContext(null);
@@ -49,10 +48,8 @@ export function CatalogProvider({ children }) {
   const loadCompany = useCallback(async () => {
     const requestId = ++catalogRequestId.current;
     try {
-      const [{ catalog: fallbackCatalog }, companyResponse] = await Promise.all([
-        loadQuotationCatalog(),
-        fetch(`${API_BASE}/public/companies`, { cache: "no-store" }),
-      ]);
+      const fallbackCatalog = componentModelAndPrice;
+      const companyResponse = await fetch(`${API_BASE}/public/companies`, { cache: "no-store" });
       if (requestId !== catalogRequestId.current) return;
       if (!companyResponse.ok) throw new Error("Company list unavailable");
       const companyRows = await companyResponse.json();

@@ -279,7 +279,6 @@ export const componentModelAndPrice = {
   ],
   "novastarCtrlCap": {
     "indoor": [
-      { "id": "NS_TB2", "max": 0 },
       { "id": "NS_TB40", "max": 0 },
       { "id": "NS_TB50", "max": 0 },
       { "id": "NS_TB60", "max": 0 },
@@ -293,7 +292,6 @@ export const componentModelAndPrice = {
     ],
     "outdoor": [
       { "id": "NS_TB1", "max": 0 },
-      { "id": "NS_TB2", "max": 550000 },
       { "id": "NS_TB40", "max": 1150000 },
       { "id": "NS_TB50", "max": 0 },
       { "id": "NS_TB60", "max": 2200000 },

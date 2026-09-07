@@ -1,5 +1,4 @@
 import { defaultQuotationCatalog, getCabinetFootprintFt } from "./defaultQuotationCatalog";
-import publicQuotationCatalog from "../../public/quotation-catalog.json";
 
 test("cabinet catalog exposes indoor and outdoor material/size options", () => {
   const options = defaultQuotationCatalog.cabinetOptions;
@@ -23,11 +22,7 @@ test("cabinet catalog exposes indoor and outdoor material/size options", () => {
     "backdoor",
   ]);
   expect(baseOptions.every((option) => option.price === 8000)).toBe(true);
-  const publicBaseOptions = publicQuotationCatalog.cabinetOptions.filter(
-    (option) => option.catalogRole !== "model"
-  );
   expect(baseOptions.every((option) => option.brand === "" && option.model === "")).toBe(true);
-  expect(publicBaseOptions.every((option) => option.brand === "" && option.model === "")).toBe(true);
 });
 
 test("cabinet footprint uses selected option dimensions", () => {

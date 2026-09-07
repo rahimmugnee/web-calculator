@@ -263,6 +263,7 @@ function CustomSelect({ value, options, onChange, ariaLabel }) {
 }
 
 function buildTotalsForCalc({
+  companyCode,
   snapshot,
   autoModulesQty,
   moduleUnitPrice,
@@ -273,6 +274,7 @@ function buildTotalsForCalc({
 }) {
   const { items, install, display, accessories } = snapshot;
   return calcAll({
+    companyCode,
     quotationMode: snapshot.quotationMode,
     irregularQty: snapshot.irregular?.qty,
     modulesQty: autoModulesQty,
@@ -319,6 +321,7 @@ function buildTotalsForCalc({
 }
 
 export default function PriceForm({
+  companyCode = "mugnee",
   installationType = "fixed",
   displayType = "indoor",
   technology = "smd",
@@ -1171,6 +1174,7 @@ export default function PriceForm({
     (userSubmit = false) => {
       if (installationType !== "fixed") return;
       const result = buildTotalsForCalc({
+        companyCode,
         snapshot,
         autoModulesQty,
         moduleUnitPrice,
@@ -1181,7 +1185,7 @@ export default function PriceForm({
       });
       onCalculated?.(result, snapshot, { userSubmit });
     },
-    [installationType, snapshot, autoModulesQty, moduleUnitPrice, rcUnitPrice, psUnitPrice, cabinetQty, cabinetUnitPrice, onCalculated]
+    [companyCode, installationType, snapshot, autoModulesQty, moduleUnitPrice, rcUnitPrice, psUnitPrice, cabinetQty, cabinetUnitPrice, onCalculated]
   );
 
   const handleCalculate = (e) => {

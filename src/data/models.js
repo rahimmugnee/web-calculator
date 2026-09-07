@@ -1,7 +1,7 @@
 // ===============================
 // src/data/models.js
 // ===============================
-// Re-exports match bundled defaults; live app + mobile should use /quotation-catalog.json via CatalogContext / fetch.
+// Re-exports use the bundled component catalog; live database values are applied by CatalogContext.
 
 import { defaultQuotationCatalog } from "./defaultQuotationCatalog.js";
 

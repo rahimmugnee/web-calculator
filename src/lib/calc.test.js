@@ -42,6 +42,23 @@ test("ignores custom item price when disabled", () => {
   expect(result.totals.grandTotal).toBe(2000);
 });
 
+test.each([
+  ["mugnee", 1000, 2000],
+  ["renex", 1100, 2200],
+  ["sasha", 1130, 2260],
+])("applies the %s multiplier to accessories and installation costs", (companyCode, expectedAccessories, expectedInstallation) => {
+  const result = calcAll({
+    companyCode,
+    accessoriesMode: "manual",
+    accessoriesValue: 1000,
+    installMode: "manual",
+    installValue: 2000,
+  });
+
+  expect(result.totals.accessories).toBe(expectedAccessories);
+  expect(result.totals.installation).toBe(expectedInstallation);
+});
+
 test("generates compact quotation PDF filename from proposal title", () => {
   const snapshot = {
     model: { name: "P1.25 Indoor" },
