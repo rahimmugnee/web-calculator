@@ -104,6 +104,8 @@ test.each(["Mean well", "Mean Well", "Mean-Well", "mean_well"])(
 test("normalizes quotation text for the editable native PDF layer", () => {
   expect(normalizePdfText("Grand Total ৳1,500 — Size 8 × 4 ft"))
     .toBe("Grand Total ৳1,500 - Size 8 x 4 ft");
+  expect(normalizePdfText("Name: আব্দুর রহিম, পদবি: উপ সহকারী প্রকৌশলী"))
+    .toBe("Name: আব্দুর রহিম, পদবি: উপ সহকারী প্রকৌশলী");
 });
 
 test("shrinks native PDF text that is wider than its table cell", () => {

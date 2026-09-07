@@ -1,5 +1,6 @@
 // src/components/PDFButton.jsx
 import bengaliRegularFontUrl from "@fontsource/noto-sans-bengali/files/noto-sans-bengali-bengali-400-normal.woff";
+import bengaliBoldFontUrl from "@fontsource/noto-sans-bengali/files/noto-sans-bengali-bengali-700-normal.woff";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 const A4 = { w: 595.28, h: 841.89 };
@@ -12,7 +13,8 @@ export function normalizePdfText(value = "") {
     .replace(/[‘’]/g, "'")
     .replace(/[“”]/g, '"')
     .replace(/…/g, "...")
-    .replace(/[^\x20-\x7E\xA0-\xFF\u09F3]/g, "")
+    // Preserve the complete Bengali Unicode block in the native PDF text layer.
+    .replace(/[^\x20-\x7E\xA0-\xFF\u0980-\u09FF]/g, "")
     .replace(/\s+/g, " ");
 }
 
@@ -165,6 +167,7 @@ function collectEditableTextRuns(el) {
               domScale: cumulativeScale(parent, el),
               bold: style.fontWeight === "bold" || Number.parseInt(style.fontWeight, 10) >= 600,
               italic: style.fontStyle === "italic" || style.fontStyle === "oblique",
+              fontFamily: style.fontFamily,
               color: parseCssColor(style.color),
               textAlign: alignmentStyle.textAlign,
               containerX: alignmentRect.left - rootRect.left,
@@ -203,6 +206,7 @@ function collectEditableTextRuns(el) {
       domScale: cumulativeScale(title, el),
       bold: true,
       italic: false,
+      fontFamily: style.fontFamily,
       color: parseCssColor(style.color),
       textAlign: "center",
       containerX: rect.left - rootRect.left,
@@ -229,6 +233,7 @@ function collectEditableTextRuns(el) {
       domScale: cumulativeScale(item, el),
       bold: false,
       italic: false,
+      fontFamily: style.fontFamily,
       color: parseCssColor(style.color),
     });
   });
@@ -262,47 +267,94 @@ async function embedTextLayerFonts(pdf) {
   const fontkitModule = await import("@pdf-lib/fontkit");
   const fontkit = fontkitModule.default || fontkitModule;
   pdf.registerFontkit(fontkit);
-  const bengaliFontBytes = await fetch(bengaliRegularFontUrl).then((response) => {
-    if (!response.ok) throw new Error("Unable to load the PDF currency font.");
+  const loadFont = (url) => fetch(url).then((response) => {
+    if (!response.ok) throw new Error("Unable to load the PDF Bengali font.");
     return response.arrayBuffer();
   });
-  const [regular, bold, italic, boldItalic, currency] = await Promise.all([
+  const [bengaliRegularFontBytes, bengaliBoldFontBytes] = await Promise.all([
+    loadFont(bengaliRegularFontUrl),
+    loadFont(bengaliBoldFontUrl),
+  ]);
+  const [regular, bold, italic, boldItalic, bengaliRegular, bengaliBold] = await Promise.all([
     pdf.embedFont(StandardFonts.Helvetica),
     pdf.embedFont(StandardFonts.HelveticaBold),
     pdf.embedFont(StandardFonts.HelveticaOblique),
     pdf.embedFont(StandardFonts.HelveticaBoldOblique),
-    pdf.embedFont(bengaliFontBytes, { subset: true }),
+    pdf.embedFont(bengaliRegularFontBytes, { subset: true }),
+    pdf.embedFont(bengaliBoldFontBytes, { subset: true }),
   ]);
-  return { regular, bold, italic, boldItalic, currency };
+  return { regular, bold, italic, boldItalic, bengaliRegular, bengaliBold };
 }
 
-function splitCurrencyText(text, font, currencyFont, size) {
-  return text.split(/(৳)/).filter(Boolean).map((value) => {
-    const segmentFont = value === "৳" ? currencyFont : font;
-    return { value, font: segmentFont, width: segmentFont.widthOfTextAtSize(value, size) };
+export function splitPdfTextByScript(text, latinFont, bengaliFont, size) {
+  return String(text).split(/([\u0980-\u09FF]+)/).filter(Boolean).map((value) => {
+    const font = /^[\u0980-\u09FF]+$/.test(value) ? bengaliFont : latinFont;
+    return { value, font, width: font.widthOfTextAtSize(value, size) };
   });
 }
 
-function drawEditableText(page, el, fonts) {
+function containsComplexBengali(text) {
+  return /[\u0980-\u09F2\u09F4-\u09FF]/.test(text);
+}
+
+async function drawBrowserShapedText(pdf, page, run, text, scaleX, scaleY) {
+  const padding = 3;
+  const domScale = run.domScale || 1;
+  const cssWidth = Math.max(1, run.width + (padding * 2));
+  const cssHeight = Math.max(1, run.height + (padding * 2));
+  const pixelRatio = 4;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.ceil(cssWidth * pixelRatio);
+  canvas.height = Math.ceil(cssHeight * pixelRatio);
+  const context = canvas.getContext("2d");
+  context.scale(pixelRatio, pixelRatio);
+  context.fillStyle = run.color
+    ? `rgba(${Math.round(run.color.color.red * 255)}, ${Math.round(run.color.color.green * 255)}, ${Math.round(run.color.color.blue * 255)}, ${run.color.opacity})`
+    : "#000000";
+  const weight = run.bold ? 700 : 400;
+  const style = run.italic ? "italic" : "normal";
+  context.font = `${style} ${weight} ${run.fontSize * domScale}px ${run.fontFamily || "sans-serif"}`;
+  context.textBaseline = "alphabetic";
+  context.fillText(text, padding, padding + (run.height * 0.82));
+
+  const bytes = await fetch(canvas.toDataURL("image/png")).then((response) => response.arrayBuffer());
+  const image = await pdf.embedPng(bytes);
+  page.drawImage(image, {
+    x: Math.max(0, (run.x - padding) * scaleX),
+    y: Math.max(0, A4.h - ((run.y + run.height + padding) * scaleY)),
+    width: cssWidth * scaleX,
+    height: cssHeight * scaleY,
+  });
+}
+
+async function drawEditableText(pdf, page, el, fonts) {
   const { runs, pageWidth, pageHeight } = collectEditableTextRuns(el);
   const scaleX = A4.w / pageWidth;
   const scaleY = A4.h / pageHeight;
 
   for (const run of runs) {
     const font = run.bold && run.italic ? fonts.boldItalic : run.bold ? fonts.bold : run.italic ? fonts.italic : fonts.regular;
+    const bengaliFont = run.bold ? fonts.bengaliBold : fonts.bengaliRegular;
     try {
       const text = run.text.trimEnd();
+      // pdf-lib/fontkit does not apply Bengali shaping reliably. Let the browser
+      // shape these runs exactly as it does in preview, then place that rendering
+      // into the otherwise-native PDF page.
+      if (containsComplexBengali(text)) {
+        await drawBrowserShapedText(pdf, page, run, text, scaleX, scaleY);
+        continue;
+      }
       const contentLeft = ((run.containerX ?? run.x) + (run.paddingLeft || 0)) * scaleX;
       const contentRight = ((run.containerX ?? run.x) + (run.containerWidth ?? run.width) - (run.paddingRight || 0)) * scaleX;
       const availableWidth = Math.max(0, contentRight - contentLeft) * 0.98;
       const preferredFontSize = Math.max(4, run.fontSize * (run.domScale || 1) * scaleY);
       let fontSize = preferredFontSize;
-      let segments = splitCurrencyText(text, font, fonts.currency, fontSize);
+      let segments = splitPdfTextByScript(text, font, bengaliFont, fontSize);
       let measuredWidth = segments.reduce((total, segment) => total + segment.width, 0);
       if (run.alignWithinContainer) {
         fontSize = fitPdfTextSize(preferredFontSize, measuredWidth, availableWidth);
         if (fontSize !== preferredFontSize) {
-          segments = splitCurrencyText(text, font, fonts.currency, fontSize);
+          segments = splitPdfTextByScript(text, font, bengaliFont, fontSize);
           measuredWidth = segments.reduce((total, segment) => total + segment.width, 0);
         }
       }
@@ -561,7 +613,7 @@ async function renderDomPage(pdf, el, textFonts) {
     }
   });
   for (const image of contentImages) await drawImageElement(pdf, page, image, rootRect, scaleX, scaleY);
-  drawEditableText(page, el, textFonts);
+  await drawEditableText(pdf, page, el, textFonts);
   return page;
 }
 
