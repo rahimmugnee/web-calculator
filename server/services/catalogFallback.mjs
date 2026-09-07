@@ -1,5 +1,5 @@
 import { writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { componentModelAndPrice } from "../../src/data/component-model-and-price.js";
 import { applyLedPriceRows } from "../../src/lib/apply-led-price-rows.js";
