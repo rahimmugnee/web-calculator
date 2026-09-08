@@ -10,15 +10,15 @@ function fixedRows(snapshot, calc) {
     name, brand: brand || "", model: modelName || "", unit: itemUnit, qty: Number(qty) || 0,
     unitPrice: Number(unitPrice) || 0, total: Number(total) || 0,
   });
-  add(withoutLedTechnology(model.itemName || "LED Display Module"), model.invoiceBrand || items.brands?.module, moduleModelName,
+  add(withoutLedTechnology(model.itemName || "LED Display Module"), items.brands?.module || model.invoiceBrand, moduleModelName,
     "Pcs", items.modulesQty, unit.unitModule, totals.totalModules);
   if (items.controllerQty > 0) add(items.controllerPicked?.itemName || items.controllerPicked?.label || items.controllerLabel || "Controller", items.controllerPicked?.brand || items.brands?.controller, componentModelName(items.controllerPicked?.model, items.controllerLabel, items.controllerId), "Pcs", items.controllerQty, unit.unitCtrl, totals.controllerTotal);
   add(items.receivingPicked?.itemName || items.receivingPicked?.label || "Receiving Card", items.receivingPicked?.brand || items.brands?.receiving, componentModelName(items.receivingPicked?.model, items.receivingPicked?.label, items.receivingPicked?.id), "Pcs", items.rcQty, unit.unitRC, totals.totalRC);
   add(powerSupplyItemName(items.psuPicked?.itemName, items.psuPicked?.model || items.psuPicked?.label), items.psuPicked?.brand || items.brands?.psu, items.psuPicked?.model || items.psuPicked?.label, "Pcs", items.psQty, unit.unitPS, totals.totalPS);
-  if (items.cabinetEnabled) add(items.cabinet?.itemName || "Cabinet", items.cabinet?.brand || "", items.cabinet?.model || "", "Pcs", items.cabinetQty, unit.unitCabinet, totals.totalCabinet);
+  if (items.cabinetEnabled) add(items.cabinet?.itemName || "Cabinet", items.cabinet?.brand || "N/A", items.cabinet?.model || "N/A", "Pcs", items.cabinetQty, unit.unitCabinet, totals.totalCabinet);
   (items.customItems || []).forEach((item, index) => add(item.name || "Custom Item", "", "", "Pcs", 1, unit.customItems?.[index] ?? item.price, unit.customItems?.[index] ?? item.price));
-  add("Structure & Accessories", "", "", "Lot", 1, totals.accessoriesUnit ?? totals.accessories ?? 0, totals.accessories ?? 0);
-  add("Installation, Testing & Commissioning", "", "", "Make", 1, totals.installationUnit ?? totals.installation, totals.installation);
+  add("Structure & Accessories", "N/A", "N/A", "Lot", 1, totals.accessoriesUnit ?? totals.accessories ?? 0, totals.accessories ?? 0);
+  add("Installation, Testing & Commissioning", "N/A", "N/A", "Make", 1, totals.installationUnit ?? totals.installation, totals.installation);
   if (totals.transport) add("Transport Cost", "", "", "Lot", 1, unit.transport, totals.transport);
   return rows;
 }

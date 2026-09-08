@@ -115,7 +115,7 @@ test("stores readable Novastar models instead of internal ids", () => {
   ]));
 });
 
-test("keeps an unselected cabinet brand and model empty for quotation hyphens", () => {
+test("uses N/A for an unselected cabinet brand and model", () => {
   const payload = quotationHistoryPayload({
     company: { id: 1 },
     quotationRef: "MUG-2026-CABINET-NONE",
@@ -132,7 +132,7 @@ test("keeps an unselected cabinet brand and model empty for quotation hyphens", 
   });
 
   expect(payload.items.find((item) => item.name === "Aluminium Cabinet")).toEqual(expect.objectContaining({
-    brand: "",
-    model: "",
+    brand: "N/A",
+    model: "N/A",
   }));
 });

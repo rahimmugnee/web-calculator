@@ -631,10 +631,11 @@ function extractPitch(raw = "") {
 }
 
 function normalizeBrand(raw = "") {
-  const value = String(raw).toLowerCase();
+  const value = String(raw).trim().toLowerCase();
   if (value.includes("leyard")) return "leyard";
   if (value.includes("absen")) return "absen";
-  return "lampro";
+  if (value.includes("lampro")) return "lampro";
+  return value.replace(/[^a-z0-9]/g, "");
 }
 
 const MUGNEE_CATALOGUE_ROOT = "Mugnee Product data sheet";
@@ -658,6 +659,7 @@ function useRenexCataloguePath(path) {
   const renexFileOverrides = {
     "Recieving Card, PSu and structure/Structure.pdf": "Recieving Card, PSu and structure/Frame.pdf",
     "Recieving Card, PSu and structure/Mean_Well_LRS-200_5V_200W_Power_Supply.pdf": "Recieving Card, PSu and structure/power supply.pdf",
+    "Processor and Controller/Novastar/VX1000_Pro_All-in-One_Controller_Technical_Specification.pdf": "Processor and Controller/Novastar/VX1000 Pro.pdf",
   };
 
   return `${RENEX_CATALOGUE_ROOT}/${renexFileOverrides[relativePath] || relativePath}`;
@@ -676,6 +678,7 @@ function buildRenexLeyardCataloguePath({ displayType, technology }) {
 
 function buildModuleCataloguePath({ displayType, technology, pitch, moduleBrand, cabinetSizeKey }) {
   const brand = normalizeBrand(moduleBrand);
+  if (brand !== "lampro" && brand !== "leyard") return null;
 
   if (displayType === "indoor") {
     if (brand === "leyard") {
@@ -775,6 +778,7 @@ function buildModuleCataloguePath({ displayType, technology, pitch, moduleBrand,
 
 function buildControllerCataloguePath({ displayType, controllerBrand, controllerId }) {
   if (!controllerId) return null;
+  const catalogueControllerId = String(controllerId).replace(/^NS_DSP/, "NS_VX");
 
   if (controllerBrand === "Novastar") {
     const novastarMap = {
@@ -785,12 +789,12 @@ function buildControllerCataloguePath({ displayType, controllerBrand, controller
       NS_TU15PRO: "Mugnee Product data sheet/Processor and Controller/Novastar/TU-15 Pro.pdf",
       NS_TU20PRO: "Mugnee Product data sheet/Processor and Controller/Novastar/TU-20 Pro.pdf",
       NS_TU40PRO: "Mugnee Product data sheet/Processor and Controller/Novastar/TU-40 Pro.pdf",
-      NS_DSP400: "Mugnee Product data sheet/Processor and Controller/Novastar/dsp-400-pro.pdf",
-      NS_DSP600: "Mugnee Product data sheet/Processor and Controller/Novastar/DSP600-Pro-All-in-One-Controller-Specifications-V1.0.0.pdf",
-      NS_DSP1000: "Mugnee Product data sheet/Processor and Controller/Novastar/DSP1000 Pro.pdf",
-      NS_DSP2000: "Mugnee Product data sheet/Processor and Controller/Novastar/VX2000 Pro Specification.pdf",
+      NS_VX400: "Mugnee Product data sheet/Processor and Controller/Novastar/VX400-pro.pdf",
+      NS_VX600: "Mugnee Product data sheet/Processor and Controller/Novastar/VX600-Pro-All-in-One-Controller-Specifications-V1.0.0.pdf",
+      NS_VX1000: "Mugnee Product data sheet/Processor and Controller/Novastar/VX1000_Pro_All-in-One_Controller_Technical_Specification.pdf",
+      NS_VX2000: "Mugnee Product data sheet/Processor and Controller/Novastar/VX2000 Pro Specification.pdf",
     };
-    return novastarMap[controllerId] || null;
+    return novastarMap[catalogueControllerId] || null;
   }
 
   const huiduIndoorMap = {
@@ -810,7 +814,7 @@ function buildControllerCataloguePath({ displayType, controllerBrand, controller
   };
 
   const preferredMap = displayType === "outdoor" ? huiduOutdoorMap : huiduIndoorMap;
-  return preferredMap[controllerId] || huiduIndoorMap[controllerId] || huiduOutdoorMap[controllerId] || null;
+  return preferredMap[catalogueControllerId] || huiduIndoorMap[catalogueControllerId] || huiduOutdoorMap[catalogueControllerId] || null;
 }
 
 function buildReceivingCardCataloguePath(receivingCardId = "") {
@@ -873,12 +877,16 @@ export function getCataloguePaths(exportData) {
   const useRenexCatalogues = isRenexCatalogue(exportData);
 
   const paths = [];
-  if (moduleBrandSelection !== "Custom") {
-    const modulePath = useRenexCatalogues && normalizeBrand(moduleBrand) === "leyard"
-      ? buildRenexLeyardCataloguePath({ displayType, technology })
-      : buildModuleCataloguePath({ displayType, technology, pitch, moduleBrand, cabinetSizeKey });
-    paths.push(modulePath);
-  }
+  if (moduleBrandSelection === "Custom") return [];
+
+  const modulePath = useRenexCatalogues && normalizeBrand(moduleBrand) === "leyard"
+    ? buildRenexLeyardCataloguePath({ displayType, technology })
+    : buildModuleCataloguePath({ displayType, technology, pitch, moduleBrand, cabinetSizeKey });
+
+  // Component catalogues are merged only when the selected module brand has
+  // a matching module catalogue. Never fall back to another brand's folder.
+  if (!modulePath) return [];
+  paths.push(modulePath);
 
   if (exportData.items.cabinetEnabled && normalizeCabinetSizeKey(exportData.items.cabinet) === "640x480") {
     paths.push("Mugnee Product data sheet/Cabinet 640 X 480.pdf");

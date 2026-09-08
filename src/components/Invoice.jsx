@@ -120,10 +120,10 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
       unitPrice: totals.ledSetUnitTotal || 0,
       total: (totals.ledSetUnitTotal || 0) * irregularQty,
       packageLines: [
-        { name: withoutLedTechnology(model.itemName || "LED Display Module"), brand: model.invoiceBrand || items.brands?.module, model: moduleModelName },
+        { name: withoutLedTechnology(model.itemName || "LED Display Module"), brand: items.brands?.module || model.invoiceBrand, model: moduleModelName },
         { name: psuItemName, brand: psuPicked.brand || items.brands?.psu, model: psuPicked.model || psuPicked.label || "" },
         { name: receivingItemName, brand: receivingPicked.brand || items.brands?.receiving, model: componentModelName(receivingPicked.model, rcLabel, receivingPicked.id) },
-        ...(items?.cabinetEnabled ? [{ name: "Cabinet", brand: items.cabinet?.brand, model: items.cabinet?.model || "" }] : []),
+        ...(items?.cabinetEnabled ? [{ name: "Cabinet", brand: items.cabinet?.brand || "N/A", model: items.cabinet?.model || "N/A" }] : []),
       ],
     });
   } else {
@@ -135,7 +135,7 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
       qty: items.modulesQty,
       unitPrice: unitModule,
       total: totals.totalModules,
-      brand: model.invoiceBrand || items.brands?.module,
+      brand: items.brands?.module || model.invoiceBrand,
     });
   }
 
@@ -184,12 +184,12 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
     rows.push({
       sl: sl++,
       name: items.cabinet?.itemName || "Cabinet",
-      model: items.cabinet?.model || "",
+      model: items.cabinet?.model || "N/A",
       unit: "Pcs",
       qty: items.cabinetQty,
       unitPrice: unitCabinet,
       total: totals.totalCabinet || 0,
-      brand: items.cabinet?.brand || "",
+      brand: items.cabinet?.brand || "N/A",
     });
   }
 
@@ -214,6 +214,8 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
   rows.push({
     sl: sl++,
     name: "Structure & Accessories",
+    brand: "N/A",
+    model: "N/A",
     unit: "Lot",
     qty: isIrregular ? irregularQty : 1,
     unitPrice: totals.accessoriesUnit ?? unitPrices?.accessories ?? totals.accessories ?? 0,
@@ -224,6 +226,8 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
   rows.push({
     sl: sl++,
     name: "Installation, Testing & Commissioning",
+    brand: "N/A",
+    model: "N/A",
     unit: "Make",
     qty: isIrregular ? irregularQty : 1,
     unitPrice: totals.installationUnit ?? totals.installation,

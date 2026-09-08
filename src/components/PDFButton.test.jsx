@@ -59,6 +59,24 @@ test("adds the renamed structure catalogue", () => {
   expect(paths).not.toContain("Mugnee Product data sheet/Recieving Card, PSu and structure/Frame.pdf");
 });
 
+test.each(["Absen", "Synoveta"])(
+  "does not merge any catalogue when the %s module catalogue folder is unavailable",
+  (moduleBrand) => {
+    const exportData = buildExportData({ sizeId: "640x480" });
+    exportData.items.brands.module = moduleBrand;
+
+    expect(getCataloguePaths(exportData)).toEqual([]);
+  }
+);
+
+test("does not merge another brand catalogue for a custom module brand", () => {
+  const exportData = buildExportData({ sizeId: "640x480" });
+  exportData.items.brands.module = "My Custom Brand";
+  exportData.items.brandSelections = { module: "Custom" };
+
+  expect(getCataloguePaths(exportData)).toEqual([]);
+});
+
 test("uses only the Renex catalogue folder for a Renex quotation", () => {
   const exportData = buildExportData({
     sizeId: "640x480",
@@ -100,6 +118,32 @@ test.each(["Mean well", "Mean Well", "Mean-Well", "mean_well"])(
     );
   }
 );
+
+test.each([
+  ["NS_VX400", "VX400-pro.pdf"],
+  ["NS_VX600", "VX600-Pro-All-in-One-Controller-Specifications-V1.0.0.pdf"],
+  ["NS_VX1000", "VX1000_Pro_All-in-One_Controller_Technical_Specification.pdf"],
+  ["NS_VX2000", "VX2000 Pro Specification.pdf"],
+])("uses the renamed Mugnee VX catalogue for %s", (controllerId, filename) => {
+  const exportData = buildExportData({ sizeId: "960x960" });
+  exportData.items.controllerId = controllerId;
+  exportData.items.brands.controller = "Novastar";
+
+  expect(getCataloguePaths(exportData)).toContain(
+    `Mugnee Product data sheet/Processor and Controller/Novastar/${filename}`
+  );
+});
+
+test("uses the renamed Renex VX1000 catalogue", () => {
+  const exportData = buildExportData({ sizeId: "960x960" });
+  exportData.catalogueCompanyCode = "renex";
+  exportData.items.controllerId = "NS_VX1000";
+  exportData.items.brands.controller = "Novastar";
+
+  expect(getCataloguePaths(exportData)).toContain(
+    "Renex Product data sheet/Processor and Controller/Novastar/VX1000 Pro.pdf"
+  );
+});
 
 test("normalizes quotation text for the editable native PDF layer", () => {
   expect(normalizePdfText("Grand Total ৳1,500 — Size 8 × 4 ft"))

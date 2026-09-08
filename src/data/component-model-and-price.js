@@ -122,6 +122,32 @@ export const componentModelAndPrice = {
       "cob-in-p1_86": { "default": 5800 },
       "gob-in-p1_86": { "default": 4350 },
       "smd-out-p6": { "default": 1860 }
+    },
+    "Synoveta": {
+      "smd-in-p1_25": { "default": 9050 },
+      "smd-in-p1_53": { "default": 5832 },
+      "smd-in-p1_86": { "default": 3770 },
+      "smd-in-p2": { "default": 2750 },
+      "smd-in-p2_5": { "default": 2100 },
+      "smd-in-p3": { "default": 2600 },
+      "smd-out-p2_5": { "default": 6250 },
+      "smd-out-p3": { "default": 2368 },
+      "smd-out-p3.91": { "default": 3250 },
+      "smd-out-p4": { "default": 2600 },
+      "smd-out-p5": { "default": 2100 },
+      "smd-out-p6": { "default": 1610 },
+      "smd-out-p6_67": { "default": 1955 },
+      "smd-out-p8": { "default": 1679 },
+      "smd-out-p10": { "default": 1427 },
+      "gob-in-p1_25": { "default": 5550 },
+      "gob-in-p1_53": { "default": 4350 },
+      "gob-in-p1_86": { "default": 4100 },
+      "gob-in-p2": { "default": 3368 },
+      "gob-in-p2.5": { "default": 2700 },
+      "gob-in-p3": { "default": 3750 },
+      "cob-in-p1_25": { "default": 12750 },
+      "cob-in-p1_53": { "default": 8450 },
+      "cob-in-p1_86": { "default": 5550 }
     }
   },
   "moduleBrandModelNames": {
@@ -202,6 +228,14 @@ export const componentModelAndPrice = {
       "cob-in-p1_86": "LC COB 1.86",
       "gob-in-p1_86": "LC1.86P GOB",
       "smd-out-p6": "LC6PO"
+    },
+    "Synoveta": {
+      "smd-in-p1_25": "SVC 1.25P",
+      "smd-in-p1_53": "SVC 1.53P",
+      "smd-in-p1_86": "SVC 1.86P",
+      "cob-in-p1_25": "SVC 1.25P",
+      "cob-in-p1_53": "SVC 1.53P",
+      "cob-in-p1_86": "SVC 1.86P"
     }
   },
   "moduleBrandGoldAdjustments": {
@@ -258,7 +292,8 @@ export const componentModelAndPrice = {
   "moduleBrands": [
     { "value": "Absen", "label": "Absen" },
     { "value": "Lampro", "label": "Lampro" },
-    { "value": "Leyard", "label": "Leyard" }
+    { "value": "Leyard", "label": "Leyard" },
+    { "value": "Synoveta", "label": "Synoveta" }
   ],
   "controllerSystemBrands": [
     { "value": "Huidu", "label": "Huidu" },
@@ -271,11 +306,11 @@ export const componentModelAndPrice = {
     { "id": "NS_TU15PRO", "unit": "Pcs", "brand": "Novastar", "label": "Controller: TU-15 Pro", "model": "TU-15 Pro", "price": 150000, "itemName": "Controller: TU-15 Pro" },
     { "id": "NS_TU20PRO", "unit": "Pcs", "brand": "Novastar", "label": "Controller: TU-20 Pro", "model": "TU-20 Pro", "price": 180000, "itemName": "Controller: TU-20 Pro" },
     { "id": "NS_TU40PRO", "unit": "Pcs", "brand": "Novastar", "label": "Controller: TU-40 Pro", "model": "TU-40 Pro", "price": 312000, "itemName": "Controller: TU-40 Pro" },
-    { "id": "NS_DSP2000", "unit": "Pcs", "brand": "Novastar", "label": "Video Processor: VX2000 Pro", "model": "VX2000 Pro", "price": 560000, "itemName": "Video Processor: VX2000 Pro" },
+    { "id": "NS_VX2000", "unit": "Pcs", "brand": "Novastar", "label": "Video Processor: VX2000 Pro", "model": "VX2000 Pro", "price": 560000, "itemName": "Video Processor: VX2000 Pro" },
     { "id": "NS_TB1", "unit": "Pcs", "brand": "Novastar", "label": "Controller: TB-1", "model": "TB-1", "price": 21000, "itemName": "Controller: TB-1" },
-    { "id": "NS_DSP400", "unit": "Pcs", "brand": "Novastar", "label": "Video Processor: DSP-400", "model": "DSP-400", "price": 198000, "itemName": "Video Processor: DSP-400" },
-    { "id": "NS_DSP1000", "unit": "Pcs", "brand": "Novastar", "label": "Video Processor: DSP-1000 Pro", "model": "DSP-1000 Pro", "price": 280000, "itemName": "Video Processor: DSP-1000 Pro" },
-    { "id": "NS_DSP600", "unit": "Pcs", "brand": "Novastar", "label": "Video Processor: DSP-600 Pro", "model": "DSP-600 Pro", "price": 215000, "itemName": "Video Processor: DSP-600 Pro" }
+    { "id": "NS_VX400", "unit": "Pcs", "brand": "Novastar", "label": "Video Processor: VX400 Pro", "model": "VX400 Pro", "price": 198000, "itemName": "Video Processor: VX400 Pro" },
+    { "id": "NS_VX1000", "unit": "Pcs", "brand": "Novastar", "label": "Video Processor: VX1000 Pro", "model": "VX1000 Pro", "price": 280000, "itemName": "Video Processor: VX1000 Pro" },
+    { "id": "NS_VX600", "unit": "Pcs", "brand": "Novastar", "label": "Video Processor: VX600 Pro", "model": "VX600 Pro", "price": 215000, "itemName": "Video Processor: VX600 Pro" }
   ],
   "novastarCtrlCap": {
     "indoor": [
@@ -285,10 +320,10 @@ export const componentModelAndPrice = {
       { "id": "NS_TU15PRO", "max": 2400000 },
       { "id": "NS_TU20PRO", "max": 3750000 },
       { "id": "NS_TU40PRO", "max": 12800000 },
-      { "id": "NS_DSP400", "max": 2450000 },
-      { "id": "NS_DSP600", "max": 3800000 },
-      { "id": "NS_DSP1000", "max": 6300000 },
-      { "id": "NS_DSP2000", "max": 12820000 }
+      { "id": "NS_VX400", "max": 2450000 },
+      { "id": "NS_VX600", "max": 3800000 },
+      { "id": "NS_VX1000", "max": 6300000 },
+      { "id": "NS_VX2000", "max": 12820000 }
     ],
     "outdoor": [
       { "id": "NS_TB1", "max": 0 },
@@ -298,10 +333,10 @@ export const componentModelAndPrice = {
       { "id": "NS_TU15PRO", "max": 2400000 },
       { "id": "NS_TU20PRO", "max": 3750000 },
       { "id": "NS_TU40PRO", "max": 12800000 },
-      { "id": "NS_DSP400", "max": 2450000 },
-      { "id": "NS_DSP600", "max": 3800000 },
-      { "id": "NS_DSP1000", "max": 6300000 },
-      { "id": "NS_DSP2000", "max": 12820000 }
+      { "id": "NS_VX400", "max": 2450000 },
+      { "id": "NS_VX600", "max": 3800000 },
+      { "id": "NS_VX1000", "max": 6300000 },
+      { "id": "NS_VX2000", "max": 12820000 }
     ]
   },
   "receivingCards": {
@@ -569,6 +604,32 @@ export const componentModelAndPrice = {
       "smd-out-p6",
       "smd-out-p6_67",
       "smd-out-p8"
+    ],
+    "Synoveta": [
+      "smd-in-p1_25",
+      "gob-in-p1_25",
+      "cob-in-p1_25",
+      "smd-in-p1_53",
+      "gob-in-p1_53",
+      "cob-in-p1_53",
+      "smd-in-p1_86",
+      "gob-in-p1_86",
+      "cob-in-p1_86",
+      "smd-in-p2",
+      "gob-in-p2",
+      "smd-in-p2_5",
+      "gob-in-p2.5",
+      "smd-in-p3",
+      "gob-in-p3",
+      "smd-out-p2_5",
+      "smd-out-p3",
+      "smd-out-p3.91",
+      "smd-out-p4",
+      "smd-out-p5",
+      "smd-out-p6",
+      "smd-out-p6_67",
+      "smd-out-p8",
+      "smd-out-p10"
     ]
   },
   "moduleBrandLabels": {

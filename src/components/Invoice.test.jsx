@@ -75,6 +75,7 @@ test("shows Structure & Accessories with a Lot unit when no size is entered", ()
   const row = screen.getByText("Structure & Accessories").closest("tr");
   expect(row).toBeInTheDocument();
   expect(within(row).getByText("Lot")).toBeInTheDocument();
+  expect(within(row).getAllByText("N/A")).toHaveLength(2);
 });
 
 test("renders multiple custom items as separate quotation rows", () => {
@@ -177,9 +178,9 @@ test("renders Mugnee item, brand and model in separate table columns", () => {
 });
 
 test.each([
-  ["No Brand / No Model", "", "", "—", "—"],
-  ["selected brand only", "CaseCo", "", "CaseCo", "—"],
-  ["unbranded model", "", "CAB-NB", "—", "CAB-NB"],
+  ["No Brand / No Model", "", "", "N/A", "N/A"],
+  ["selected brand only", "CaseCo", "", "CaseCo", "N/A"],
+  ["unbranded model", "", "CAB-NB", "N/A", "CAB-NB"],
   ["selected cabinet", "CaseCo", "CAB-X", "CaseCo", "CAB-X"],
 ])("renders cabinet brand and model columns for %s", (_label, brand, model, expectedBrand, expectedModel) => {
   const snapshot = buildSnapshot({ enabled: false, name: "", price: 0 });

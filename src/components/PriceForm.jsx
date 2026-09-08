@@ -886,10 +886,12 @@ export default function PriceForm({
   }, [powerSupplyId, powerSupplyOptions]);
 
   const moduleBrandOptions = useMemo(
-    () =>
-      (catalog.moduleBrands || []).map((brand) =>
+    () => [
+      ...(catalog.moduleBrands || []).map((brand) =>
         typeof brand === "string" ? { value: brand, label: brand } : { value: brand.value, label: brand.label || brand.value }
       ),
+      { value: CUSTOM_MODULE_BRAND_VALUE, label: "Custom Brand" },
+    ].filter((option, index, options) => options.findIndex((item) => item.value === option.value) === index),
     [catalog.moduleBrands]
   );
 
@@ -1664,13 +1666,14 @@ export default function PriceForm({
         {isCustomModuleBrand ? (
           <div className="form-row" style={{ marginTop: 10 }}>
             <label>
-              Brand Name
+              Custom Brand Name
               <input
                 className="input"
                 type="text"
                 value={customModuleBrandName}
                 onChange={(e) => setCustomModuleBrandName(e.target.value)}
                 placeholder="e.g. Your Brand"
+                aria-label="Custom Module Brand Name"
               />
             </label>
           </div>

@@ -128,6 +128,22 @@ test("uses dropdowns for display structure choices", () => {
   expect(screen.getByRole("button", { name: "Payment Terms" })).toHaveTextContent("75% Advance, 25% before Installation");
 });
 
+test("accepts a custom module brand and exports the typed brand name", async () => {
+  const onChange = jest.fn();
+  renderPriceForm({ onChange });
+
+  fireEvent.click(screen.getByRole("button", { name: "Module Brand" }));
+  fireEvent.click(screen.getByRole("option", { name: "Custom Brand" }));
+
+  const input = screen.getByLabelText("Custom Module Brand Name");
+  fireEvent.change(input, { target: { value: "Example LED" } });
+
+  await waitFor(() => {
+    expect(onChange.mock.calls.at(-1)[0].items.brands.module).toBe("Example LED");
+    expect(onChange.mock.calls.at(-1)[0].items.brandSelections.module).toBe("Custom");
+  });
+});
+
 test("uses No Brand and No Model for a cabinet until an admin model is selected", async () => {
   const cabinetRow = {
     source_key: "admin:1:cab-x",
@@ -446,7 +462,7 @@ test("manual component selections survive tab focus and live catalog refreshes",
   fireEvent.click(screen.getByRole("button", { name: "Module Brand" }));
   fireEvent.click(screen.getByRole("option", { name: "Absen" }));
   fireEvent.click(screen.getByRole("button", { name: "Controller Model" }));
-  expect(screen.getByRole("option", { name: "DSP-400" })).toBeInTheDocument();
+  expect(screen.getByRole("option", { name: "VX400 Pro" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("option", { name: "TU-40 Pro" }));
   fireEvent.click(screen.getByRole("button", { name: "Receiving Card" }));
   fireEvent.click(screen.getByRole("option", { name: "NV7512 (16 pin)" }));

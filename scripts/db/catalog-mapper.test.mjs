@@ -56,6 +56,22 @@ test("uses brand-specific module model names", () => {
   assert.equal(lampro.unit, "Pcs");
 });
 
+test("maps Synoveta modules at 250 below Lampro with its SVC model names", () => {
+  const rows = mapStaticCatalog({
+    ledCatalog: {
+      modelGroups: { smd: { indoor: [{ id: "smd-in-p1_25", name: "P1.25", prices: { default: 9300 } }] } },
+      moduleBrandPrices: { Synoveta: { "smd-in-p1_25": { default: 9050 } } },
+      moduleBrandModelNames: { Synoveta: { "smd-in-p1_25": "SVC 1.25P" } },
+      controllers: [], novastarControllers: [], receivingCards: {}, cabinetOptions: [], powerSupplies: [],
+    },
+    paProducts: [], conferenceProducts: [],
+  });
+
+  const synoveta = rows.find((row) => row.sourceKey === "led:module:synoveta:smd-in-p1_25");
+  assert.equal(synoveta.model, "SVC 1.25P");
+  assert.deepEqual(synoveta.prices, { default: 9050 });
+});
+
 test("uses the configured model for each power supply brand", () => {
   const products = mapStaticCatalog({
     ledCatalog: {
