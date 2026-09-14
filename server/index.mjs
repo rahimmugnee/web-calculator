@@ -55,6 +55,7 @@ const categoryComponentType = (category, requested) => requested || LED_COMPONEN
 const STATIC_COMPANY_ASSETS = {
   mugnee: { folder: "Mugnee-Multiple-Limited", invoice_pad: "Mugnee_Invoice.png" },
   "mugnee-multiple": { folder: "Mugnee-Multiple", invoice_pad: "Letterhead PAD 25.png" },
+  sasha: { folder: "Sasha", invoice_pad: "Sasha Pad.png" },
 };
 const staticAssetFile = (code, type) => {
   const config = STATIC_COMPANY_ASSETS[code];

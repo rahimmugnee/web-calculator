@@ -48,8 +48,8 @@ try {
       signatory: ["Sharif Uddin", "Chief Technology Officer", "Renex Digital", "+8801600-007242", "sharif.renex@gmail.com"],
     },
     {
-      code: "sasha", folder: "Sasha", invoicePad: "Mugnee_Invoice.png",
-      signatory: ["Abdur Rahim", "Sub Assistant Engineer", "Sasha Corporation", "+8801608843419", "rahim@sashabd.com"],
+      code: "sasha", folder: "Sasha", invoicePad: "Sasha Pad.png",
+      signatory: ["Abdur Rahim", "Sub Assistant Engineer", "Sasha Corporation", "01717-079855", "rahim@sashabd.com"],
     },
   ];
   for (const branding of companyBranding) {

@@ -77,6 +77,17 @@ test("does not merge another brand catalogue for a custom module brand", () => {
   expect(getCataloguePaths(exportData)).toEqual([]);
 });
 
+test.each([
+  { catalogueCompanyCode: "sasha" },
+  { companyCode: "SASHA" },
+  { company: { code: "sasha" } },
+  { company: { name: "Sasha Corporation" } },
+])("does not merge any catalogue for a Sasha Corporation quotation", (companyData) => {
+  const exportData = { ...buildExportData({ sizeId: "640x480" }), ...companyData };
+
+  expect(getCataloguePaths(exportData)).toEqual([]);
+});
+
 test("uses only the Renex catalogue folder for a Renex quotation", () => {
   const exportData = buildExportData({
     sizeId: "640x480",

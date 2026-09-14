@@ -649,6 +649,15 @@ function isRenexCatalogue(exportData = {}) {
   return String(companyCode).trim().toLowerCase().includes("renex");
 }
 
+function isSashaQuotation(exportData = {}) {
+  const companyCode = exportData.catalogueCompanyCode
+    || exportData.companyCode
+    || exportData.company?.code
+    || exportData.company?.name
+    || "";
+  return String(companyCode).trim().toLowerCase().includes("sasha");
+}
+
 function useRenexCataloguePath(path) {
   if (!path) return null;
   if (path.startsWith(`${RENEX_CATALOGUE_ROOT}/`)) return path;
@@ -859,6 +868,7 @@ function normalizeCabinetSizeKey(cabinet = {}) {
 }
 
 export function getCataloguePaths(exportData) {
+  if (isSashaQuotation(exportData)) return [];
   if (exportData?.quotationType === "rental") return [];
   if (exportData?.quotationType === "pa") return [];
   if (exportData?.quotationType === "conference") return [];

@@ -72,7 +72,19 @@ test("generates compact quotation PDF filename from proposal title", () => {
   expect(buildQuotationFilenameTitle(snapshot)).toBe(
     "Proposal for P1.25 Indoor (SMD) LED Display. (5.25ft x 3.15ft)"
   );
-  expect(quotationTitlePdfFilename(snapshot, "HO/MQ-260603-9580")).toBe(
+  expect(quotationTitlePdfFilename(snapshot, "mugnee")).toBe(
     "Proposal_for_P1.25_Indoor_(SMD)_LED_Display._(5.25ft_x_3.15ft).pdf"
+  );
+  expect(buildQuotationFilenameTitle(snapshot, "renex")).toBe(
+    "Quotation for: P1.25 Indoor Indoor LED Display. (5.25ft x 3.15ft) Renex"
+  );
+  expect(quotationTitlePdfFilename(snapshot, "renex")).toBe(
+    "Quotation_for-_P1.25_Indoor_Indoor_LED_Display._(5.25ft_x_3.15ft)_Renex.pdf"
+  );
+  expect(buildQuotationFilenameTitle(snapshot, "sasha")).toBe(
+    "Quotation for P1.25 Indoor Indoor LED Display. (5.25ft x 3.15ft)"
+  );
+  expect(quotationTitlePdfFilename(snapshot, "sasha")).toBe(
+    "Quotation_for_P1.25_Indoor_Indoor_LED_Display._(5.25ft_x_3.15ft).pdf"
   );
 });

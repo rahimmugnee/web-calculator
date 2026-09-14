@@ -70,7 +70,7 @@ const SashaInvoice = forwardRef(function SashaInvoice({
           <strong>{company?.signatory_name || "Abdur Rahim"}</strong>
           <em>{company?.signatory_designation || "Sub Assistant Engineer"}</em>
           <span>{company?.signatory_company_name || "Sasha Corporation"}</span>
-          <span>Cell: {company?.signatory_phone || "+8801608843419"}</span>
+          <span>Cell: {company?.signatory_phone || "01717-079855"}</span>
           <span>E-mail: {company?.signatory_email || "rahim@sashabd.com"}</span>
         </div>
       </div>

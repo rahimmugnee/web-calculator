@@ -480,7 +480,7 @@ export default function App() {
               {/* ✅ One click download => 2 pages */}
               <PDFButton
                 targetIds={["pdf-page-1", "pdf-page-2"]}
-                filename={snapshot ? quotationTitlePdfFilename(snapshot, quotationRef) : "Mugnee_Quotation.pdf"}
+                filename={snapshot ? quotationTitlePdfFilename(snapshot, company?.code) : "Mugnee_Quotation.pdf"}
                 exportData={snapshot ? {
                   ...snapshot,
                   ...(quotationRef ? { quotationRef } : {}),

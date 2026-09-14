@@ -133,7 +133,7 @@ export function buildQuotationTitle(snapshot = {}) {
     .trim();
 }
 
-export function buildQuotationFilenameTitle(snapshot = {}) {
+export function buildQuotationFilenameTitle(snapshot = {}, companyCode = "mugnee") {
   if (snapshot?.quotationType === "pa") {
     return snapshot.paInstallationType === "ip" ? "Proposal For IP PA System" : "Proposal For Wired PA System";
   }
@@ -155,17 +155,40 @@ export function buildQuotationFilenameTitle(snapshot = {}) {
   const technology = String(snapshot?.items?.technology || "").trim().toUpperCase();
   const widthFt = String(snapshot?.display?.widthFt || "").trim();
   const heightFt = String(snapshot?.display?.heightFt || "").trim();
+  const normalizedCompanyCode = String(companyCode || "mugnee").trim().toLowerCase();
+  const configuredDisplayType = String(snapshot?.items?.dispType || "").trim().toLowerCase();
+  const displayType = configuredDisplayType === "outdoor"
+    ? "Outdoor"
+    : configuredDisplayType === "indoor"
+      ? "Indoor"
+      : /\boutdoor\b/i.test(modelName)
+        ? "Outdoor"
+        : /\bindoor\b/i.test(modelName)
+          ? "Indoor"
+          : "";
 
   const techPart = technology ? ` (${technology})` : "";
   const sizePart = widthFt || heightFt ? ` (${widthFt || "-"}ft x ${heightFt || "-"}ft)` : "";
+
+  if (normalizedCompanyCode === "renex") {
+    return `Quotation for: ${modelName}${displayType ? ` ${displayType}` : ""} LED Display.${sizePart} Renex`
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  if (normalizedCompanyCode === "sasha") {
+    return `Quotation for ${modelName}${displayType ? ` ${displayType}` : ""} LED Display.${sizePart}`
+      .replace(/\s+/g, " ")
+      .trim();
+  }
 
   return `Proposal for ${modelName}${techPart} LED Display.${sizePart}`
     .replace(/\s+/g, " ")
     .trim();
 }
 
-export function quotationTitlePdfFilename(snapshot) {
-  const title = buildQuotationFilenameTitle(snapshot);
+export function quotationTitlePdfFilename(snapshot, companyCode = "mugnee") {
+  const title = buildQuotationFilenameTitle(snapshot, companyCode);
   const safeTitle = sanitizeRefForFilename(title);
   const titleStem = safeTitle.slice(0, 160).replace(/^[._-]+|[._-]+$/g, "") || "Mugnee_Quotation";
   return `${titleStem}.pdf`;
