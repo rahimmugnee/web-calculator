@@ -826,7 +826,7 @@ section h3{
   margin-top:10px;
 }
 .rental-custom-field-row{
-  grid-template-columns:minmax(0,1.5fr) minmax(160px,1fr) auto;
+  grid-template-columns:minmax(0,1.5fr) minmax(135px,.75fr) minmax(160px,1fr) auto;
   align-items:end;
 }
 .rental-remove-custom-field{

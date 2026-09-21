@@ -164,7 +164,7 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
     technicalPerson: settings.includedQty?.technicalPerson ?? 1,
   });
   const [customItemEnabled, setCustomItemEnabled] = useState(false);
-  const [customItems, setCustomItems] = useState([{ id: 1, name: "", price: 0 }]);
+  const [customItems, setCustomItems] = useState([{ id: 1, name: "", pricingMode: "included", price: 0 }]);
   const nextCustomItemId = useRef(2);
   const [vatEnabled, setVatEnabled] = useState(Boolean(settings.vatEnabled));
   const settingDirty = useRef(new Set());
@@ -243,7 +243,7 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
   const addCustomItem = () => {
     setCustomItems((current) => [
       ...current,
-      { id: nextCustomItemId.current++, name: "", price: 0 },
+      { id: nextCustomItemId.current++, name: "", pricingMode: "included", price: 0 },
     ]);
   };
 
@@ -358,14 +358,18 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
 	          unit: "Persons",
 	          included: true,
         },
-	        ...(customItemEnabled ? customItems.map((item) => ({
-	          name: item.name.trim() || "Custom Item",
-	          qty: 1,
-	          unit: "Pcs",
-	          rate: toNumber(item.price),
-	          duration: "fixed-1",
-	          customItem: true,
-	        })) : []),
+	        ...(customItemEnabled ? customItems.map((item) => {
+	          const included = item.pricingMode !== "price";
+	          return {
+	            name: item.name.trim() || "Custom Item",
+	            qty: 1,
+	            unit: "Pcs",
+	            rate: included ? 0 : toNumber(item.price),
+	            duration: "fixed-1",
+	            included,
+	            customItem: true,
+	          };
+	        }) : []),
 	        {
 	          name: "Transport (Round Trip)",
 	          qty: 2,
@@ -610,7 +614,7 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
 	              const enabled = event.target.value === "with";
 	              setCustomItemEnabled(enabled);
 	              if (!enabled) {
-	                setCustomItems([{ id: nextCustomItemId.current++, name: "", price: 0 }]);
+	                setCustomItems([{ id: nextCustomItemId.current++, name: "", pricingMode: "included", price: 0 }]);
 	              }
 	            }}
 	          >
@@ -629,11 +633,24 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
 	                  onChange={(value) => updateCustomItem(item.id, "name", value)}
 	                  placeholder="e.g. Spare Module"
 	                />
+	                <label>
+	                  Price Option
+	                  <select
+	                    className="input"
+	                    aria-label={`Custom item price option ${index + 1}`}
+	                    value={item.pricingMode || "included"}
+	                    onChange={(event) => updateCustomItem(item.id, "pricingMode", event.target.value)}
+	                  >
+	                    <option value="included">Included</option>
+	                    <option value="price">Price</option>
+	                  </select>
+	                </label>
 	                <MoneyField
 	                  label="Price (Tk)"
 	                  value={item.price}
 	                  onChange={(value) => updateCustomItem(item.id, "price", value)}
 	                  placeholder="e.g. 2500"
+	                  disabled={item.pricingMode !== "price"}
 	                />
 	                {customItems.length > 1 ? (
 	                  <button

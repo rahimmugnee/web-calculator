@@ -103,6 +103,17 @@ test("Rental custom fields can be added, priced, and removed from the quotation"
 
   fireEvent.change(screen.getByLabelText("Custom Field Option"), { target: { value: "with" } });
   fireEvent.change(screen.getByLabelText("Item Name"), { target: { value: "Stage Light" } });
+  expect(screen.getByLabelText("Custom item price option 1")).toHaveValue("included");
+  expect(screen.getByLabelText(/^Price \(Tk\)$/)).toBeDisabled();
+
+  await waitFor(() => expect(latestCalculation.rows.find((row) => row.customItem)).toMatchObject({
+    name: "Stage Light",
+    included: true,
+    amount: 0,
+  }));
+
+  fireEvent.change(screen.getByLabelText("Custom item price option 1"), { target: { value: "price" } });
+  expect(screen.getByLabelText(/^Price \(Tk\)$/)).toBeEnabled();
   fireEvent.change(screen.getByLabelText(/^Price \(Tk\)$/), { target: { value: "2500" } });
 
   await waitFor(() => expect(latestCalculation.rows.find((row) => row.customItem)).toMatchObject({
@@ -115,6 +126,8 @@ test("Rental custom fields can be added, priced, and removed from the quotation"
   fireEvent.click(screen.getByRole("button", { name: /add custom field/i }));
   expect(screen.getAllByLabelText("Item Name")).toHaveLength(2);
   fireEvent.change(screen.getAllByLabelText("Item Name")[1], { target: { value: "Backup Cable" } });
+  expect(screen.getByLabelText("Custom item price option 2")).toHaveValue("included");
+  fireEvent.change(screen.getByLabelText("Custom item price option 2"), { target: { value: "price" } });
   fireEvent.change(screen.getAllByLabelText(/^Price \(Tk\)$/)[1], { target: { value: "500" } });
   fireEvent.click(screen.getByRole("button", { name: "Remove custom field 1" }));
 
