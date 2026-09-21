@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+import { RENTAL_VALIDITY_DAYS } from "../lib/rentalCalc.js";
 
 const scopeItems = [
   "Transportation of all equipment to the venue and return",
@@ -19,7 +20,7 @@ const noteItems = [
 ];
 
 const termsItems = [
-  "Quotation validity: 3 (Three) days from the date of issue.",
+  `Quotation validity: ${RENTAL_VALIDITY_DAYS} (Five) days from the date of issue.`,
   "Prices are {vatText}.",
   "Client is responsible to provide stable power supply, safe working area & necessary security.",
   "Any damage to equipment due to negligence, mishandling or improper use will be charged at actual cost.",
@@ -41,14 +42,11 @@ function SectionTitle({ icon, children }) {
 
 const RentalTermsPage = forwardRef(function RentalTermsPage({ calc, company, quotationSettings }, ref) {
   const vatText = calc?.totals?.vatEnabled ? "inclusive of VAT & Tax" : "exclusive of VAT & Tax";
-  const validityDays = Number.isFinite(Number(quotationSettings?.default_validity_days))
-    ? Math.max(0, Number(quotationSettings.default_validity_days))
-    : 3;
   const configuredTerms = Array.isArray(quotationSettings?.terms)
     ? quotationSettings.terms.map((term) => typeof term === "string" ? term : term?.text || term?.label || "").filter(Boolean)
     : [];
   const liveTerms = [
-    `Quotation validity: ${validityDays} day(s) from the date of issue.`,
+    `Quotation validity: ${RENTAL_VALIDITY_DAYS} (Five) days from the date of issue.`,
     ...termsItems.slice(1),
     ...configuredTerms,
   ];
@@ -79,11 +77,11 @@ const RentalTermsPage = forwardRef(function RentalTermsPage({ calc, company, quo
             <SectionTitle icon="BI">Bank Information</SectionTitle>
             <table className="rental-bank-table">
               <tbody>
-                <tr><th>Account Name</th><td>Mugnee Multiple Limited</td></tr>
-                <tr><th>Bank Name</th><td>Eastern Bank PLC.</td></tr>
-                <tr><th>Branch</th><td>Lalbagh Branch, Dhaka</td></tr>
-                <tr><th>Account Number</th><td>1267 1234 5678</td></tr>
-                <tr><th>Routing Number</th><td>095260273</td></tr>
+                <tr><th>Account Name</th><td>Mugnee Multiple</td></tr>
+                <tr><th>Bank Name</th><td>BRAC</td></tr>
+                <tr><th>Branch Name</th><td>Lalbag Sub Branch (Imamganj Br)</td></tr>
+                <tr><th>Account Number</th><td>2053 2939 00 00 2</td></tr>
+                <tr><th>Routing Number</th><td>060 272 807</td></tr>
                 <tr><th>Currency</th><td>BDT (Bangladeshi Taka)</td></tr>
               </tbody>
             </table>

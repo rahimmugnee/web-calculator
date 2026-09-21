@@ -1,6 +1,7 @@
 const ceilNonNeg = (value) => Math.max(0, Math.ceil(Number(value) || 0));
 
 export const RENTAL_VAT_RATE = 0.15;
+export const RENTAL_VALIDITY_DAYS = 5;
 
 export function calculateRentalQuotation(snapshot = {}) {
   const duration = Math.max(1, ceilNonNeg(snapshot.duration || 1));

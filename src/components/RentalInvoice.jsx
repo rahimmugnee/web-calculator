@@ -1,5 +1,6 @@
 import { forwardRef, useMemo } from "react";
 import { bdtToWords, generateRef, toBDT } from "../lib/calc.js";
+import { RENTAL_VALIDITY_DAYS } from "../lib/rentalCalc.js";
 
 const RentalInvoice = forwardRef(function RentalInvoice({ calc, snapshot, orderDate = new Date(), quotationRef, company }, ref) {
   const rows = calc?.rows || [];
@@ -38,7 +39,7 @@ const RentalInvoice = forwardRef(function RentalInvoice({ calc, snapshot, orderD
             <tbody>
               <tr><th>Quotation No.</th><td>{refNo}</td></tr>
               <tr><th>Date</th><td>{dateStr}</td></tr>
-              <tr><th>Validity</th><td>3 Days</td></tr>
+              <tr><th>Validity</th><td>{RENTAL_VALIDITY_DAYS} Days</td></tr>
               <tr><th>Prepared By</th><td>Mugnee Multiple Limited</td></tr>
             </tbody>
           </table>

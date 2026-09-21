@@ -17,6 +17,7 @@ test("removes Sound System from rental copy when it is excluded", () => {
   );
 
   expect(screen.getByText("Quotation For P3 Rental LED Display & Technical Support")).toBeInTheDocument();
+  expect(screen.getByText("5 Days")).toBeInTheDocument();
   expect(screen.queryByText(/Sound System/)).not.toBeInTheDocument();
 });
 
