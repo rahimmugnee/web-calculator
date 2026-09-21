@@ -23,6 +23,12 @@
   --ui-font: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
   --invoice-font: var(--ui-font);
   --page-max-width:1600px;
+  --invoice-page-width:794px;
+  --invoice-page-height:1175px;
+  --invoice-page-pad-top:150px;
+  --invoice-page-pad-inline:30px;
+  /* The pad artwork's footer starts before the physical page edge. */
+  --invoice-page-pad-bottom:90px;
 }
 
 
@@ -814,10 +820,32 @@ section h3{
 .rental-total-sft-row{
   margin-top:4px;
 }
+.rental-custom-fields{
+  display:grid;
+  gap:10px;
+  margin-top:10px;
+}
+.rental-custom-field-row{
+  grid-template-columns:minmax(0,1.5fr) minmax(160px,1fr) auto;
+  align-items:end;
+}
+.rental-remove-custom-field{
+  min-height:38px;
+  padding:8px 14px;
+  background:#dc2626;
+  border-color:#dc2626;
+  color:#fff;
+}
+.rental-remove-custom-field:hover{
+  background:#b91c1c;
+  border-color:#b91c1c;
+  color:#fff;
+}
 
 @media (max-width:640px){
   .form-row{ grid-template-columns:1fr; }
   .rental-size-fields{ grid-template-columns:1fr; }
+  .rental-custom-field-row{ grid-template-columns:1fr; }
 }
 
 /* ============================== 06) BUTTONS ========================= */
@@ -853,8 +881,8 @@ section h3{
 .invoice-wrap{
   position:relative;
   margin-inline:auto;
-  width:794px;
-  min-height:1175px;
+  width:var(--invoice-page-width);
+  min-height:var(--invoice-page-height);
   height:auto;
   background:transparent;
   border:0;
@@ -866,23 +894,42 @@ section h3{
 .invoice-inner{
   position:relative;
   z-index:2;
-  padding:150px 30px 50px 30px;
+  padding:var(--invoice-page-pad-top) var(--invoice-page-pad-inline) var(--invoice-page-pad-bottom);
   transform:none;               /* no zoom => crisp borders */
   transform-origin:top center;
 }
 
+.invoice-content-frame{
+  position:relative;
+  width:100%;
+  height:100%;
+  min-height:0;
+  overflow:hidden;
+}
+
+/* Preserve the original LED invoice panel's 20px top and 8px side inset. */
+.invoice-document-frame{
+  padding:20px 8px 14px;
+}
+
+.invoice-fit-content{
+  width:100%;
+  min-height:100%;
+  transform-origin:top left;
+}
+
 @media (max-width:900px){
-  .invoice-wrap{ width:100%; min-height:auto; height:auto; }
-  .invoice-inner{ padding:120px 20px 110px 20px; }
+  .invoice-wrap:not(.preview-mode):not(.invoice--pdf-scale){ width:100%; min-height:auto; height:auto; }
+  .invoice-wrap:not(.preview-mode):not(.invoice--pdf-scale) > .invoice-inner{ padding:120px 20px 110px 20px; }
 }
 
 @media print{
-  .invoice-wrap{ width:794px; min-height:1175px; }
-  .invoice-inner{ padding:150px 30px 50px 30px !important; transform:none !important; }
+  .invoice-wrap{ width:var(--invoice-page-width); min-height:var(--invoice-page-height); }
+  .invoice-inner{ padding:var(--invoice-page-pad-top) var(--invoice-page-pad-inline) var(--invoice-page-pad-bottom) !important; transform:none !important; }
 }
 
 /* ================= 09) INVOICE — PAD / DARK / LAYERING ============== */
-#invoice-root{ position:relative; width:794px; min-height:1175px; height:auto; margin:0 auto; }
+#invoice-root{ position:relative; width:var(--invoice-page-width); min-height:var(--invoice-page-height); height:auto; margin:0 auto; }
 
 .invoice-pad-bg{
   position:absolute;
@@ -1314,6 +1361,11 @@ section h3{
   font-size:12.5px;
   line-height:1.35;
 }
+.invoice-fit-content > .rental-quotation{
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+}
 .rental-header-row{
   display:grid;
   grid-template-columns:1.15fr .85fr;
@@ -1517,6 +1569,10 @@ section h3{
   color:#0f172a;
   font-size:12px;
   text-align:center;
+}
+.invoice-fit-content > .rental-quotation .rental-signature{
+  margin-top:auto;
+  padding-top:18px;
 }
 .rental-signature img{
   width:92px;
@@ -1813,11 +1869,11 @@ section h3{
 /* PDF scale mode */
 .invoice--pdf-scale .invoice-inner{
   transform:none !important;
-  padding:150px 30px 50px 30px !important;
+  padding:var(--invoice-page-pad-top) var(--invoice-page-pad-inline) var(--invoice-page-pad-bottom) !important;
 }
 .invoice-wrap.invoice--pdf-scale > .invoice-inner{
-  height:1175px !important;
-  min-height:1175px !important;
+  height:var(--invoice-page-height) !important;
+  min-height:var(--invoice-page-height) !important;
   box-sizing:border-box !important;
 }
 .invoice--pdf-scale .signatures:not(.pa-signatures){
@@ -1849,14 +1905,14 @@ section h3{
   background:transparent !important;
 }
 .invoice-wrap.invoice--pdf-scale{
-  width:794px !important;
-  height:1175px !important;
-  min-height:1175px !important;
+  width:var(--invoice-page-width) !important;
+  height:var(--invoice-page-height) !important;
+  min-height:var(--invoice-page-height) !important;
   overflow:hidden !important;
 }
 @media print{
   .invoice--pdf-scale .invoice-inner{
-    padding:150px 30px 50px 30px !important;
+    padding:var(--invoice-page-pad-top) var(--invoice-page-pad-inline) var(--invoice-page-pad-bottom) !important;
     transform:none !important;
   }
 }
@@ -1881,17 +1937,17 @@ section h3{
 
 #invoice-root.preview-mode,
 #terms-root.preview-mode{
-  width:794px !important;
-  height:1175px !important;
-  min-height:1175px !important;
+  width:var(--invoice-page-width) !important;
+  height:var(--invoice-page-height) !important;
+  min-height:var(--invoice-page-height) !important;
   overflow:hidden !important;
   transform:scale(var(--preview-scale, 1)) !important;
   transform-origin:top left !important;
 }
 #invoice-root.preview-mode > .invoice-inner,
 #terms-root.preview-mode > .invoice-inner{
-  height:1175px !important;
-  min-height:1175px !important;
+  height:var(--invoice-page-height) !important;
+  min-height:var(--invoice-page-height) !important;
   box-sizing:border-box !important;
 }
 

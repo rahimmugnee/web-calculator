@@ -55,7 +55,7 @@ function formatSftLabel(value) {
   return `${String(Number(num.toFixed(2)))} Sft.`;
 }
 
-function MoneyField({ label, value, onChange, placeholder = "0", restoreEmptyToZero = true }) {
+function MoneyField({ label, value, onChange, placeholder = "0", restoreEmptyToZero = true, disabled = false }) {
   return (
     <label>
       {label}
@@ -65,6 +65,7 @@ function MoneyField({ label, value, onChange, placeholder = "0", restoreEmptyToZ
         min="0"
         step="any"
         value={value}
+        disabled={disabled}
         onFocus={(event) => {
           if (String(value) === "0") {
             zeroClearOnFocus(value, onChange);
@@ -83,7 +84,7 @@ function MoneyField({ label, value, onChange, placeholder = "0", restoreEmptyToZ
   );
 }
 
-function TextField({ label, value, onChange, type = "text", placeholder = "", clearZeroOnFocus = false }) {
+function TextField({ label, value, onChange, type = "text", placeholder = "", clearZeroOnFocus = false, disabled = false }) {
   return (
     <label>
       {label}
@@ -92,6 +93,7 @@ function TextField({ label, value, onChange, type = "text", placeholder = "", cl
         type={type}
         step={type === "number" ? "any" : undefined}
         value={value}
+        disabled={disabled}
         onFocus={(event) => {
           if (clearZeroOnFocus && String(value) === "0") {
             onChange("");
@@ -110,7 +112,7 @@ function TextField({ label, value, onChange, type = "text", placeholder = "", cl
   );
 }
 
-function QuantityField({ label, value, onChange }) {
+function QuantityField({ label, value, onChange, disabled = false }) {
   return (
     <label>
       {label}
@@ -120,6 +122,7 @@ function QuantityField({ label, value, onChange }) {
         inputMode="numeric"
         pattern="[0-9]*"
         value={value}
+        disabled={disabled}
         onFocus={selectInputValue}
         onMouseUp={keepSelectedValue}
         onChange={(event) => onChange(event.target.value)}
@@ -147,6 +150,7 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
   const [activeDisplaySizeId, setActiveDisplaySizeId] = useState(1);
   const [sftRate, setSftRate] = useState(settings.sftRate ?? 150);
   const [structureRate, setStructureRate] = useState(settings.structureRate ?? "");
+  const [soundSystemEnabled, setSoundSystemEnabled] = useState(settings.soundSystemEnabled !== false);
   const [soundPairs, setSoundPairs] = useState(settings.soundPairs ?? "");
   const [soundRate, setSoundRate] = useState(settings.soundRate ?? 0);
   const [duration, setDuration] = useState(settings.duration ?? 1);
@@ -159,6 +163,9 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
     laptop: settings.includedQty?.laptop ?? 1,
     technicalPerson: settings.includedQty?.technicalPerson ?? 1,
   });
+  const [customItemEnabled, setCustomItemEnabled] = useState(false);
+  const [customItems, setCustomItems] = useState([{ id: 1, name: "", price: 0 }]);
+  const nextCustomItemId = useRef(2);
   const [vatEnabled, setVatEnabled] = useState(Boolean(settings.vatEnabled));
   const settingDirty = useRef(new Set());
 
@@ -166,6 +173,7 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
     const dirty = settingDirty.current;
     if (!dirty.has("sftRate") && settings.sftRate !== undefined) setSftRate(settings.sftRate);
     if (!dirty.has("structureRate") && settings.structureRate !== undefined) setStructureRate(settings.structureRate);
+    if (!dirty.has("soundSystemEnabled") && typeof settings.soundSystemEnabled === "boolean") setSoundSystemEnabled(settings.soundSystemEnabled);
     if (!dirty.has("soundPairs") && settings.soundPairs !== undefined) setSoundPairs(settings.soundPairs);
     if (!dirty.has("soundRate") && settings.soundRate !== undefined) setSoundRate(settings.soundRate);
     if (!dirty.has("duration") && settings.duration !== undefined) setDuration(settings.duration);
@@ -232,6 +240,23 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
     });
   };
 
+  const addCustomItem = () => {
+    setCustomItems((current) => [
+      ...current,
+      { id: nextCustomItemId.current++, name: "", price: 0 },
+    ]);
+  };
+
+  const updateCustomItem = (id, field, value) => {
+    setCustomItems((current) => current.map((item) => (
+      item.id === id ? { ...item, [field]: value } : item
+    )));
+  };
+
+  const removeCustomItem = (id) => {
+    setCustomItems((current) => current.filter((item) => item.id !== id));
+  };
+
   useEffect(() => {
     if (!sizePick) return;
 
@@ -273,6 +298,7 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
       },
       display,
       duration: Math.max(1, toNumber(duration) || 1),
+      soundSystemEnabled,
       vatEnabled,
       model: {
         name: "Rental LED Display",
@@ -293,31 +319,33 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
           unit: "Set",
           rate: structureDisplayRate,
         },
-        {
-          name: "Professional Sound System",
-          qty: Math.max(1, numberOrDefault(soundPairs, 1)),
-          unit: "Pair",
-          rate: soundRate,
-        },
-	        { name: "Digital Audio Mixer", qty: getIncludedQty("mixer"), unit: "Pc", included: true },
-	        {
-	          name: "Audio Processor",
-	          qty: getIncludedQty("processor"),
-	          unit: "Pc",
-	          included: true,
-	        },
-	        {
-	          name: "Wireless Microphone",
-	          qty: getIncludedQty("wirelessMic"),
-	          unit: "Pcs",
-	          included: true,
-	        },
-	        {
-	          name: "Wired Microphone",
-	          qty: getIncludedQty("wiredMic"),
-	          unit: "Pc",
-	          included: true,
-	        },
+	        ...(soundSystemEnabled ? [{
+	          name: "Professional Sound System",
+	          qty: Math.max(1, numberOrDefault(soundPairs, 1)),
+	          unit: "Pair",
+	          rate: soundRate,
+	        }] : []),
+	        ...(soundSystemEnabled ? [
+	          { name: "Digital Audio Mixer", qty: getIncludedQty("mixer"), unit: "Pc", included: true },
+	          {
+	            name: "Audio Processor",
+	            qty: getIncludedQty("processor"),
+	            unit: "Pc",
+	            included: true,
+	          },
+	          {
+	            name: "Wireless Microphone",
+	            qty: getIncludedQty("wirelessMic"),
+	            unit: "Pcs",
+	            included: true,
+	          },
+	          {
+	            name: "Wired Microphone",
+	            qty: getIncludedQty("wiredMic"),
+	            unit: "Pc",
+	            included: true,
+	          },
+	        ] : []),
 	        {
 	          name: "Laptop (Display Control)",
 	          qty: getIncludedQty("laptop"),
@@ -330,6 +358,14 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
 	          unit: "Persons",
 	          included: true,
         },
+	        ...(customItemEnabled ? customItems.map((item) => ({
+	          name: item.name.trim() || "Custom Item",
+	          qty: 1,
+	          unit: "Pcs",
+	          rate: toNumber(item.price),
+	          duration: "fixed-1",
+	          customItem: true,
+	        })) : []),
 	        {
 	          name: "Transport (Round Trip)",
 	          qty: 2,
@@ -347,10 +383,13 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
     duration,
     sftRate,
     structureRate,
+	    soundSystemEnabled,
 	    soundPairs,
 	    soundRate,
 	    transportValue,
 	    includedQty,
+	    customItemEnabled,
+	    customItems,
 	    vatEnabled,
 	  ]);
 
@@ -457,14 +496,29 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
             settingDirty.current.add("duration");
             setDuration(value);
           }} type="number" placeholder="1" />
+          <label>
+            Sound System Option
+            <select
+              className="input"
+              aria-label="Sound System Option"
+              value={soundSystemEnabled ? "with" : "without"}
+              onChange={(event) => {
+                settingDirty.current.add("soundSystemEnabled");
+                setSoundSystemEnabled(event.target.value === "with");
+              }}
+            >
+              <option value="with">With Sound System</option>
+              <option value="without">Without Sound System</option>
+            </select>
+          </label>
           <TextField label="Sound System Pair" value={soundPairs} onChange={(value) => {
             settingDirty.current.add("soundPairs");
             setSoundPairs(value);
-          }} type="number" placeholder="1" />
+          }} type="number" placeholder="1" disabled={!soundSystemEnabled} />
           <MoneyField label="Sound System Rate (Tk / Pair)" value={soundRate} onChange={(value) => {
             settingDirty.current.add("soundRate");
             setSoundRate(value);
-          }} />
+          }} disabled={!soundSystemEnabled} />
         </div>
       </section>
 
@@ -484,6 +538,7 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
 	          <QuantityField
 	            label="Digital Audio Mixer"
 	            value={includedQty.mixer}
+              disabled={!soundSystemEnabled}
             onChange={(value) => {
               settingDirty.current.add("includedQty.mixer");
               setIncludedQty((prev) => ({ ...prev, mixer: value }));
@@ -492,6 +547,7 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
 	          <QuantityField
 	            label="Audio Processor"
 	            value={includedQty.processor}
+              disabled={!soundSystemEnabled}
             onChange={(value) => {
               settingDirty.current.add("includedQty.processor");
               setIncludedQty((prev) => ({ ...prev, processor: value }));
@@ -500,6 +556,7 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
 	          <QuantityField
 	            label="Wireless Microphone"
 	            value={includedQty.wirelessMic}
+              disabled={!soundSystemEnabled}
             onChange={(value) => {
               settingDirty.current.add("includedQty.wirelessMic");
               setIncludedQty((prev) => ({ ...prev, wirelessMic: value }));
@@ -508,6 +565,7 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
 	          <QuantityField
 	            label="Wired Microphone"
 	            value={includedQty.wiredMic}
+              disabled={!soundSystemEnabled}
             onChange={(value) => {
               settingDirty.current.add("includedQty.wiredMic");
               setIncludedQty((prev) => ({ ...prev, wiredMic: value }));
@@ -530,6 +588,67 @@ export default function RentalPriceForm({ onChange, onCalculated, sizePick, onSi
             }}
 	          />
 	        </div>
+	      </section>
+
+	      <section>
+	        <div className="section-title-row">
+	          <h3>Custom Field</h3>
+	          {customItemEnabled ? (
+	            <button className="btn btn-light rental-add-size" type="button" onClick={addCustomItem}>
+	              + Add Custom Field
+	            </button>
+	          ) : null}
+	        </div>
+
+	        <label>
+	          Custom Field Option
+	          <select
+	            className="input"
+	            aria-label="Custom Field Option"
+	            value={customItemEnabled ? "with" : "without"}
+	            onChange={(event) => {
+	              const enabled = event.target.value === "with";
+	              setCustomItemEnabled(enabled);
+	              if (!enabled) {
+	                setCustomItems([{ id: nextCustomItemId.current++, name: "", price: 0 }]);
+	              }
+	            }}
+	          >
+	            <option value="without">Without Custom Field</option>
+	            <option value="with">With Custom Field</option>
+	          </select>
+	        </label>
+
+	        {customItemEnabled ? (
+	          <div className="rental-custom-fields">
+	            {customItems.map((item, index) => (
+	              <div className="form-row rental-custom-field-row" key={item.id}>
+	                <TextField
+	                  label="Item Name"
+	                  value={item.name}
+	                  onChange={(value) => updateCustomItem(item.id, "name", value)}
+	                  placeholder="e.g. Spare Module"
+	                />
+	                <MoneyField
+	                  label="Price (Tk)"
+	                  value={item.price}
+	                  onChange={(value) => updateCustomItem(item.id, "price", value)}
+	                  placeholder="e.g. 2500"
+	                />
+	                {customItems.length > 1 ? (
+	                  <button
+	                    type="button"
+	                    className="btn btn-light rental-remove-custom-field"
+	                    aria-label={`Remove custom field ${index + 1}`}
+	                    onClick={() => removeCustomItem(item.id)}
+	                  >
+	                    Remove
+	                  </button>
+	                ) : null}
+	              </div>
+	            ))}
+	          </div>
+	        ) : null}
 	      </section>
 
 	      <section>

@@ -89,3 +89,81 @@ test("Rental settings update live but do not overwrite a rate the user edited", 
     expect(screen.getByLabelText("Structure Rate (Tk)")).toHaveValue(3400);
   });
 });
+
+test("Rental custom fields can be added, priced, and removed from the quotation", async () => {
+  let latestSnapshot;
+  let latestCalculation;
+  render(
+    <RentalPriceForm
+      settings={{ sftRate: 0, structureRate: 0, soundRate: 0, transportValue: 0, duration: 3, includedQty: {} }}
+      onChange={(snapshot) => { latestSnapshot = snapshot; }}
+      onCalculated={(calculation) => { latestCalculation = calculation; }}
+    />
+  );
+
+  fireEvent.change(screen.getByLabelText("Custom Field Option"), { target: { value: "with" } });
+  fireEvent.change(screen.getByLabelText("Item Name"), { target: { value: "Stage Light" } });
+  fireEvent.change(screen.getByLabelText(/^Price \(Tk\)$/), { target: { value: "2500" } });
+
+  await waitFor(() => expect(latestCalculation.rows.find((row) => row.customItem)).toMatchObject({
+    name: "Stage Light",
+    rate: 2500,
+    duration: 1,
+    amount: 2500,
+  }));
+
+  fireEvent.click(screen.getByRole("button", { name: /add custom field/i }));
+  expect(screen.getAllByLabelText("Item Name")).toHaveLength(2);
+  fireEvent.change(screen.getAllByLabelText("Item Name")[1], { target: { value: "Backup Cable" } });
+  fireEvent.change(screen.getAllByLabelText(/^Price \(Tk\)$/)[1], { target: { value: "500" } });
+  fireEvent.click(screen.getByRole("button", { name: "Remove custom field 1" }));
+
+  await waitFor(() => {
+    const customItems = latestSnapshot.items.filter((item) => item.customItem);
+    expect(customItems).toHaveLength(1);
+    expect(customItems[0]).toMatchObject({ name: "Backup Cable", rate: 500 });
+    expect(latestCalculation.totals.grandTotal).toBe(500);
+  });
+});
+
+test("Rental sound system is enabled by default and can be excluded from calculation", async () => {
+  let latestSnapshot;
+  let latestCalculation;
+  render(
+    <RentalPriceForm
+      settings={{ sftRate: 0, structureRate: 0, soundRate: 900, soundPairs: 2, transportValue: 0, duration: 1, includedQty: {} }}
+      onChange={(snapshot) => { latestSnapshot = snapshot; }}
+      onCalculated={(calculation) => { latestCalculation = calculation; }}
+    />
+  );
+
+  expect(screen.getByLabelText("Sound System Option")).toHaveValue("with");
+  await waitFor(() => expect(latestCalculation.rows.find((row) => row.name === "Professional Sound System")).toMatchObject({
+    qty: 2,
+    rate: 900,
+    amount: 1800,
+  }));
+
+  fireEvent.change(screen.getByLabelText("Sound System Option"), { target: { value: "without" } });
+
+  expect(screen.getByLabelText("Sound System Pair")).toBeDisabled();
+  expect(screen.getByLabelText("Sound System Rate (Tk / Pair)")).toBeDisabled();
+  expect(screen.getByLabelText("Digital Audio Mixer")).toBeDisabled();
+  expect(screen.getByLabelText("Audio Processor")).toBeDisabled();
+  expect(screen.getByLabelText("Wireless Microphone")).toBeDisabled();
+  expect(screen.getByLabelText("Wired Microphone")).toBeDisabled();
+  await waitFor(() => {
+    expect(latestSnapshot.soundSystemEnabled).toBe(false);
+    const excludedSoundItems = [
+      "Professional Sound System",
+      "Digital Audio Mixer",
+      "Audio Processor",
+      "Wireless Microphone",
+      "Wired Microphone",
+    ];
+    expect(latestSnapshot.items.some((item) => excludedSoundItems.includes(item.name))).toBe(false);
+    expect(latestCalculation.rows.some((row) => excludedSoundItems.includes(row.name))).toBe(false);
+    expect(latestCalculation.rows.some((row) => row.name === "Laptop (Display Control)")).toBe(true);
+    expect(latestCalculation.rows.some((row) => row.name === "Technical Person")).toBe(true);
+  });
+});

@@ -2,6 +2,7 @@
 import bengaliRegularFontUrl from "@fontsource/noto-sans-bengali/files/noto-sans-bengali-bengali-400-normal.woff";
 import bengaliBoldFontUrl from "@fontsource/noto-sans-bengali/files/noto-sans-bengali-bengali-700-normal.woff";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { fitInvoicePageContent, resetInvoiceContentFit } from "../lib/invoiceLayout.js";
 
 const A4 = { w: 595.28, h: 841.89 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -938,26 +939,7 @@ export default function PDFButton({
   className = "btn btn-primary",
 }) {
   const fitPdfContent = (el) => {
-    const inner = el.querySelector(":scope > .invoice-inner");
-    const panel = inner?.querySelector(":scope > .invoice-panel");
-    if (!inner || !panel) return;
-
-    panel.style.removeProperty("transform");
-    panel.style.removeProperty("transform-origin");
-    panel.style.removeProperty("width");
-
-    const innerStyle = window.getComputedStyle(inner);
-    const availableHeight = inner.clientHeight
-      - (Number.parseFloat(innerStyle.paddingTop) || 0)
-      - (Number.parseFloat(innerStyle.paddingBottom) || 0);
-    const contentHeight = panel.scrollHeight;
-    const scale = Math.min(1, availableHeight / Math.max(1, contentHeight));
-
-    if (scale < 0.999) {
-      panel.style.setProperty("transform", `scale(${scale})`, "important");
-      panel.style.setProperty("transform-origin", "top left", "important");
-      panel.style.setProperty("width", `${100 / scale}%`, "important");
-    }
+    fitInvoicePageContent(el);
   };
 
   const applyPdfClasses = (el) => {
@@ -966,10 +948,7 @@ export default function PDFButton({
   };
 
   const revertPdfClasses = (el) => {
-    const panel = el.querySelector(":scope > .invoice-inner > .invoice-panel:not(.terms-panel)");
-    panel?.style.removeProperty("transform");
-    panel?.style.removeProperty("transform-origin");
-    panel?.style.removeProperty("width");
+    resetInvoiceContentFit(el);
     el.classList.remove("invoice--pdf-scale");
   };
 

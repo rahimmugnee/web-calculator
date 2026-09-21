@@ -9,9 +9,15 @@ import RentalDisplaySize from "./components/RentalDisplaySize";
 import { generateRef, quotationTitlePdfFilename } from "./lib/calc.js";
 import { useCatalog } from "./context/CatalogContext.jsx";
 import { quotationHistoryPayload, saveQuotationHistory } from "./lib/quotationHistory.js";
+import {
+  fitInvoicePageContent,
+  getInvoiceFitElements,
+  INVOICE_PAGE_HEIGHT,
+  INVOICE_PAGE_WIDTH,
+  resetInvoiceContentFit,
+  resolveInvoicePageFormatClass,
+} from "./lib/invoiceLayout.js";
 
-const PREVIEW_PAGE_WIDTH = 794;
-const PREVIEW_PAGE_HEIGHT = 1175;
 const API_BASE = process.env.REACT_APP_ADMIN_API_URL || "/api";
 const LEGACY_AUTH_SESSION_KEY = "mugneeLoginAuthenticated";
 const LEGACY_REMEMBER_LOGIN_KEY = "mugneeRememberedLogin";
@@ -107,6 +113,9 @@ export default function App() {
 	      ? "rental"
 	      : "fixed";
   const isRentalQuotation = quotationKind === "rental";
+  // Company format classes own the complete fixed-LED document layout.
+  // Other categories keep company branding, but must use the shared page area.
+  const invoicePageFormatClass = resolveInvoicePageFormatClass(invoiceFormatClass, quotationKind);
 
   useEffect(() => {
     window.sessionStorage.removeItem(LEGACY_AUTH_SESSION_KEY);
@@ -147,35 +156,18 @@ export default function App() {
 
     if (!stage || !page) return undefined;
 
-    const inner = page.querySelector(":scope > .invoice-inner");
-    const panel = inner?.querySelector(":scope > .invoice-panel");
+    const { frame, content } = getInvoiceFitElements(page);
 
     let frameId = 0;
 
     const updateFit = () => {
       window.cancelAnimationFrame(frameId);
       frameId = window.requestAnimationFrame(() => {
-        panel?.style.removeProperty("transform");
-        panel?.style.removeProperty("transform-origin");
-        panel?.style.removeProperty("width");
-
-        if (inner && panel) {
-          const innerStyle = window.getComputedStyle(inner);
-          const availableHeight = inner.clientHeight
-            - (Number.parseFloat(innerStyle.paddingTop) || 0)
-            - (Number.parseFloat(innerStyle.paddingBottom) || 0);
-          const contentScale = Math.min(1, availableHeight / Math.max(1, panel.scrollHeight));
-
-          if (contentScale < 0.999) {
-            panel.style.setProperty("transform", `scale(${contentScale})`, "important");
-            panel.style.setProperty("transform-origin", "top left", "important");
-            panel.style.setProperty("width", `${100 / contentScale}%`, "important");
-          }
-        }
+        fitInvoicePageContent(page);
 
         const availableWidth = Math.max(0, stage.clientWidth);
-        const scale = Math.min(1, availableWidth / PREVIEW_PAGE_WIDTH);
-        const nextHeight = Math.ceil(PREVIEW_PAGE_HEIGHT * scale);
+        const scale = Math.min(1, availableWidth / INVOICE_PAGE_WIDTH);
+        const nextHeight = Math.ceil(INVOICE_PAGE_HEIGHT * scale);
 
         setPreviewFit((prev) => {
           if (Math.abs(prev.scale - scale) < 0.001 && prev.height === nextHeight) {
@@ -191,16 +183,15 @@ export default function App() {
     const resizeObserver = new ResizeObserver(updateFit);
     resizeObserver.observe(stage);
     resizeObserver.observe(page);
-    if (panel) resizeObserver.observe(panel);
+    if (frame) resizeObserver.observe(frame);
+    if (content) resizeObserver.observe(content);
     window.addEventListener("resize", updateFit);
 
     return () => {
       window.cancelAnimationFrame(frameId);
       resizeObserver.disconnect();
       window.removeEventListener("resize", updateFit);
-      panel?.style.removeProperty("transform");
-      panel?.style.removeProperty("transform-origin");
-      panel?.style.removeProperty("width");
+      resetInvoiceContentFit(page);
     };
   }, [calc, snapshot, view, isRentalQuotation]);
 
@@ -504,11 +495,13 @@ export default function App() {
                 }}
               >
                 {view === "invoice" ? (
-	                  <div ref={previewInvoicePageRef} id="invoice-root" className={`invoice-wrap invoice-dark preview-mode ${invoiceFormatClass}`}>
+	                  <div ref={previewInvoicePageRef} id="invoice-root" className={`invoice-wrap invoice-dark preview-mode ${invoicePageFormatClass}`}>
                 <img src={branding.invoice_pad || "/Mugnee-Multiple-Limited/Mugnee_Invoice.png"} className="invoice-pad-bg pad--contain" alt="" />
                 <div className="invoice-inner pad-safe">
-                  <div className="invoice-panel">
-                    <Invoice ref={invoiceRef} calc={calc} snapshot={snapshot} quotationRef={quotationRef} />
+                  <div className="invoice-content-frame invoice-document-frame">
+                    <div className="invoice-fit-content">
+                      <Invoice ref={invoiceRef} calc={calc} snapshot={snapshot} quotationRef={quotationRef} />
+                    </div>
                   </div>
                 </div>
                   </div>
@@ -518,8 +511,10 @@ export default function App() {
                 {/* ✅ IMPORTANT: terms-inner class added */}
                 <div className="invoice-inner pad-safe terms-inner">
                   {/* ✅ IMPORTANT: terms-panel class added */}
-                  <div className="invoice-panel terms-panel">
-                    <TermsPage ref={termsRef} calc={calc} snapshot={snapshot} />
+                  <div className="invoice-content-frame">
+                    <div className="invoice-fit-content invoice-panel terms-panel">
+                      <TermsPage ref={termsRef} calc={calc} snapshot={snapshot} />
+                    </div>
                   </div>
                 </div>
                   </div>
@@ -534,17 +529,19 @@ export default function App() {
                   position: "absolute",
                   left: "-10000px",
                   top: 0,
-                  width: "794px", // ✅ IMPORTANT: match A4 width (same as invoice-wrap)
+                  width: `${INVOICE_PAGE_WIDTH}px`, // match the shared invoice page width
                   pointerEvents: "none",
                   opacity: 1, // keep the hidden native-PDF source measurable
                 }}
               >
                 {/* Page-1 (Invoice) */}
-	                <div id="pdf-page-1" className={`invoice-wrap invoice-dark preview-mode ${invoiceFormatClass}`}>
+	                <div id="pdf-page-1" className={`invoice-wrap invoice-dark preview-mode ${invoicePageFormatClass}`}>
                   <img src={branding.invoice_pad || "/Mugnee-Multiple-Limited/Mugnee_Invoice.png"} className="invoice-pad-bg pad--contain" alt="" />
                   <div className="invoice-inner pad-safe">
-                    <div className="invoice-panel">
-                      <Invoice calc={calc} snapshot={snapshot} quotationRef={quotationRef} />
+                    <div className="invoice-content-frame invoice-document-frame">
+                      <div className="invoice-fit-content">
+                        <Invoice calc={calc} snapshot={snapshot} quotationRef={quotationRef} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -555,8 +552,10 @@ export default function App() {
                   {/* ✅ IMPORTANT: terms-inner class added */}
                   <div className="invoice-inner pad-safe terms-inner">
                     {/* ✅ IMPORTANT: terms-panel class added */}
-                    <div className="invoice-panel terms-panel">
-                      <TermsPage calc={calc} snapshot={snapshot} />
+                    <div className="invoice-content-frame">
+                      <div className="invoice-fit-content invoice-panel terms-panel">
+                        <TermsPage calc={calc} snapshot={snapshot} />
+                      </div>
                     </div>
                   </div>
                 </div>

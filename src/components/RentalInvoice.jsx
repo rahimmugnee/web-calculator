@@ -7,6 +7,10 @@ const RentalInvoice = forwardRef(function RentalInvoice({ calc, snapshot, orderD
   const customer = snapshot?.customer || {};
   const fallbackRef = useMemo(() => generateRef(), []);
   const refNo = quotationRef ?? fallbackRef;
+  const soundSystemEnabled = snapshot?.soundSystemEnabled !== false;
+  const serviceTitle = soundSystemEnabled
+    ? "P3 Rental LED Display, Sound System & Technical Support"
+    : "P3 Rental LED Display & Technical Support";
   const dateStr = new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "long",
@@ -43,14 +47,14 @@ const RentalInvoice = forwardRef(function RentalInvoice({ calc, snapshot, orderD
 
       <div className="rental-subject">
         <span>Subject:</span>
-        <strong>Quotation For P3 Rental LED Display, Sound System &amp; Technical Support</strong>
+        <strong>Quotation For {serviceTitle}</strong>
       </div>
 
       <div className="rental-letter">
         <p>Dear Sir/Madam,</p>
 	        <p>
 	          Thank you very much for your kind inquiry. We are pleased to submit our best commercial offer for
-	          <b> Rental LED Display, Sound System &amp; Technical Support </b>
+	          <b> {soundSystemEnabled ? "Rental LED Display, Sound System & Technical Support" : "Rental LED Display & Technical Support"} </b>
 	          as per your requirement. Please find the details of our proposal below:
 	        </p>
 	      </div>
