@@ -43,20 +43,36 @@ test("ignores custom item price when disabled", () => {
 });
 
 test.each([
-  ["mugnee", 1000, 2000],
-  ["renex", 1100, 2200],
-  ["sasha", 1130, 2260],
-])("applies the %s multiplier to accessories and installation costs", (companyCode, expectedAccessories, expectedInstallation) => {
+  ["mugnee", 24000],
+  ["renex", 26400],
+  ["sasha", 27120],
+])("applies the %s multiplier to automatic accessories and installation costs", (companyCode, expectedServiceCost) => {
   const result = calcAll({
     companyCode,
-    accessoriesMode: "manual",
-    accessoriesValue: 1000,
-    installMode: "manual",
-    installValue: 2000,
+    sft: 50,
+    accessoriesMode: "auto",
+    installMode: "auto",
   });
 
-  expect(result.totals.accessories).toBe(expectedAccessories);
-  expect(result.totals.installation).toBe(expectedInstallation);
+  expect(result.totals.accessories).toBe(expectedServiceCost);
+  expect(result.totals.installation).toBe(expectedServiceCost);
+  expect(result.totals.accessoriesUnit).toBe(expectedServiceCost);
+  expect(result.totals.installationUnit).toBe(expectedServiceCost);
+});
+
+test("uses manual service costs as exact overrides without a company multiplier", () => {
+  const result = calcAll({
+    companyCode: "renex",
+    accessoriesMode: "manual",
+    accessoriesValue: 25000,
+    installMode: "manual",
+    installValue: 25000,
+  });
+
+  expect(result.totals.accessories).toBe(25000);
+  expect(result.totals.accessoriesUnit).toBe(25000);
+  expect(result.totals.installation).toBe(25000);
+  expect(result.totals.installationUnit).toBe(25000);
 });
 
 test("generates compact quotation PDF filename from proposal title", () => {

@@ -236,11 +236,14 @@ export function calcAll({
 }) {
   const area = parseFloat(sft) || 0;
   const normalizedCompanyCode = String(companyCode || "").trim().toLowerCase();
-  const serviceCostMultiplier = normalizedCompanyCode.includes("renex")
-    ? 1.1
+  // Keep the company markup as an integer percentage. Decimal multipliers such
+  // as 1.1 can become 1.1000000000000001 in JavaScript and Math.ceil would then
+  // add an incorrect extra taka (for example, 24,000 became 26,401).
+  const serviceCostPercent = normalizedCompanyCode.includes("renex")
+    ? 110
     : normalizedCompanyCode.includes("sasha")
-      ? 1.13
-      : 1;
+      ? 113
+      : 100;
   const isIrregular = quotationMode === "irregular";
   const irregularQtyInt = isIrregular ? Math.max(1, ceilNonNeg(irregularQty)) : 1;
 
@@ -304,8 +307,9 @@ export function calcAll({
   }
 
   if (vatEnabled) accTkBase = ceilNonNeg(accTkBase * (1 + taxMarkupRate));
+  const accessoriesServicePercent = accessoriesMode === "manual" ? 100 : serviceCostPercent;
   const accTk = ceilNonNeg(
-    accTkBase * (isIrregular ? irregularQtyInt : 1) * serviceCostMultiplier
+    (accTkBase * (isIrregular ? irregularQtyInt : 1) * accessoriesServicePercent) / 100
   );
 
   let installTk = 0;
@@ -332,7 +336,8 @@ export function calcAll({
   if (isIrregular && !(installMode === "manual" && installIsPercent)) {
     installTk = ceilNonNeg(installTk * irregularQtyInt);
   }
-  installTk = ceilNonNeg(installTk * serviceCostMultiplier);
+  const installationServicePercent = installMode === "manual" ? 100 : serviceCostPercent;
+  installTk = ceilNonNeg((installTk * installationServicePercent) / 100);
 
   let transportTk = transportEnabled ? ceilNonNeg(transportValue) : 0;
   if (vatEnabled) transportTk = ceilNonNeg(transportTk * (1 + taxMarkupRate));
@@ -368,7 +373,7 @@ export function calcAll({
       discount: discountApplied,
       payable,
       ledSetUnitTotal,
-      accessoriesUnit: accTkBase,
+      accessoriesUnit: isIrregular && irregularQtyInt > 0 ? ceilNonNeg(accTk / irregularQtyInt) : accTk,
       installationUnit: isIrregular && irregularQtyInt > 0 ? ceilNonNeg(installTk / irregularQtyInt) : installTk,
       irregularQty: irregularQtyInt,
     },
