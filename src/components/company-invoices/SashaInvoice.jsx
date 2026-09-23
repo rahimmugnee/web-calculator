@@ -58,7 +58,13 @@ const SashaInvoice = forwardRef(function SashaInvoice({
               <td>{toBDT(displayTotal)}</td>
             </tr>
             {extraRows.map((row, index) => <tr key={row.sl}><td>{index + 2}</td><td><strong>{row.name}</strong></td><td>{row.unit}</td><td>{row.qty}</td><td>{toBDT(row.unitPrice)}</td><td>{toBDT(row.total)}</td></tr>)}
-            <tr className="sasha-grand-row"><td colSpan="5">Grand Total =</td><td>{toBDT(payable)}</td></tr>
+            <tr className="sasha-grand-row"><td className="sasha-summary-label" colSpan="5">Grand Total =</td><td className="sasha-summary-amount">{toBDT(totals.grandTotal)}</td></tr>
+            {showDiscountBlock ? (
+              <>
+                <tr className="sasha-grand-row"><td className="sasha-summary-label" colSpan="5">Special Discount =</td><td className="sasha-summary-amount">{toBDT(totals.discount || 0)}</td></tr>
+                <tr className="sasha-grand-row"><td className="sasha-summary-label" colSpan="5">Payable =</td><td className="sasha-summary-amount">{toBDT(payable)}</td></tr>
+              </>
+            ) : null}
           </tbody>
         </table>
 
