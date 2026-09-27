@@ -5,6 +5,12 @@ import App from './App';
 import AdminApp from './admin/AdminApp';
 import reportWebVitals from './reportWebVitals';
 import { CatalogProvider } from './context/CatalogContext';
+import { blurActiveNumberInputOnWheel } from './lib/numberInputWheel';
+
+// Browsers increment/decrement a focused number field when the mouse wheel is
+// used over it. Blur before the default action so the wheel keeps scrolling the
+// page without changing the field's value.
+document.addEventListener('wheel', blurActiveNumberInputOnWheel, true);
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
