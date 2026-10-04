@@ -1470,7 +1470,7 @@ export default function PriceForm({
               value={tierId}
               options={catalog.priceTiers.map((tier) => ({
                 value: tier.id,
-                label: tier.note ? `${tier.label} - ${tier.note}` : tier.label,
+                label: tier.label,
               }))}
               onChange={(value) => {
                 fixedSettingDirty.current.add("tierId");
