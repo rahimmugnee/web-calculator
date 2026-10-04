@@ -443,8 +443,8 @@ export default function App() {
 
           {/* Right: Preview + Download */}
           <div className="card">
-            <div className="inline" style={{ justifyContent: "space-between", marginBottom: 8 }}>
-              <div className="inline" style={{ gap: 8 }}>
+            <div className="inline quotation-preview-toolbar" style={{ justifyContent: "space-between", marginBottom: 8 }}>
+              <div className="inline quotation-preview-tabs" style={{ gap: 8 }}>
                 <h3 style={{ marginRight: 10 }}>Preview</h3>
 
                 <button
@@ -466,6 +466,7 @@ export default function App() {
 
               {/* ✅ One click download => 2 pages */}
               <PDFButton
+                label="Download Quotation (PDF)"
                 targetIds={["pdf-page-1", "pdf-page-2"]}
                 filename={snapshot ? quotationTitlePdfFilename(snapshot, company?.code) : "Mugnee_Quotation.pdf"}
                 exportData={snapshot ? {

@@ -541,8 +541,12 @@ export default function PriceForm({
   }, [modelId, modelsForType]);
 
   const [ctrlSystemBrand, setCtrlSystemBrand] = useState("Novastar"); // Huidu | Novastar
+  const [customCtrlBrandEnabled, setCustomCtrlBrandEnabled] = useState(false);
+  const [customCtrlBrand, setCustomCtrlBrand] = useState("");
+  const selectedCtrlBrand = customCtrlBrandEnabled ? customCtrlBrand.trim() || "Custom Brand" : ctrlSystemBrand;
 
   const [controllerId, setControllerId] = useState(catalog.controllers[0]?.id || "");
+  const [customControllerModel, setCustomControllerModel] = useState("");
   const controllerSelectionManualRef = useRef(false);
   const [controllerQty, setControllerQty] = useState(1);
 
@@ -748,7 +752,7 @@ export default function PriceForm({
         : pickControllerByPixels(dispType, controllerSelectionPixels, catalog.ctrlCap);
 
     const validManualSelection = controllerSelectionManualRef.current && (
-      controllerId === "" || (
+      controllerId === "" || controllerId === "__custom__" || (
         ctrlSystemBrand === "Novastar"
           ? getNovastarControllersForDisplayType(dispType, catalog.novastarControllers, catalog.novastarCtrlCap)
               .some((item) => item.id === controllerId)
@@ -783,10 +787,9 @@ export default function PriceForm({
       .map((id) => {
         const card = catalog.receivingCards?.[id];
         if (!card) return null;
-        const pinLabel = card.pin ? ` (${card.pin} pin)` : "";
         return {
           value: id,
-          label: `${componentModelName(card.label || id)}${pinLabel}`,
+          label: componentModelName(card.label || id),
         };
       })
       .filter(Boolean);
@@ -802,18 +805,19 @@ export default function PriceForm({
   }, [autoRcPicked?.id, receivingCardOptions]);
 
   const rcPicked = useMemo(() => {
-    if (receivingCardId === "__custom__") return { id: "__custom__", label: customReceivingCard.trim() || "Custom Receiving Card", model: customReceivingCard.trim() || "Custom Receiving Card", unitPrice: 0, brand: ctrlSystemBrand };
+    if (receivingCardId === "__custom__") return { id: "__custom__", label: customReceivingCard.trim() || "Custom Receiving Card", model: customReceivingCard.trim() || "Custom Receiving Card", unitPrice: 0, brand: selectedCtrlBrand };
     const selectedId = receivingCardId || autoRcPicked?.id;
     const selected = catalog.receivingCards?.[selectedId];
-    if (!selected) return autoRcPicked;
+    if (!selected) return autoRcPicked ? { ...autoRcPicked, brand: selectedCtrlBrand } : autoRcPicked;
     return {
       ...selected,
+      brand: selectedCtrlBrand,
       id: selectedId,
       label: selected.label || selectedId,
       unitPrice: selected.unitPrice ?? 0,
       pin: selected.pin,
     };
-  }, [autoRcPicked, catalog.receivingCards, receivingCardId, customReceivingCard, ctrlSystemBrand]);
+  }, [autoRcPicked, catalog.receivingCards, receivingCardId, customReceivingCard, selectedCtrlBrand]);
 
   // âœ… RC auto unit price + reset override when picked changes
   const rcUnitPriceAuto = useMemo(() => rcPicked?.unitPrice ?? 0, [rcPicked]);
@@ -947,7 +951,7 @@ export default function PriceForm({
 
   // âœ… Controller auto price
   const controllerPriceAuto = useMemo(() => {
-    if (!controllerId) return 0;
+    if (!controllerId || controllerId === "__custom__") return 0;
     if (ctrlSystemBrand === "Novastar") return novastarControllerPriceById(dispType, controllerId, catalog.novastarControllers);
     return controllerPriceById(controllerId, catalog.controllers);
   }, [ctrlSystemBrand, dispType, controllerId, catalog.novastarControllers, catalog.controllers]);
@@ -968,17 +972,20 @@ export default function PriceForm({
 
   const controllerLabel = useMemo(() => {
     if (!controllerId) return "";
+    if (controllerId === "__custom__") return customControllerModel.trim() || "Custom Controller";
     if (ctrlSystemBrand === "Novastar") {
       return getNovastarControllersForDisplayType(dispType, catalog.novastarControllers, catalog.novastarCtrlCap).find((c) => c.id === controllerId)?.label || controllerId;
     }
     return catalog.controllers.find((c) => c.id === controllerId)?.label || controllerId;
-  }, [ctrlSystemBrand, dispType, controllerId, catalog.novastarControllers, catalog.novastarCtrlCap, catalog.controllers]);
+  }, [ctrlSystemBrand, dispType, controllerId, catalog.novastarControllers, catalog.novastarCtrlCap, catalog.controllers, customControllerModel]);
 
   const controllerPicked = useMemo(() => {
     if (!controllerId) return null;
+    if (controllerId === "__custom__") return { id: controllerId, label: customControllerModel.trim() || "Custom Controller", model: customControllerModel.trim() || "Custom Controller", brand: selectedCtrlBrand };
     const source = ctrlSystemBrand === "Novastar" ? catalog.novastarControllers : catalog.controllers;
-    return source.find((controller) => controller.id === controllerId) || null;
-  }, [controllerId, ctrlSystemBrand, catalog.controllers, catalog.novastarControllers]);
+    const picked = source.find((controller) => controller.id === controllerId);
+    return picked ? { ...picked, brand: selectedCtrlBrand } : null;
+  }, [controllerId, ctrlSystemBrand, catalog.controllers, catalog.novastarControllers, customControllerModel, selectedCtrlBrand]);
 
   const controllerPixelCapacity = useMemo(() => {
     if (!controllerId) return 0;
@@ -1069,8 +1076,8 @@ export default function PriceForm({
 
         brands: {
           module: selectedModuleBrand,
-          controller: ctrlSystemBrand,
-          receiving: ctrlSystemBrand,
+          controller: selectedCtrlBrand,
+          receiving: selectedCtrlBrand,
           psu: psuPicked.brand || psuBrand,
         },
         brandSelections: {
@@ -1151,6 +1158,7 @@ export default function PriceForm({
       customItems,
       moduleBrand,
       selectedModuleBrand,
+      selectedCtrlBrand,
       ctrlSystemBrand,
       cabinetSizeId,
       selectedCabinetSize,
@@ -1701,10 +1709,14 @@ export default function PriceForm({
             Controller & RC Brand
             <CustomSelect
               ariaLabel="Controller and Receiving Card Brand"
-              value={ctrlSystemBrand}
-              options={(catalog.controllerSystemBrands || []).map((b) => ({ value: b.value, label: b.label || b.value }))}
-              onChange={setCtrlSystemBrand}
+              value={customCtrlBrandEnabled ? "__custom__" : ctrlSystemBrand}
+              options={[...(catalog.controllerSystemBrands || []).map((b) => ({ value: b.value, label: b.label || b.value })), { value: "__custom__", label: "Custom Brand" }]}
+              onChange={(value) => {
+                setCustomCtrlBrandEnabled(value === "__custom__");
+                if (value !== "__custom__") setCtrlSystemBrand(value);
+              }}
             />
+            {customCtrlBrandEnabled ? <input className="input" aria-label="Custom Controller and Receiving Card Brand" placeholder="Enter controller & RC brand" value={customCtrlBrand} onChange={(e) => setCustomCtrlBrand(e.target.value)} /> : null}
           </label>
 
           <label>
@@ -1725,12 +1737,15 @@ export default function PriceForm({
                         value: c.id,
                         label: componentModelName(c.label),
                       }))),
+                { value: "__custom__", label: "Custom Controller Model" },
               ]}
               onChange={(value) => {
                 controllerSelectionManualRef.current = true;
                 setControllerId(value);
+                if (value === "__custom__") setControllerQty(1);
               }}
             />
+            {controllerId === "__custom__" ? <input className="input" aria-label="Custom Controller Model" placeholder="Enter controller model" value={customControllerModel} onChange={(e) => setCustomControllerModel(e.target.value)} /> : null}
           </label>
 
           <label>

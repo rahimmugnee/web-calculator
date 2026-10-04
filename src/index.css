@@ -582,6 +582,12 @@ body{
 
 /* =============================== 05) FORMS ========================== */
 .form-grid{ display:grid; gap:0; }
+@media(max-width:640px){
+  .quotation-preview-toolbar{flex-wrap:nowrap;gap:6px}
+  .quotation-preview-tabs{flex-wrap:nowrap;gap:4px!important;min-width:0}
+  .quotation-preview-tabs h3{font-size:12px;margin:0 2px 0 0!important}
+  .quotation-preview-toolbar .btn{font-size:10px;padding:8px 6px;white-space:nowrap;border-radius:8px}
+}
 
 .form-row{
   display:grid;

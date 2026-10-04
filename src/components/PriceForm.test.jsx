@@ -128,6 +128,43 @@ test("uses dropdowns for display structure choices", () => {
   expect(screen.getByRole("button", { name: "Payment Terms" })).toHaveTextContent("75% Advance, 25% before Installation");
 });
 
+test("exports a custom controller and receiving brand without changing the selected model or price", async () => {
+  const onChange = jest.fn();
+  renderPriceForm({ onChange });
+  const previous = onChange.mock.calls.at(-1)[0].items;
+  fireEvent.click(screen.getByRole("button", { name: "Controller and Receiving Card Brand" }));
+  fireEvent.click(screen.getByRole("option", { name: "Custom Brand" }));
+  fireEvent.change(screen.getByLabelText("Custom Controller and Receiving Card Brand"), { target: { value: "Example Control" } });
+  await waitFor(() => {
+    const items = onChange.mock.calls.at(-1)[0].items;
+    expect(items.brands.controller).toBe("Example Control");
+    expect(items.brands.receiving).toBe("Example Control");
+    expect(items.controllerPicked.brand).toBe("Example Control");
+    expect(items.receivingPicked.brand).toBe("Example Control");
+    expect(items.controllerId).toBe(previous.controllerId);
+    expect(items.controllerPrice).toBe(previous.controllerPrice);
+  });
+});
+
+test("exports a manually priced custom controller model", async () => {
+  const onChange = jest.fn();
+  renderPriceForm({ onChange });
+  fireEvent.click(screen.getByRole("button", { name: "Controller Model" }));
+  fireEvent.click(screen.getByRole("option", { name: "Custom Controller Model" }));
+  fireEvent.change(screen.getByLabelText("Custom Controller Model"), { target: { value: "CTRL-X" } });
+  const price = screen.getByLabelText("Controller Price");
+  fireEvent.focus(price);
+  fireEvent.change(price, { target: { value: "12000" } });
+  fireEvent.blur(price);
+  await waitFor(() => {
+    const items = onChange.mock.calls.at(-1)[0].items;
+    expect(items.controllerLabel).toBe("CTRL-X");
+    expect(items.controllerPicked.model).toBe("CTRL-X");
+    expect(items.controllerQty).toBe(1);
+    expect(items.controllerPrice).toBe(12000);
+  });
+});
+
 test("exports custom receiving card and power supply selections", async () => {
   const onChange = jest.fn();
   renderPriceForm({ onChange });
@@ -486,7 +523,7 @@ test("manual component selections survive tab focus and live catalog refreshes",
   expect(screen.getByRole("option", { name: "VX400 Pro" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("option", { name: "TU-40 Pro" }));
   fireEvent.click(screen.getByRole("button", { name: "Receiving Card Model" }));
-  fireEvent.click(screen.getByRole("option", { name: "NV7512 (16 pin)" }));
+  fireEvent.click(screen.getByRole("option", { name: "NV7512" }));
   fireEvent.click(screen.getByRole("button", { name: "Power Supply Brand" }));
   fireEvent.click(screen.getByRole("option", { name: "G-Energy" }));
   await waitFor(() => expect(screen.getByRole("button", { name: "Power Supply Model" })).toHaveTextContent("N200V5-A"));
