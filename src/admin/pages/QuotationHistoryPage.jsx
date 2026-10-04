@@ -4,6 +4,7 @@ import { EmptyState, Notice, PageHeader } from "../AdminLayout";
 import { useCompany } from "../contexts";
 import { componentModelAndPrice } from "../../data/component-model-and-price.js";
 import PDFButton from "../../components/PDFButton.jsx";
+import MonthFilter from "../MonthFilter";
 
 const money = (value) => `৳${Number(value || 0).toLocaleString("en-US")}`;
 const date = (value) => value ? new Date(value).toLocaleDateString("en-GB") : "—";
@@ -51,8 +52,8 @@ export default function QuotationHistoryPage() {
     if (!companyId) return;
     let cancelled = false;
     setMonths([]);
-    get(`/admin/quotations/months?companyId=${companyId}`).then((data) => {
-      if (!cancelled) setMonths(Array.isArray(data) ? data.filter((item) => /^\d{4}-(0[1-9]|1[0-2])$/.test(item.month)) : []);
+    get(`/admin/dashboard?companyId=${companyId}`).then((data) => {
+      if (!cancelled) setMonths(Array.isArray(data?.months) ? data.months.filter((item) => /^\d{4}-(0[1-9]|1[0-2])$/.test(item.month)) : []);
     }).catch((error) => { if (!cancelled) setNotice(error.message); });
     return () => { cancelled = true; };
   }, [companyId]);
@@ -150,10 +151,14 @@ export default function QuotationHistoryPage() {
       <section className="quotation-history-main">
         <div className="quotation-filters admin-panel">
           <label>Search<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Ref no, client or organization..." /></label>
-          <label>Month<select aria-label="Filter quotations by month" value={month} onChange={(event) => setMonth(event.target.value)}>
+          <div className="quotation-month-field"><span>Month</span><MonthFilter ariaLabel="Filter quotations by month" value={month} onChange={(event) => setMonth(event.target.value)}>
             <option value="">All Months</option>
-            {monthKeys.map((key) => <option key={key} value={key}>{new Date(`${key}-01T00:00:00`).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</option>)}
-          </select></label>
+            {monthKeys.map((key) => {
+              const entry = months.find((item) => item.month === key);
+              const label = new Date(`${key}-01T00:00:00`).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+              return <option key={key} value={key}>{label}{entry ? ` · ${Number(entry.quotations) || 0} quotations` : ""}</option>;
+            })}
+          </MonthFilter></div>
           <label>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">All Status</option>{["final", "sent", "approved", "draft", "rejected", "expired"].map((item) => <option key={item}>{item}</option>)}</select></label>
         </div>
         <div className="admin-table-wrap admin-panel quotation-list">

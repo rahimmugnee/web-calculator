@@ -181,3 +181,10 @@
 .quotation-preview-modal .quotation-col-price{width:12%}
 .quotation-preview-modal .quotation-col-total{width:12%}
 .admin-content:has(.dashboard-page){padding-left:12px;padding-right:12px}
+.quotation-month-field{display:flex;flex-direction:column;gap:5px;font-size:10px;color:var(--admin-muted)}
+.quotation-filters{align-items:flex-end}
+.admin-month-filter,.quotation-filters .admin-month-filter{width:252px;height:48px;box-sizing:border-box;margin:0!important;padding:0 16px;display:grid!important;grid-template-columns:17px minmax(0,1fr) 14px;align-items:center;gap:10px;line-height:1;color:#44546c;font-size:12px;font-weight:700}
+.admin-month-filter select,.quotation-filters .admin-month-filter select{width:100%;min-width:0;height:46px;margin:0;padding:0 4px;border:0;outline:0;border-radius:0;appearance:none;background:transparent;color:inherit;font:inherit;line-height:46px;text-align:left;cursor:pointer}
+.admin-month-filter option{padding:10px 14px}
+@media(max-width:760px){.admin-month-filter{width:100%}}
+@media(max-width:700px){.quotation-filters{align-items:stretch}.quotation-filters .admin-month-filter{width:100%}}

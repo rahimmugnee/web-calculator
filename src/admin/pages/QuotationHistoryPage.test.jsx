@@ -37,9 +37,11 @@ beforeEach(() => {
 });
 
 test("combines month filtering with search and status and allows all months", async () => {
-  get.mockImplementation((path) => Promise.resolve(path.startsWith("/admin/quotations/months?") ? [{ month: "2026-08" }] : [quotation]));
+  get.mockImplementation((path) => Promise.resolve(path.startsWith("/admin/dashboard?") ? { months: [{ month: "2026-10", quotations: 6 }, { month: "2026-09", quotations: 59 }, { month: "2026-08", quotations: 5 }] } : [quotation]));
   render(<QuotationHistoryPage />);
-  await screen.findByRole("option", { name: "August 2026" });
+  await screen.findByRole("option", { name: "August 2026 · 5 quotations" });
+  expect(screen.getByRole("option", { name: "September 2026 · 59 quotations" })).toBeInTheDocument();
+  expect(screen.getByRole("option", { name: "October 2026 · 6 quotations" })).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText("Filter quotations by month"), { target: { value: "2026-08" } });
   fireEvent.change(screen.getByPlaceholderText("Ref no, client or organization..."), { target: { value: "ABC" } });
   fireEvent.change(screen.getByLabelText("Status"), { target: { value: "final" } });

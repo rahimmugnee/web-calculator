@@ -3,6 +3,7 @@ import { get } from "../api";
 import { PageHeader } from "../AdminLayout";
 import { useAuth, useCompany } from "../contexts";
 import { isPrivilegedAdmin } from "../access";
+import MonthFilter from "../MonthFilter";
 
 const number = (value) => Number(value || 0);
 const money = (value) => `৳${number(value).toLocaleString("en-US")}`;
@@ -74,11 +75,9 @@ export default function DashboardPage() {
     { label: "Organizations", value: dashboard.organizations, note: "View Organizations", growth: dashboard.organizationGrowth, tone: "violet", icon: "O", onNoteClick: () => setShowOrganizations(true) },
   ];
 
-  const monthSelector = <label className={`dashboard-date-range${loading ? " loading" : ""}`}>
-    <svg className="dashboard-date-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3m10-3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Z" /></svg>
-    <select aria-label="Filter dashboard by month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)} disabled={loading}>{months.map((item) => <option key={item.month} value={item.month}>{item.label}{item.quotations !== null ? ` · ${item.quotations} quotations` : ""}</option>)}</select>
-    <svg className="dashboard-date-chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" /></svg>
-  </label>;
+  const monthSelector = <MonthFilter ariaLabel="Filter dashboard by month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)} disabled={loading}>
+    {months.map((item) => <option key={item.month} value={item.month}>{item.label}{item.quotations !== null ? ` · ${item.quotations} quotations` : ""}</option>)}
+  </MonthFilter>;
 
   return <div className={`dashboard-page${loading ? " is-loading" : ""}`}>
     <PageHeader eyebrow="Overview" title="Dashboard" description={`Overview of quotations and sales activities for ${company?.name || "Calculator"}.`} actions={monthSelector} />
