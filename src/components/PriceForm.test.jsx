@@ -90,10 +90,10 @@ test("uses dropdowns for display structure choices", () => {
   expect(screen.getByRole("heading", { name: "Irregular Quotation" })).toBeInTheDocument();
 
   const quality = screen.getByRole("button", { name: "Quality" });
-  expect(quality).toHaveTextContent("Gold - Standard");
+  expect(quality).toHaveTextContent("Gold");
   fireEvent.click(quality);
-  fireEvent.click(screen.getByRole("option", { name: "Platinum - 15% premium" }));
-  expect(screen.getByRole("button", { name: "Quality" })).toHaveTextContent("Platinum - 15% premium");
+  fireEvent.click(screen.getByRole("option", { name: "Platinum" }));
+  expect(screen.getByRole("button", { name: "Quality" })).toHaveTextContent("Platinum");
   expect(screen.getByLabelText(/Custom Warranty/i)).toHaveAttribute("placeholder", "Default: 2 Year(s)");
 
   const productModelSection = screen.getByRole("heading", { name: "Model, Brand & Size" }).closest("section");
@@ -103,7 +103,7 @@ test("uses dropdowns for display structure choices", () => {
   expect(screen.getByRole("button", { name: "Power Supply Model" })).toHaveTextContent("LD-200");
 
   const controllerRow = screen.getByRole("button", { name: "Controller Model" }).closest(".form-row");
-  expect(screen.getByRole("button", { name: "Receiving Card" }).closest(".form-row")).toBe(controllerRow);
+  expect(screen.getByRole("button", { name: "Receiving Card Model" }).closest(".form-row")).toBe(controllerRow);
   expect(screen.getByRole("heading", { name: "Component Unit Price (Tk)" })).toBeInTheDocument();
   expect(screen.getAllByLabelText("Power Supply Price")).toHaveLength(1);
   const metricsRow = screen.getByLabelText("Controller Pixel Capacity").closest(".form-row");
@@ -131,7 +131,7 @@ test("uses dropdowns for display structure choices", () => {
 test("exports custom receiving card and power supply selections", async () => {
   const onChange = jest.fn();
   renderPriceForm({ onChange });
-  fireEvent.click(screen.getByRole("button", { name: "Receiving Card" }));
+  fireEvent.click(screen.getByRole("button", { name: "Receiving Card Model" }));
   fireEvent.click(screen.getByRole("option", { name: "Custom Receiving Card" }));
   fireEvent.change(screen.getByLabelText("Custom Receiving Card"), { target: { value: "RC-X" } });
   fireEvent.click(screen.getByRole("button", { name: "Power Supply Brand" }));
@@ -485,7 +485,7 @@ test("manual component selections survive tab focus and live catalog refreshes",
   fireEvent.click(screen.getByRole("button", { name: "Controller Model" }));
   expect(screen.getByRole("option", { name: "VX400 Pro" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("option", { name: "TU-40 Pro" }));
-  fireEvent.click(screen.getByRole("button", { name: "Receiving Card" }));
+  fireEvent.click(screen.getByRole("button", { name: "Receiving Card Model" }));
   fireEvent.click(screen.getByRole("option", { name: "NV7512 (16 pin)" }));
   fireEvent.click(screen.getByRole("button", { name: "Power Supply Brand" }));
   fireEvent.click(screen.getByRole("option", { name: "G-Energy" }));
@@ -503,7 +503,7 @@ test("manual component selections survive tab focus and live catalog refreshes",
     expect(screen.getByRole("button", { name: "Pixel Pitch" })).toHaveTextContent("P2");
     expect(screen.getByRole("button", { name: "Module Brand" })).toHaveTextContent("Absen");
     expect(screen.getByRole("button", { name: "Controller Model" })).toHaveTextContent("TU-40 Pro");
-    expect(screen.getByRole("button", { name: "Receiving Card" })).toHaveTextContent("NV7512");
+    expect(screen.getByRole("button", { name: "Receiving Card Model" })).toHaveTextContent("NV7512");
     expect(screen.getByRole("button", { name: "Power Supply Brand" })).toHaveTextContent("G-Energy");
     expect(screen.getByRole("button", { name: "Power Supply Model" })).toHaveTextContent("N200V5-A");
   });

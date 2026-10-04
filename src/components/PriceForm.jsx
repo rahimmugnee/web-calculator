@@ -1529,6 +1529,7 @@ export default function PriceForm({
 	      <section>
         <h3>Model, Brand &amp; Size</h3>
 
+        <div className="product-details-fields">
         <div className="form-row product-model-main-row">
           <label>
             Pixel Pitch
@@ -1680,7 +1681,7 @@ export default function PriceForm({
         </div>
 
         {isCustomModuleBrand ? (
-          <div className="form-row" style={{ marginTop: 10 }}>
+          <div className="form-row product-custom-brand-row" style={{ marginTop: 10 }}>
             <label>
               Custom Brand Name
               <input
@@ -1733,9 +1734,9 @@ export default function PriceForm({
           </label>
 
           <label>
-            Receiving Card
+            Receiving Card Model
             <CustomSelect
-              ariaLabel="Receiving Card"
+              ariaLabel="Receiving Card Model"
               value={receivingCardId}
               options={[...receivingCardOptions, { value: "__custom__", label: "Custom Receiving Card" }]}
               onChange={(value) => {
@@ -1769,6 +1770,7 @@ export default function PriceForm({
           </label>
         </div>
 
+        </div>
         <h3 className="component-price-title">Component Unit Price (Tk)</h3>
         <div className="form-row component-price-row">
           <label>

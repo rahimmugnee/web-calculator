@@ -601,6 +601,21 @@ body{
 .product-model-main-row{
   grid-template-columns:repeat(5,minmax(0,1fr));
 }
+.product-details-fields{display:contents}
+@media(max-width:640px){
+  .product-details-fields{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px 10px;
+  }
+  .form-grid .product-details-fields > .form-row{display:contents}
+  .product-details-fields label{min-width:0;margin-bottom:0;font-size:12px}
+  .form-grid .product-details-fields > .product-custom-brand-row{
+    display:grid;
+    grid-column:1 / -1;
+    order:1;
+  }
+}
 .component-price-title{
   margin:18px 0 10px;
 }
