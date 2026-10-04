@@ -1,0 +1,29 @@
+.terms-format-sasha{font-family:Arial,Helvetica,sans-serif;color:#10192d;font-weight:400}
+.sasha-terms-heading{text-align:center;margin:0 0 15px}
+.sasha-terms-heading h1{margin:0 0 5px;font-size:35px;line-height:1.15;font-weight:900;letter-spacing:-.6px;color:#080808}
+.sasha-terms-heading h1 span{color:#ed003d}
+.sasha-terms-subtitle{font-size:9px;line-height:1.5;letter-spacing:3px;color:#26344c}
+.sasha-terms-accent{width:68px;height:2px;margin:11px auto 0;background:#ed003d}
+.sasha-terms-section{margin-bottom:27px;break-inside:avoid}
+.sasha-terms-section-heading{display:flex;align-items:center;min-height:46px;background:#f1f2f4;gap:14px}
+.sasha-terms-letter{position:relative;width:76px;height:46px;flex:0 0 76px;margin-right:-9px}
+.sasha-terms-letter img{position:absolute;inset:0;width:76px;height:46px}
+.sasha-terms-letter span{position:relative;display:block;padding:8px 0 0 14px;color:#fff;font-size:26px;font-weight:800;line-height:1.2}
+.sasha-terms-icon{width:32px;height:32px;flex:0 0 32px;object-fit:contain}
+.sasha-terms-section-heading h2{flex:1;min-width:0;margin:0;font-size:14px;font-weight:800;line-height:1.3;text-transform:uppercase;color:#10192d}
+.sasha-terms-tagline{position:relative;align-self:stretch;display:flex;align-items:center;flex:0 0 155px;padding:5px 8px 5px 30px;font-size:6.5px;line-height:1.6;letter-spacing:1.1px;color:#69778e}
+.sasha-terms-section:nth-of-type(3) .sasha-terms-section-heading h2{font-size:11.5px;letter-spacing:-.2px}
+.sasha-terms-tagline img{position:absolute;left:0;top:0;width:30px;height:100%}
+.sasha-terms-section-content{padding:7px 4px 0 12px}
+.sasha-terms-row-list{list-style:none;padding:0;margin:0;flex:1;min-width:0}
+.sasha-terms-row{display:flex;align-items:stretch;list-style:none;margin:0;border-bottom:1px solid #e1e5eb;background:#f7f8fa;min-height:28px}
+.sasha-terms-row:last-child{border-bottom:0}
+.sasha-terms-row-number{flex:0 0 50px;display:flex;align-items:center;justify-content:center;background:#fceff2;color:#ed003d;font-size:13px;line-height:1.5;font-weight:700}
+.sasha-terms-row-copy{flex:1;min-width:0;padding:5px 12px;font-size:12px;line-height:1.55;color:#152035}
+.terms-format-sasha b{font-weight:700}
+.terms-format-sasha .terms-p{margin:2px 0 8px 3px;font-size:12px;line-height:1.6;font-weight:400;color:#152035}
+.sasha-terms-payment-box{display:flex;align-items:center;gap:12px;padding:9px 12px;border:1px solid #ed003d;border-radius:5px;background:#fff5f7}
+.sasha-terms-payment-icon{width:38px;height:42px;flex:0 0 38px;object-fit:contain}
+.sasha-terms-payment-box .sasha-terms-row{background:transparent}
+.sasha-terms-payment-box .sasha-terms-row-number{background:transparent;flex-basis:44px}
+.sasha-terms-payment-box .sasha-terms-row-copy{padding:5px 9px}

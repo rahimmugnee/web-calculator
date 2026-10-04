@@ -285,7 +285,8 @@ export function calcAll({
   const totalPS = ceilNonNeg(totalPSBase * irregularQtyInt);
   const controllerTotal = ceilNonNeg(controllerQtyInt * effUnitCtrl);
   const totalCabinet = ceilNonNeg(totalCabinetBase * irregularQtyInt);
-  const totalCustomItem = effUnitCustomItem;
+  const totalCustomItem = effUnitCustomItems.reduce((sum, price, index) =>
+    sum + price * Math.max(0, Math.floor(Number(customItems[index]?.qty ?? 1) || 0)), 0);
 
   const goodsSubTotal = totalModules + totalRC + totalPS + controllerTotal + totalCabinet + totalCustomItem;
 

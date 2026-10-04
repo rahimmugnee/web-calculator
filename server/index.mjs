@@ -559,9 +559,19 @@ app.delete("/api/admin/recycle-bin/:entityType/:id/permanent",requireRecyclePerm
   }catch(error){await client.query("ROLLBACK").catch(()=>{});throw error;}finally{client.release();}
 }));
 
+app.get("/api/admin/quotations/months", asyncRoute(async(req,res)=>{
+  const result=await pool.query(`SELECT to_char(date_trunc('month',created_at),'YYYY-MM') month FROM quotations WHERE deleted_at IS NULL AND ($1::bigint IS NULL OR company_id=$1) GROUP BY date_trunc('month',created_at) ORDER BY date_trunc('month',created_at) DESC`,[req.query.companyId||null]);
+  res.json(result.rows);
+}));
 app.get("/api/admin/quotations", asyncRoute(async(req,res)=>{
   const {limit,offset}=paging(req.query), params=[req.query.companyId||null], where=["q.deleted_at IS NULL","($1::bigint IS NULL OR q.company_id=$1)"];
   if(req.query.status){params.push(req.query.status);where.push(`q.status=$${params.length}`);}
+  if(req.query.month){
+    const month=String(req.query.month);
+    if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))return res.status(400).json({error:"Invalid month. Use YYYY-MM."});
+    params.push(`${month}-01`);
+    where.push(`q.created_at >= $${params.length}::date AND q.created_at < $${params.length}::date + interval '1 month'`);
+  }
   if(req.query.search){params.push(`%${req.query.search}%`);where.push(`(q.quotation_number ILIKE $${params.length} OR q.client_name ILIKE $${params.length} OR q.client_information->>'company' ILIKE $${params.length})`);}
   params.push(limit,offset);
   const result=await pool.query(`SELECT q.*,c.name company_name,creator.display_name created_by_name,creator.email created_by_email,count(*) OVER() total_count FROM quotations q JOIN companies c ON c.id=q.company_id LEFT JOIN users creator ON creator.id=q.created_by_user_id WHERE ${where.join(" AND ")} ORDER BY q.created_at DESC LIMIT $${params.length-1} OFFSET $${params.length}`,params);

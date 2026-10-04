@@ -106,8 +106,9 @@ function toRoman(value) {
   return result;
 }
 
-function listMarkerFor(item) {
+export function listMarkerFor(item) {
   const list = item.parentElement;
+  if (list && window.getComputedStyle(list).listStyleType === "none") return "";
   if (!list || list.tagName !== "OL") return list?.tagName === "UL" ? "-" : "";
   const siblings = Array.from(list.children).filter((child) => child.tagName === "LI");
   const value = (Number(list.getAttribute("start")) || 1) + Math.max(0, siblings.indexOf(item));

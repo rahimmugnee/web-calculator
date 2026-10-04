@@ -350,19 +350,15 @@ export default function App() {
       <header className="topbar">
         <div className="inner">
           <img src={branding.logo || "/Mugnee-Multiple-Limited/logo.png"} alt="Company" className="topbar-logo" />
-          <div className="topbar-title">LED Display Builder</div>
+          <div className="topbar-title">Quotation Builder</div>
 
           <nav className="topbar-nav">
             <a href="/admin/login" className="top-link" target="_blank" rel="noopener noreferrer">
               Admin Panel
             </a>
-            <a href="https://mugnee.com/" className="top-link">
-              Home
-            </a>
           </nav>
       
           <div className="topbar-right">
-             <a href="https://www.mugnee.com/product-category/led-display/" className="top-link">LED Display</a>
              <div className="calculator-profile" ref={profileRef}>
                <button
                  className="calculator-profile-button"

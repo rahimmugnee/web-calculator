@@ -553,6 +553,9 @@ export default function PriceForm({
 
   const [rcQty, setRcQty] = useState(10);
   const [receivingCardId, setReceivingCardId] = useState("");
+  const [customReceivingCard, setCustomReceivingCard] = useState("");
+  const [customPsuBrand, setCustomPsuBrand] = useState("");
+  const [customPsuModel, setCustomPsuModel] = useState("");
   const receivingCardSelectionManualRef = useRef(false);
   const [psQty, setPsQty] = useState(17);
   const [psuBrand, setPsuBrand] = useState("Lampro");
@@ -791,6 +794,7 @@ export default function PriceForm({
 
   useEffect(() => {
     setReceivingCardId((current) => {
+      if (current === "__custom__") return current;
       if (receivingCardSelectionManualRef.current && receivingCardOptions.some((option) => option.value === current)) return current;
       receivingCardSelectionManualRef.current = false;
       return autoRcPicked?.id || receivingCardOptions[0]?.value || "";
@@ -798,6 +802,7 @@ export default function PriceForm({
   }, [autoRcPicked?.id, receivingCardOptions]);
 
   const rcPicked = useMemo(() => {
+    if (receivingCardId === "__custom__") return { id: "__custom__", label: customReceivingCard.trim() || "Custom Receiving Card", model: customReceivingCard.trim() || "Custom Receiving Card", unitPrice: 0, brand: ctrlSystemBrand };
     const selectedId = receivingCardId || autoRcPicked?.id;
     const selected = catalog.receivingCards?.[selectedId];
     if (!selected) return autoRcPicked;
@@ -808,7 +813,7 @@ export default function PriceForm({
       unitPrice: selected.unitPrice ?? 0,
       pin: selected.pin,
     };
-  }, [autoRcPicked, catalog.receivingCards, receivingCardId]);
+  }, [autoRcPicked, catalog.receivingCards, receivingCardId, customReceivingCard, ctrlSystemBrand]);
 
   // âœ… RC auto unit price + reset override when picked changes
   const rcUnitPriceAuto = useMemo(() => rcPicked?.unitPrice ?? 0, [rcPicked]);
@@ -868,18 +873,20 @@ export default function PriceForm({
 
   const powerSupplyOptions = useMemo(
     () => (catalog.powerSupplies || [])
-      .filter((supply) => supply.brand === psuBrand)
+      .filter((supply) => psuBrand === "__custom__" || supply.brand === psuBrand)
       .map((supply) => ({ value: supply.id, label: supply.model || supply.label || supply.id })),
     [catalog.powerSupplies, psuBrand]
   );
 
   useEffect(() => {
+    if (psuBrand === "__custom__") return;
     if (psuBrandOptions.length && !psuBrandOptions.some((option) => option.value === psuBrand)) {
       setPsuBrand(psuBrandOptions[0].value);
     }
   }, [psuBrand, psuBrandOptions]);
 
   useEffect(() => {
+    if (powerSupplyId === "__custom__") return;
     if (powerSupplyOptions.length && !powerSupplyOptions.some((option) => option.value === powerSupplyId)) {
       setPowerSupplyId(powerSupplyOptions[0].value);
     }
@@ -905,16 +912,23 @@ export default function PriceForm({
   }, [moduleBrand, moduleBrandOptions]);
 
   const psuPicked = useMemo(() => {
+    if (powerSupplyId === "__custom__") return {
+      id: "__custom__", model: customPsuModel.trim() || "Custom Power Supply",
+      label: customPsuModel.trim() || "Custom Power Supply", itemName: "Power Supply",
+      brand: psuBrand === "__custom__" ? customPsuBrand.trim() || "Custom Brand" : psuBrand,
+      price: 0,
+    };
     const selected = (catalog.powerSupplies || []).find((supply) => supply.id === powerSupplyId)
       || (catalog.powerSupplies || []).find((supply) => supply.brand === psuBrand)
       || {};
     const pickedModel = selected.model || "";
     return {
       ...selected,
+      brand: psuBrand === "__custom__" ? customPsuBrand.trim() || "Custom Brand" : selected.brand,
       itemName: powerSupplyItemName(selected.itemName || selected.label, pickedModel),
       model: pickedModel,
     };
-  }, [catalog.powerSupplies, powerSupplyId, psuBrand]);
+  }, [catalog.powerSupplies, powerSupplyId, psuBrand, customPsuBrand, customPsuModel]);
 
   // âœ… PSU unit price (auto + manual) â€” NEW
   const psUnitPriceAuto = useMemo(() => Number(psuPicked.price || 0), [psuPicked.price]);
@@ -1040,10 +1054,12 @@ export default function PriceForm({
         customItem: {
           enabled: customItemEnabled,
           name: customItems[0]?.name.trim() || "",
+          unit: customItems[0]?.unitMode === "custom" ? customItems[0]?.unit?.trim() || "Pcs" : "Pcs",
+          qty: Math.max(0, Math.floor(Number(customItems[0]?.qty ?? 1) || 0)),
           price: customItemEnabled ? parseFloat(customItems[0]?.price || 0) : 0,
         },
         customItems: customItemEnabled
-          ? customItems.map((item) => ({ name: item.name.trim(), price: parseFloat(item.price || 0) }))
+          ? customItems.map((item) => ({ name: item.name.trim(), price: parseFloat(item.price || 0), unit: item.unitMode === "custom" ? item.unit?.trim() || "Pcs" : "Pcs", qty: Math.max(0, Math.floor(Number(item.qty ?? 1) || 0)) }))
           : [],
         psUnitPrice, // âœ… NEW: PSU final unit price
         dispType,
@@ -1055,7 +1071,7 @@ export default function PriceForm({
           module: selectedModuleBrand,
           controller: ctrlSystemBrand,
           receiving: ctrlSystemBrand,
-          psu: psuBrand,
+          psu: psuPicked.brand || psuBrand,
         },
         brandSelections: {
           module: moduleBrand,
@@ -1721,12 +1737,13 @@ export default function PriceForm({
             <CustomSelect
               ariaLabel="Receiving Card"
               value={receivingCardId}
-              options={receivingCardOptions}
+              options={[...receivingCardOptions, { value: "__custom__", label: "Custom Receiving Card" }]}
               onChange={(value) => {
                 receivingCardSelectionManualRef.current = true;
                 setReceivingCardId(value);
               }}
             />
+            {receivingCardId === "__custom__" ? <input className="input" aria-label="Custom Receiving Card" placeholder="Enter receiving card model" value={customReceivingCard} onChange={(e) => setCustomReceivingCard(e.target.value)} /> : null}
           </label>
 
           <label>
@@ -1734,9 +1751,10 @@ export default function PriceForm({
             <CustomSelect
               ariaLabel="Power Supply Brand"
               value={psuBrand}
-              options={psuBrandOptions}
+              options={[...psuBrandOptions, { value: "__custom__", label: "Custom Brand" }]}
               onChange={setPsuBrand}
             />
+            {psuBrand === "__custom__" ? <input className="input" aria-label="Custom Power Supply Brand" placeholder="Enter power supply brand" value={customPsuBrand} onChange={(e) => setCustomPsuBrand(e.target.value)} /> : null}
           </label>
 
           <label>
@@ -1744,9 +1762,10 @@ export default function PriceForm({
             <CustomSelect
               ariaLabel="Power Supply Model"
               value={powerSupplyId}
-              options={powerSupplyOptions}
+              options={[...powerSupplyOptions, { value: "__custom__", label: "Custom Model" }]}
               onChange={setPowerSupplyId}
             />
+            {powerSupplyId === "__custom__" ? <input className="input" aria-label="Custom Power Supply Model" placeholder="Enter power supply model" value={customPsuModel} onChange={(e) => setCustomPsuModel(e.target.value)} /> : null}
           </label>
         </div>
 
@@ -2134,7 +2153,7 @@ export default function PriceForm({
           {customItemEnabled ? (
             <div style={{ marginTop: 10 }}>
               {customItems.map((item, index) => (
-                <div className="form-row" style={{ marginTop: index ? 10 : 0 }} key={item.id}>
+                <div className="form-row custom-item-fields" style={{ marginTop: index ? 10 : 0 }} key={item.id}>
                   <label>
                     Item Name
                     <input
@@ -2159,6 +2178,41 @@ export default function PriceForm({
                       placeholder="e.g. 2500"
                     />
                   </label>
+
+                  <label>
+                    Unit
+                    <CustomSelect
+                      ariaLabel={`Custom item unit ${index + 1}`}
+                      value={item.unitMode || "pcs"}
+                      options={[{ value: "pcs", label: "Pcs" }, { value: "custom", label: "Custom Unit" }]}
+                      onChange={(value) => setCustomItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, unitMode: value } : entry))}
+                    />
+                  </label>
+                  <label>
+                    Qty
+                    <input
+                      className="input"
+                      type="number"
+                      min="0"
+                      step="1"
+                      aria-label={`Custom item quantity ${index + 1}`}
+                      value={item.qty ?? 1}
+                      onChange={(e) => setCustomItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, qty: e.target.value } : entry))}
+                    />
+                  </label>
+                  {item.unitMode === "custom" ? (
+                    <label>
+                      Custom Unit
+                      <input
+                        className="input"
+                        type="text"
+                        aria-label={`Custom item unit name ${index + 1}`}
+                        value={item.unit || ""}
+                        placeholder="e.g. Set, Lot, Meter"
+                        onChange={(e) => setCustomItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, unit: e.target.value } : entry))}
+                      />
+                    </label>
+                  ) : null}
 
                   {customItems.length > 1 ? (
                     <button type="button" className="btn secondary" onClick={() => setCustomItems((current) => current.filter((entry) => entry.id !== item.id))}>

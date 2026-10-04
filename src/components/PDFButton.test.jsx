@@ -2,10 +2,26 @@ import {
   fitPdfTextSize,
   fitRoundedCornerRadius,
   getCataloguePaths,
+  listMarkerFor,
   normalizePdfText,
 } from "./PDFButton";
 
 const cabinetCataloguePath = "Mugnee Product data sheet/Cabinet 640 X 480.pdf";
+
+test("PDF skips automatic markers on custom numbered Sasha rows while preserving Roman lists", () => {
+  const customList = document.createElement("ol");
+  customList.style.listStyleType = "none";
+  customList.innerHTML = '<li><span>01</span>Payment terms</li>';
+  document.body.appendChild(customList);
+  expect(listMarkerFor(customList.firstElementChild)).toBe("");
+  const romanList = document.createElement("ol");
+  romanList.type = "i";
+  romanList.innerHTML = '<li>First</li><li>Second</li>';
+  document.body.appendChild(romanList);
+  expect(listMarkerFor(romanList.lastElementChild)).toBe("ii.");
+  customList.remove();
+  romanList.remove();
+});
 const structureCataloguePath =
   "Mugnee Product data sheet/Recieving Card, PSu and structure/Structure.pdf";
 

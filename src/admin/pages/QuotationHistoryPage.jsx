@@ -34,6 +34,8 @@ export default function QuotationHistoryPage() {
   const [loadingRowId, setLoadingRowId] = useState(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
+  const [month, setMonth] = useState("");
+  const [months, setMonths] = useState([]);
   const [notice, setNotice] = useState("");
 
   const load = useCallback(async () => {
@@ -41,8 +43,23 @@ export default function QuotationHistoryPage() {
     const query = new URLSearchParams({ companyId: String(companyId), limit: "100" });
     if (search) query.set("search", search);
     if (status) query.set("status", status);
+    if (month) query.set("month", month);
     setRows(await get(`/admin/quotations?${query}`));
-  }, [companyId, search, status]);
+  }, [companyId, search, status, month]);
+
+  useEffect(() => {
+    if (!companyId) return;
+    let cancelled = false;
+    setMonths([]);
+    get(`/admin/quotations/months?companyId=${companyId}`).then((data) => {
+      if (!cancelled) setMonths(Array.isArray(data) ? data.filter((item) => /^\d{4}-(0[1-9]|1[0-2])$/.test(item.month)) : []);
+    }).catch((error) => { if (!cancelled) setNotice(error.message); });
+    return () => { cancelled = true; };
+  }, [companyId]);
+
+  const today = new Date();
+  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+  const monthKeys = [...new Set([currentMonth, ...(month ? [month] : []), ...months.map((item) => item.month)])].sort().reverse();
 
   useEffect(() => {
     const timer = setTimeout(() => load().catch((error) => setNotice(error.message)), 200);
@@ -133,6 +150,10 @@ export default function QuotationHistoryPage() {
       <section className="quotation-history-main">
         <div className="quotation-filters admin-panel">
           <label>Search<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Ref no, client or organization..." /></label>
+          <label>Month<select aria-label="Filter quotations by month" value={month} onChange={(event) => setMonth(event.target.value)}>
+            <option value="">All Months</option>
+            {monthKeys.map((key) => <option key={key} value={key}>{new Date(`${key}-01T00:00:00`).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</option>)}
+          </select></label>
           <label>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">All Status</option>{["final", "sent", "approved", "draft", "rejected", "expired"].map((item) => <option key={item}>{item}</option>)}</select></label>
         </div>
         <div className="admin-table-wrap admin-panel quotation-list">

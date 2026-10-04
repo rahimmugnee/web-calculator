@@ -128,6 +128,27 @@ test("uses dropdowns for display structure choices", () => {
   expect(screen.getByRole("button", { name: "Payment Terms" })).toHaveTextContent("75% Advance, 25% before Installation");
 });
 
+test("exports custom receiving card and power supply selections", async () => {
+  const onChange = jest.fn();
+  renderPriceForm({ onChange });
+  fireEvent.click(screen.getByRole("button", { name: "Receiving Card" }));
+  fireEvent.click(screen.getByRole("option", { name: "Custom Receiving Card" }));
+  fireEvent.change(screen.getByLabelText("Custom Receiving Card"), { target: { value: "RC-X" } });
+  fireEvent.click(screen.getByRole("button", { name: "Power Supply Brand" }));
+  fireEvent.click(screen.getByRole("option", { name: "Custom Brand" }));
+  fireEvent.change(screen.getByLabelText("Custom Power Supply Brand"), { target: { value: "Example PSU" } });
+  fireEvent.click(screen.getByRole("button", { name: "Power Supply Model" }));
+  fireEvent.click(screen.getByRole("option", { name: "Custom Model" }));
+  fireEvent.change(screen.getByLabelText("Custom Power Supply Model"), { target: { value: "PS-X" } });
+  await waitFor(() => {
+    const items = onChange.mock.calls.at(-1)[0].items;
+    expect(items.receivingPicked.model).toBe("RC-X");
+    expect(items.psuPicked.model).toBe("PS-X");
+    expect(items.psuPicked.brand).toBe("Example PSU");
+    expect(items.brands.psu).toBe("Example PSU");
+  });
+});
+
 test("accepts a custom module brand and exports the typed brand name", async () => {
   const onChange = jest.fn();
   renderPriceForm({ onChange });

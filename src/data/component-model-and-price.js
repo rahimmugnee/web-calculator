@@ -45,9 +45,35 @@ export const componentModelAndPrice = {
     }
   },
   "moduleBrandPrices": {
+    "Lampro": {
+      "smd-in-p1_25": { "default": 9300 },
+      "smd-in-p1_53": { "default": 6082 },
+      "smd-in-p1_86": { "default": 4020 },
+      "smd-in-p2": { "default": 3000 },
+      "smd-in-p2_5": { "default": 2350 },
+      "smd-in-p3": { "default": 2850 },
+      "smd-out-p2_5": { "default": 6500 },
+      "smd-out-p3": { "default": 2618 },
+      "smd-out-p3.91": { "default": 3500 },
+      "smd-out-p4": { "default": 2850 },
+      "smd-out-p5": { "default": 2350 },
+      "smd-out-p6": { "default": 1860 },
+      "smd-out-p6_67": { "default": 2205 },
+      "smd-out-p8": { "default": 1929 },
+      "smd-out-p10": { "default": 1677 },
+      "gob-in-p1_25": { "default": 5800 },
+      "gob-in-p1_53": { "default": 4600 },
+      "gob-in-p1_86": { "default": 4350 },
+      "gob-in-p2": { "default": 3618 },
+      "gob-in-p2.5": { "default": 2950 },
+      "gob-in-p3": { "default": 4000 },
+      "cob-in-p1_25": { "default": 13000 },
+      "cob-in-p1_53": { "default": 8700 },
+      "cob-in-p1_86": { "default": 5800 }
+    },
     "Absen": {
-      "smd-in-p1_53": { "default": 6232 },
       "smd-in-p1_25": { "default": 9450 },
+      "smd-in-p1_53": { "default": 6232 },
       "smd-in-p1_86": { "default": 4170 },
       "smd-in-p2": { "default": 3150 },
       "smd-in-p2_5": { "default": 2500 },
@@ -68,8 +94,8 @@ export const componentModelAndPrice = {
       "gob-in-p2.5": { "default": 3100 },
       "gob-in-p3": { "default": 4150 },
       "cob-in-p1_25": { "default": 12650 },
-      "cob-in-p1_86": { "default": 5950 },
-      "cob-in-p1_53": { "default": 8850 }
+      "cob-in-p1_53": { "default": 8850 },
+      "cob-in-p1_86": { "default": 5950 }
     },
     "Leyard": {
       "smd-in-p1_25": { "default": 9550 },
@@ -81,47 +107,21 @@ export const componentModelAndPrice = {
       "smd-out-p2_5": { "default": 6750 },
       "smd-out-p3": { "default": 2868 },
       "smd-out-p3.91": { "default": 3750 },
-      "smd-out-p5": { "default": 2600 },
       "smd-out-p4": { "default": 3000 },
+      "smd-out-p5": { "default": 2600 },
       "smd-out-p6": { "default": 2110 },
-      "smd-out-p8": { "default": 2179 },
       "smd-out-p6_67": { "default": 2455 },
+      "smd-out-p8": { "default": 2179 },
       "smd-out-p10": { "default": 1927 },
-      "gob-in-p1_53": { "default": 4850 },
       "gob-in-p1_25": { "default": 6050 },
+      "gob-in-p1_53": { "default": 4850 },
       "gob-in-p1_86": { "default": 4600 },
-      "gob-in-p2.5": { "default": 3200 },
       "gob-in-p2": { "default": 3868 },
+      "gob-in-p2.5": { "default": 3200 },
       "gob-in-p3": { "default": 4250 },
       "cob-in-p1_25": { "default": 12750 },
       "cob-in-p1_53": { "default": 8950 },
       "cob-in-p1_86": { "default": 6050 }
-    },
-    "Lampro": {
-      "smd-in-p1_25": { "default": 9300 },
-      "smd-in-p1_53": { "default": 6082 },
-      "smd-in-p1_86": { "default": 4020 },
-      "smd-in-p3": { "default": 2850 },
-      "smd-in-p2": { "default": 3000 },
-      "smd-in-p2_5": { "default": 2350 },
-      "smd-out-p2_5": { "default": 6500 },
-      "smd-out-p3": { "default": 2618 },
-      "smd-out-p3.91": { "default": 3500 },
-      "smd-out-p4": { "default": 2850 },
-      "smd-out-p5": { "default": 2350 },
-      "smd-out-p6_67": { "default": 2205 },
-      "smd-out-p8": { "default": 1929 },
-      "smd-out-p10": { "default": 1677 },
-      "gob-in-p1_25": { "default": 5800 },
-      "gob-in-p1_53": { "default": 4600 },
-      "gob-in-p2": { "default": 3618 },
-      "gob-in-p2.5": { "default": 2950 },
-      "gob-in-p3": { "default": 4000 },
-      "cob-in-p1_25": { "default": 13000 },
-      "cob-in-p1_53": { "default": 8700 },
-      "cob-in-p1_86": { "default": 5800 },
-      "gob-in-p1_86": { "default": 4350 },
-      "smd-out-p6": { "default": 1860 }
     },
     "Synoveta": {
       "smd-in-p1_25": { "default": 9050 },
@@ -151,9 +151,35 @@ export const componentModelAndPrice = {
     }
   },
   "moduleBrandModelNames": {
+    "Lampro": {
+      "smd-in-p1_25": "LC1.25P",
+      "smd-in-p1_53": "LC1.53P",
+      "smd-in-p1_86": "LC1.86P",
+      "smd-in-p2": "LC2P",
+      "smd-in-p2_5": "LC2.5P",
+      "smd-in-p3": "LC3P",
+      "smd-out-p2_5": "LC2.5PO",
+      "smd-out-p3": "LC3.076PO",
+      "smd-out-p3.91": "LR3.91O",
+      "smd-out-p4": "LC4PO",
+      "smd-out-p5": "LC5PO",
+      "smd-out-p6": "LC6PO",
+      "smd-out-p6_67": "LC6.667PO",
+      "smd-out-p8": "LC8PO",
+      "smd-out-p10": "LC10PO",
+      "gob-in-p1_25": "LC1.25P GOB",
+      "gob-in-p1_53": "LC1.53P GOB",
+      "gob-in-p1_86": "LC1.86P GOB",
+      "gob-in-p2": "LC2P GOB",
+      "gob-in-p2.5": "LC2.5P GOB",
+      "gob-in-p3": "LC3P GOB",
+      "cob-in-p1_25": "LC COB 1.25",
+      "cob-in-p1_53": "LC COB 1.53",
+      "cob-in-p1_86": "LC COB 1.86"
+    },
     "Absen": {
-      "smd-in-p1_53": "P1.53",
       "smd-in-p1_25": "P1.25",
+      "smd-in-p1_53": "P1.53",
       "smd-in-p1_86": "P1.86",
       "smd-in-p2": "P2",
       "smd-in-p2_5": "P2.5",
@@ -174,8 +200,8 @@ export const componentModelAndPrice = {
       "gob-in-p2.5": "P2.5",
       "gob-in-p3": "P3",
       "cob-in-p1_25": "P1.25",
-      "cob-in-p1_86": "P1.86",
-      "cob-in-p1_53": "P1.53"
+      "cob-in-p1_53": "P1.53",
+      "cob-in-p1_86": "P1.86"
     },
     "Leyard": {
       "smd-in-p1_25": "P1.25",
@@ -187,52 +213,44 @@ export const componentModelAndPrice = {
       "smd-out-p2_5": "P2.5",
       "smd-out-p3": "P3",
       "smd-out-p3.91": "P3.91",
-      "smd-out-p5": "P5",
       "smd-out-p4": "P4",
+      "smd-out-p5": "P5",
       "smd-out-p6": "P6",
-      "smd-out-p8": "P8",
       "smd-out-p6_67": "P6.67",
+      "smd-out-p8": "P8",
       "smd-out-p10": "P10",
-      "gob-in-p1_53": "P1.53",
       "gob-in-p1_25": "P1.25",
+      "gob-in-p1_53": "P1.53",
       "gob-in-p1_86": "P1.86",
-      "gob-in-p2.5": "P2.5",
       "gob-in-p2": "P2",
+      "gob-in-p2.5": "P2.5",
       "gob-in-p3": "P3",
       "cob-in-p1_25": "P1.25",
       "cob-in-p1_53": "P1.53",
       "cob-in-p1_86": "P1.86"
     },
-    "Lampro": {
-      "smd-in-p1_25": "LC1.25P",
-      "smd-in-p1_53": "LC1.53P",
-      "smd-in-p1_86": "LC1.86P",
-      "smd-in-p3": "LC3P",
-      "smd-in-p2": "LC2P",
-      "smd-in-p2_5": "LC2.5P",
-      "smd-out-p2_5": "LC2.5PO",
-      "smd-out-p3": "LC3.076PO",
-      "smd-out-p3.91": "LR3.91O",
-      "smd-out-p4": "LC4PO",
-      "smd-out-p5": "LC5PO",
-      "smd-out-p6_67": "LC6.667PO",
-      "smd-out-p8": "LC8PO",
-      "smd-out-p10": "LC10PO",
-      "gob-in-p1_25": "LC1.25P GOB",
-      "gob-in-p1_53": "LC1.53P GOB",
-      "gob-in-p2": "LC2P GOB",
-      "gob-in-p2.5": "LC2.5P GOB",
-      "gob-in-p3": "LC3P GOB",
-      "cob-in-p1_25": "LC COB 1.25",
-      "cob-in-p1_53": "LC COB 1.53",
-      "cob-in-p1_86": "LC COB 1.86",
-      "gob-in-p1_86": "LC1.86P GOB",
-      "smd-out-p6": "LC6PO"
-    },
     "Synoveta": {
       "smd-in-p1_25": "SVC 1.25P",
       "smd-in-p1_53": "SVC 1.53P",
       "smd-in-p1_86": "SVC 1.86P",
+      "smd-in-p2": "P2",
+      "smd-in-p2_5": "P2.5",
+      "smd-in-p3": "P3",
+      "smd-out-p2_5": "P2.5",
+      "smd-out-p3": "P3",
+      "smd-out-p3.91": "P3.91",
+      "smd-out-p4": "P4",
+      "smd-out-p5": "P5",
+      "smd-out-p6": "P6",
+      "smd-out-p6_67": "P6.67",
+      "smd-out-p8": "P8",
+      "smd-out-p10": "P10",
+      "gob-in-p1_25": "P1.25",
+      "gob-in-p1_53": "P1.53",
+      "gob-in-p1_86": "P1.86",
+      "gob-in-p2": "P2",
+      "gob-in-p2.5": "P2.5",
+      "gob-in-p3": "P3",
       "cob-in-p1_25": "SVC 1.25P",
       "cob-in-p1_53": "SVC 1.53P",
       "cob-in-p1_86": "SVC 1.86P"
@@ -340,12 +358,12 @@ export const componentModelAndPrice = {
     ]
   },
   "receivingCards": {
-    "NS_NV3210": { "pin": 26, "unit": "Pcs", "brand": "Novastar", "label": "Receiving Card: NV3210", "model": "NV3210", "itemName": "Receiving Card: NV3210", "unitPrice": 4000, "id": "NS_NV3210" },
-    "NS_NV7512": { "pin": 16, "unit": "Pcs", "brand": "Novastar", "label": "Receiving Card: NV7512", "model": "NV7512", "itemName": "Receiving Card: NV7512", "unitPrice": 2900, "id": "NS_NV7512" },
-    "NS_A5S_26": { "pin": 26, "unit": "Pcs", "brand": "Novastar", "label": "Receiving Card: A5s Plus", "model": "A5s Plus", "itemName": "Receiving Card: A5s Plus", "unitPrice": 3100, "id": "NS_A5S_26" },
-    "NS_A5S_16": { "pin": 16, "unit": "Pcs", "brand": "Novastar", "label": "Receiving Card: A5s Plus", "model": "A5s Plus", "itemName": "Receiving Card: A5s Plus", "unitPrice": 2600, "id": "NS_A5S_16" },
-    "R732": { "unit": "Pcs", "brand": "Huidu", "label": "Receiving Card: R-732", "model": "R-732", "itemName": "Receiving Card: R-732", "unitPrice": 2950, "cobUnitPrice": 2900, "id": "R732" },
-    "R712": { "unit": "Pcs", "brand": "Huidu", "label": "Receiving Card: R-712", "model": "R-712", "itemName": "Receiving Card: R-712", "unitPrice": 2500, "id": "R712" }
+    "NS_NV3210": { "id": "NS_NV3210", "pin": 26, "unit": "Pcs", "brand": "Novastar", "label": "Receiving Card: NV3210", "model": "NV3210", "itemName": "Receiving Card: NV3210", "unitPrice": 4000 },
+    "NS_NV7512": { "id": "NS_NV7512", "pin": 16, "unit": "Pcs", "brand": "Novastar", "label": "Receiving Card: NV7512", "model": "NV7512", "itemName": "Receiving Card: NV7512", "unitPrice": 2900 },
+    "NS_A5S_26": { "id": "NS_A5S_26", "pin": 26, "unit": "Pcs", "brand": "Novastar", "label": "Receiving Card: A5s Plus", "model": "A5s Plus", "itemName": "Receiving Card: A5s Plus", "unitPrice": 3100 },
+    "NS_A5S_16": { "id": "NS_A5S_16", "pin": 16, "unit": "Pcs", "brand": "Novastar", "label": "Receiving Card: A5s Plus", "model": "A5s Plus", "itemName": "Receiving Card: A5s Plus", "unitPrice": 2600 },
+    "R732": { "id": "R732", "unit": "Pcs", "brand": "Huidu", "label": "Receiving Card: R-732", "model": "R-732", "itemName": "Receiving Card: R-732", "unitPrice": 2950, "cobUnitPrice": 2900 },
+    "R712": { "id": "R712", "unit": "Pcs", "brand": "Huidu", "label": "Receiving Card: R-712", "model": "R-712", "itemName": "Receiving Card: R-712", "unitPrice": 2500 }
   },
   "powerSupplies": [
     { "id": "PS_LD200", "label": "Power Supply: LD-200", "price": 1600, "itemName": "Power Supply: LD-200", "brand": "Lampro", "model": "LD-200", "unit": "Pcs" },
@@ -355,25 +373,24 @@ export const componentModelAndPrice = {
   "cabinetCasePrice": 8000,
   "modulesPerCabinet": 6,
   "cabinetOptions": [
-    { "id": "cabinet_indoor_aluminium_640x480", "unit": "Pcs", "brand": "", "label": "640mm x 480mm", "model": "", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Aluminium 640mm x 480mm", "displayType": "indoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "modulesPerCabinet": 6, "sourceKey": "led:cabinet:cabinet_indoor_aluminium_640x480", "sourceCatalog": "admin", "catalogRole": "base" },
-    { "id": "led:cabinet:cabinet_indoor_aluminium_640x480", "unit": "Pcs", "brand": "ABC", "label": "640mm x 480mm", "model": "", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Aluminium 640mm x 480mm", "displayType": "indoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "modulesPerCabinet": 6, "sourceKey": "led:cabinet:cabinet_indoor_aluminium_640x480", "sourceCatalog": "admin", "catalogRole": "model" },
-    { "id": "cabinet_indoor_aluminium_640x640", "unit": "Pcs", "brand": "", "label": "640mm x 640mm", "model": "", "price": 8000, "sizeKey": "640x640", "widthMm": 640, "heightMm": 640, "itemName": "Aluminium 640mm x 640mm", "displayType": "indoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "modulesPerCabinet": 8, "sourceKey": "led:cabinet:cabinet_indoor_aluminium_640x640", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_mild_steel_open_640x480", "unit": "Pcs", "brand": "", "label": "640mm x 480mm", "model": "", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Mild Steel Open 640mm x 480mm", "displayType": "outdoor", "variantCode": "open", "materialCode": "mild_steel", "variantLabel": "Open", "materialLabel": "Mild Steel", "modulesPerCabinet": 6, "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_open_640x480", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_mild_steel_open_640x640", "unit": "Pcs", "brand": "", "label": "640mm x 640mm", "model": "", "price": 8000, "sizeKey": "640x640", "widthMm": 640, "heightMm": 640, "itemName": "Mild Steel Open 640mm x 640mm", "displayType": "outdoor", "variantCode": "open", "materialCode": "mild_steel", "variantLabel": "Open", "materialLabel": "Mild Steel", "modulesPerCabinet": 8, "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_open_640x640", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_mild_steel_open_960x960", "unit": "Pcs", "brand": "", "label": "960mm x 960mm", "model": "", "price": 8000, "sizeKey": "960x960", "widthMm": 960, "heightMm": 960, "itemName": "Mild Steel Open 960mm x 960mm", "displayType": "outdoor", "variantCode": "open", "materialCode": "mild_steel", "variantLabel": "Open", "materialLabel": "Mild Steel", "modulesPerCabinet": 18, "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_open_960x960", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_mild_steel_open_1280x1280", "unit": "Pcs", "brand": "", "label": "1280mm x 1280mm", "model": "", "price": 8000, "sizeKey": "1280x1280", "widthMm": 1280, "heightMm": 1280, "itemName": "Mild Steel Open 1280mm x 1280mm", "displayType": "outdoor", "variantCode": "open", "materialCode": "mild_steel", "variantLabel": "Open", "materialLabel": "Mild Steel", "modulesPerCabinet": 32, "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_open_1280x1280", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_mild_steel_backdoor_640x480", "unit": "Pcs", "brand": "", "label": "640mm x 480mm", "model": "", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Mild Steel Backdoor 640mm x 480mm", "displayType": "outdoor", "variantCode": "backdoor", "materialCode": "mild_steel", "variantLabel": "Backdoor", "materialLabel": "Mild Steel", "modulesPerCabinet": 6, "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_backdoor_640x480", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_mild_steel_backdoor_640x640", "unit": "Pcs", "brand": "", "label": "640mm x 640mm", "model": "", "price": 8000, "sizeKey": "640x640", "widthMm": 640, "heightMm": 640, "itemName": "Mild Steel Backdoor 640mm x 640mm", "displayType": "outdoor", "variantCode": "backdoor", "materialCode": "mild_steel", "variantLabel": "Backdoor", "materialLabel": "Mild Steel", "modulesPerCabinet": 8, "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_backdoor_640x640", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_mild_steel_backdoor_960x960", "unit": "Pcs", "brand": "", "label": "960mm x 960mm", "model": "", "price": 8000, "sizeKey": "960x960", "widthMm": 960, "heightMm": 960, "itemName": "Mild Steel Backdoor 960mm x 960mm", "displayType": "outdoor", "variantCode": "backdoor", "materialCode": "mild_steel", "variantLabel": "Backdoor", "materialLabel": "Mild Steel", "modulesPerCabinet": 18, "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_backdoor_960x960", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_mild_steel_backdoor_1280x1280", "unit": "Pcs", "brand": "", "label": "1280mm x 1280mm", "model": "", "price": 8000, "sizeKey": "1280x1280", "widthMm": 1280, "heightMm": 1280, "itemName": "Mild Steel Backdoor 1280mm x 1280mm", "displayType": "outdoor", "variantCode": "backdoor", "materialCode": "mild_steel", "variantLabel": "Backdoor", "materialLabel": "Mild Steel", "modulesPerCabinet": 32, "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_backdoor_1280x1280", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_magnesium_640x480", "unit": "Pcs", "brand": "", "label": "640mm x 480mm", "model": "", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Magnesium 640mm x 480mm", "displayType": "outdoor", "variantCode": "", "materialCode": "magnesium", "variantLabel": "", "materialLabel": "Magnesium", "modulesPerCabinet": 6, "sourceKey": "led:cabinet:cabinet_outdoor_magnesium_640x480", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_magnesium_640x640", "unit": "Pcs", "brand": "", "label": "640mm x 640mm", "model": "", "price": 8000, "sizeKey": "640x640", "widthMm": 640, "heightMm": 640, "itemName": "Magnesium 640mm x 640mm", "displayType": "outdoor", "variantCode": "", "materialCode": "magnesium", "variantLabel": "", "materialLabel": "Magnesium", "modulesPerCabinet": 8, "sourceKey": "led:cabinet:cabinet_outdoor_magnesium_640x640", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_magnesium_960x960", "unit": "Pcs", "brand": "", "label": "960mm x 960mm", "model": "", "price": 8000, "sizeKey": "960x960", "widthMm": 960, "heightMm": 960, "itemName": "Magnesium 960mm x 960mm", "displayType": "outdoor", "variantCode": "", "materialCode": "magnesium", "variantLabel": "", "materialLabel": "Magnesium", "modulesPerCabinet": 18, "sourceKey": "led:cabinet:cabinet_outdoor_magnesium_960x960", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_magnesium_1280x1280", "unit": "Pcs", "brand": "", "label": "1280mm x 1280mm", "model": "", "price": 8000, "sizeKey": "1280x1280", "widthMm": 1280, "heightMm": 1280, "itemName": "Magnesium 1280mm x 1280mm", "displayType": "outdoor", "variantCode": "", "materialCode": "magnesium", "variantLabel": "", "materialLabel": "Magnesium", "modulesPerCabinet": 32, "sourceKey": "led:cabinet:cabinet_outdoor_magnesium_1280x1280", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_aluminium_640x480", "unit": "Pcs", "brand": "", "label": "640mm x 480mm", "model": "", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Aluminium 640mm x 480mm", "displayType": "outdoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "modulesPerCabinet": 6, "sourceKey": "led:cabinet:cabinet_outdoor_aluminium_640x480", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_aluminium_640x640", "unit": "Pcs", "brand": "", "label": "640mm x 640mm", "model": "", "price": 8000, "sizeKey": "640x640", "widthMm": 640, "heightMm": 640, "itemName": "Aluminium 640mm x 640mm", "displayType": "outdoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "modulesPerCabinet": 8, "sourceKey": "led:cabinet:cabinet_outdoor_aluminium_640x640", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_aluminium_960x960", "unit": "Pcs", "brand": "", "label": "960mm x 960mm", "model": "", "price": 8000, "sizeKey": "960x960", "widthMm": 960, "heightMm": 960, "itemName": "Aluminium 960mm x 960mm", "displayType": "outdoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "modulesPerCabinet": 18, "sourceKey": "led:cabinet:cabinet_outdoor_aluminium_960x960", "sourceCatalog": "static-js", "catalogRole": "base" },
-    { "id": "cabinet_outdoor_aluminium_1280x1280", "unit": "Pcs", "brand": "", "label": "1280mm x 1280mm", "model": "", "price": 8000, "sizeKey": "1280x1280", "widthMm": 1280, "heightMm": 1280, "itemName": "Aluminium 1280mm x 1280mm", "displayType": "outdoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "modulesPerCabinet": 32, "sourceKey": "led:cabinet:cabinet_outdoor_aluminium_1280x1280", "sourceCatalog": "static-js", "catalogRole": "base" }
+    { "id": "cabinet_indoor_aluminium_640x480", "unit": "Pcs", "brand": "", "label": "640mm x 480mm", "model": "", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Aluminium 640mm x 480mm", "sourceKey": "led:cabinet:cabinet_indoor_aluminium_640x480", "catalogRole": "base", "displayType": "indoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "sourceCatalog": "static-js", "modulesPerCabinet": 6 },
+    { "id": "cabinet_indoor_aluminium_640x640", "unit": "Pcs", "brand": "", "label": "640mm x 640mm", "model": "", "price": 8000, "sizeKey": "640x640", "widthMm": 640, "heightMm": 640, "itemName": "Aluminium 640mm x 640mm", "sourceKey": "led:cabinet:cabinet_indoor_aluminium_640x640", "catalogRole": "base", "displayType": "indoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "sourceCatalog": "static-js", "modulesPerCabinet": 8 },
+    { "id": "cabinet_outdoor_mild_steel_open_640x480", "unit": "Pcs", "brand": "", "label": "640mm x 480mm", "model": "", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Mild Steel Open 640mm x 480mm", "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_open_640x480", "catalogRole": "base", "displayType": "outdoor", "variantCode": "open", "materialCode": "mild_steel", "variantLabel": "Open", "materialLabel": "Mild Steel", "sourceCatalog": "static-js", "modulesPerCabinet": 6 },
+    { "id": "cabinet_outdoor_mild_steel_open_640x640", "unit": "Pcs", "brand": "", "label": "640mm x 640mm", "model": "", "price": 8000, "sizeKey": "640x640", "widthMm": 640, "heightMm": 640, "itemName": "Mild Steel Open 640mm x 640mm", "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_open_640x640", "catalogRole": "base", "displayType": "outdoor", "variantCode": "open", "materialCode": "mild_steel", "variantLabel": "Open", "materialLabel": "Mild Steel", "sourceCatalog": "static-js", "modulesPerCabinet": 8 },
+    { "id": "cabinet_outdoor_mild_steel_open_960x960", "unit": "Pcs", "brand": "", "label": "960mm x 960mm", "model": "", "price": 8000, "sizeKey": "960x960", "widthMm": 960, "heightMm": 960, "itemName": "Mild Steel Open 960mm x 960mm", "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_open_960x960", "catalogRole": "base", "displayType": "outdoor", "variantCode": "open", "materialCode": "mild_steel", "variantLabel": "Open", "materialLabel": "Mild Steel", "sourceCatalog": "static-js", "modulesPerCabinet": 18 },
+    { "id": "cabinet_outdoor_mild_steel_open_1280x1280", "unit": "Pcs", "brand": "", "label": "1280mm x 1280mm", "model": "", "price": 8000, "sizeKey": "1280x1280", "widthMm": 1280, "heightMm": 1280, "itemName": "Mild Steel Open 1280mm x 1280mm", "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_open_1280x1280", "catalogRole": "base", "displayType": "outdoor", "variantCode": "open", "materialCode": "mild_steel", "variantLabel": "Open", "materialLabel": "Mild Steel", "sourceCatalog": "static-js", "modulesPerCabinet": 32 },
+    { "id": "cabinet_outdoor_mild_steel_backdoor_640x480", "unit": "Pcs", "brand": "", "label": "640mm x 480mm", "model": "", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Mild Steel Backdoor 640mm x 480mm", "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_backdoor_640x480", "catalogRole": "base", "displayType": "outdoor", "variantCode": "backdoor", "materialCode": "mild_steel", "variantLabel": "Backdoor", "materialLabel": "Mild Steel", "sourceCatalog": "static-js", "modulesPerCabinet": 6 },
+    { "id": "cabinet_outdoor_mild_steel_backdoor_640x640", "unit": "Pcs", "brand": "", "label": "640mm x 640mm", "model": "", "price": 8000, "sizeKey": "640x640", "widthMm": 640, "heightMm": 640, "itemName": "Mild Steel Backdoor 640mm x 640mm", "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_backdoor_640x640", "catalogRole": "base", "displayType": "outdoor", "variantCode": "backdoor", "materialCode": "mild_steel", "variantLabel": "Backdoor", "materialLabel": "Mild Steel", "sourceCatalog": "static-js", "modulesPerCabinet": 8 },
+    { "id": "cabinet_outdoor_mild_steel_backdoor_960x960", "unit": "Pcs", "brand": "", "label": "960mm x 960mm", "model": "", "price": 8000, "sizeKey": "960x960", "widthMm": 960, "heightMm": 960, "itemName": "Mild Steel Backdoor 960mm x 960mm", "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_backdoor_960x960", "catalogRole": "base", "displayType": "outdoor", "variantCode": "backdoor", "materialCode": "mild_steel", "variantLabel": "Backdoor", "materialLabel": "Mild Steel", "sourceCatalog": "static-js", "modulesPerCabinet": 18 },
+    { "id": "cabinet_outdoor_mild_steel_backdoor_1280x1280", "unit": "Pcs", "brand": "", "label": "1280mm x 1280mm", "model": "", "price": 8000, "sizeKey": "1280x1280", "widthMm": 1280, "heightMm": 1280, "itemName": "Mild Steel Backdoor 1280mm x 1280mm", "sourceKey": "led:cabinet:cabinet_outdoor_mild_steel_backdoor_1280x1280", "catalogRole": "base", "displayType": "outdoor", "variantCode": "backdoor", "materialCode": "mild_steel", "variantLabel": "Backdoor", "materialLabel": "Mild Steel", "sourceCatalog": "static-js", "modulesPerCabinet": 32 },
+    { "id": "cabinet_outdoor_magnesium_640x480", "unit": "Pcs", "brand": "", "label": "640mm x 480mm", "model": "", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Magnesium 640mm x 480mm", "sourceKey": "led:cabinet:cabinet_outdoor_magnesium_640x480", "catalogRole": "base", "displayType": "outdoor", "variantCode": "", "materialCode": "magnesium", "variantLabel": "", "materialLabel": "Magnesium", "sourceCatalog": "static-js", "modulesPerCabinet": 6 },
+    { "id": "cabinet_outdoor_magnesium_640x640", "unit": "Pcs", "brand": "", "label": "640mm x 640mm", "model": "", "price": 8000, "sizeKey": "640x640", "widthMm": 640, "heightMm": 640, "itemName": "Magnesium 640mm x 640mm", "sourceKey": "led:cabinet:cabinet_outdoor_magnesium_640x640", "catalogRole": "base", "displayType": "outdoor", "variantCode": "", "materialCode": "magnesium", "variantLabel": "", "materialLabel": "Magnesium", "sourceCatalog": "static-js", "modulesPerCabinet": 8 },
+    { "id": "cabinet_outdoor_magnesium_960x960", "unit": "Pcs", "brand": "", "label": "960mm x 960mm", "model": "", "price": 8000, "sizeKey": "960x960", "widthMm": 960, "heightMm": 960, "itemName": "Magnesium 960mm x 960mm", "sourceKey": "led:cabinet:cabinet_outdoor_magnesium_960x960", "catalogRole": "base", "displayType": "outdoor", "variantCode": "", "materialCode": "magnesium", "variantLabel": "", "materialLabel": "Magnesium", "sourceCatalog": "static-js", "modulesPerCabinet": 18 },
+    { "id": "cabinet_outdoor_magnesium_1280x1280", "unit": "Pcs", "brand": "", "label": "1280mm x 1280mm", "model": "", "price": 8000, "sizeKey": "1280x1280", "widthMm": 1280, "heightMm": 1280, "itemName": "Magnesium 1280mm x 1280mm", "sourceKey": "led:cabinet:cabinet_outdoor_magnesium_1280x1280", "catalogRole": "base", "displayType": "outdoor", "variantCode": "", "materialCode": "magnesium", "variantLabel": "", "materialLabel": "Magnesium", "sourceCatalog": "static-js", "modulesPerCabinet": 32 },
+    { "id": "cabinet_outdoor_aluminium_640x480", "unit": "Pcs", "brand": "", "label": "640mm x 480mm", "model": "", "price": 8000, "sizeKey": "640x480", "widthMm": 640, "heightMm": 480, "itemName": "Aluminium 640mm x 480mm", "sourceKey": "led:cabinet:cabinet_outdoor_aluminium_640x480", "catalogRole": "base", "displayType": "outdoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "sourceCatalog": "static-js", "modulesPerCabinet": 6 },
+    { "id": "cabinet_outdoor_aluminium_640x640", "unit": "Pcs", "brand": "", "label": "640mm x 640mm", "model": "", "price": 8000, "sizeKey": "640x640", "widthMm": 640, "heightMm": 640, "itemName": "Aluminium 640mm x 640mm", "sourceKey": "led:cabinet:cabinet_outdoor_aluminium_640x640", "catalogRole": "base", "displayType": "outdoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "sourceCatalog": "static-js", "modulesPerCabinet": 8 },
+    { "id": "cabinet_outdoor_aluminium_960x960", "unit": "Pcs", "brand": "", "label": "960mm x 960mm", "model": "", "price": 8000, "sizeKey": "960x960", "widthMm": 960, "heightMm": 960, "itemName": "Aluminium 960mm x 960mm", "sourceKey": "led:cabinet:cabinet_outdoor_aluminium_960x960", "catalogRole": "base", "displayType": "outdoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "sourceCatalog": "static-js", "modulesPerCabinet": 18 },
+    { "id": "cabinet_outdoor_aluminium_1280x1280", "unit": "Pcs", "brand": "", "label": "1280mm x 1280mm", "model": "", "price": 8000, "sizeKey": "1280x1280", "widthMm": 1280, "heightMm": 1280, "itemName": "Aluminium 1280mm x 1280mm", "sourceKey": "led:cabinet:cabinet_outdoor_aluminium_1280x1280", "catalogRole": "base", "displayType": "outdoor", "variantCode": "", "materialCode": "aluminium", "variantLabel": "", "materialLabel": "Aluminium", "sourceCatalog": "static-js", "modulesPerCabinet": 32 }
   ],
   "cabinetSizes": [
     { "id": "cabinet_640x480", "label": "640mm x 480mm", "widthMm": 640, "heightMm": 480, "modulesPerCabinet": 6 },
@@ -528,20 +545,20 @@ export const componentModelAndPrice = {
   },
   "moduleBrandModelIds": {
     "Absen": [
-      "smd-in-p1_25",
-      "gob-in-p1_25",
       "cob-in-p1_25",
+      "gob-in-p1_25",
+      "smd-in-p1_25",
+      "gob-in-p1_53",
       "cob-in-p1_53",
       "smd-in-p1_53",
-      "gob-in-p1_53",
-      "smd-in-p1_86",
       "cob-in-p1_86",
+      "smd-in-p1_86",
       "gob-in-p1_86",
       "smd-out-p10",
       "gob-in-p2",
       "smd-in-p2",
-      "smd-in-p2_5",
       "gob-in-p2.5",
+      "smd-in-p2_5",
       "smd-out-p2_5",
       "smd-in-p3",
       "gob-in-p3",
@@ -555,17 +572,17 @@ export const componentModelAndPrice = {
     ],
     "Lampro": [
       "smd-in-p1_25",
-      "cob-in-p1_25",
       "gob-in-p1_25",
+      "cob-in-p1_25",
       "smd-in-p1_53",
-      "gob-in-p1_53",
       "cob-in-p1_53",
-      "gob-in-p1_86",
+      "gob-in-p1_53",
       "smd-in-p1_86",
       "cob-in-p1_86",
+      "gob-in-p1_86",
       "smd-out-p10",
-      "smd-in-p2",
       "gob-in-p2",
+      "smd-in-p2",
       "smd-in-p2_5",
       "gob-in-p2.5",
       "smd-out-p2_5",
@@ -580,23 +597,23 @@ export const componentModelAndPrice = {
       "smd-out-p8"
     ],
     "Leyard": [
+      "gob-in-p1_25",
       "smd-in-p1_25",
       "cob-in-p1_25",
-      "gob-in-p1_25",
-      "smd-in-p1_53",
       "gob-in-p1_53",
       "cob-in-p1_53",
+      "smd-in-p1_53",
       "gob-in-p1_86",
-      "cob-in-p1_86",
       "smd-in-p1_86",
+      "cob-in-p1_86",
       "smd-out-p10",
-      "smd-in-p2",
       "gob-in-p2",
+      "smd-in-p2",
       "smd-in-p2_5",
       "gob-in-p2.5",
       "smd-out-p2_5",
-      "gob-in-p3",
       "smd-in-p3",
+      "gob-in-p3",
       "smd-out-p3",
       "smd-out-p3.91",
       "smd-out-p4",
@@ -607,35 +624,35 @@ export const componentModelAndPrice = {
     ],
     "Synoveta": [
       "smd-in-p1_25",
-      "gob-in-p1_25",
       "cob-in-p1_25",
+      "gob-in-p1_25",
+      "cob-in-p1_53",
       "smd-in-p1_53",
       "gob-in-p1_53",
-      "cob-in-p1_53",
+      "cob-in-p1_86",
       "smd-in-p1_86",
       "gob-in-p1_86",
-      "cob-in-p1_86",
-      "smd-in-p2",
+      "smd-out-p10",
       "gob-in-p2",
-      "smd-in-p2_5",
+      "smd-in-p2",
       "gob-in-p2.5",
-      "smd-in-p3",
-      "gob-in-p3",
+      "smd-in-p2_5",
       "smd-out-p2_5",
+      "gob-in-p3",
+      "smd-in-p3",
       "smd-out-p3",
       "smd-out-p3.91",
       "smd-out-p4",
       "smd-out-p5",
       "smd-out-p6",
       "smd-out-p6_67",
-      "smd-out-p8",
-      "smd-out-p10"
+      "smd-out-p8"
     ]
   },
   "moduleBrandLabels": {
-    "Absen": {
-      "smd-in-p1_53": "P 1.53 indoor LED Display Module",
+    "Lampro": {
       "smd-in-p1_25": "P 1.25 indoor LED Display Module",
+      "smd-in-p1_53": "P 1.53 indoor LED Display Module",
       "smd-in-p1_86": "P 1.86 indoor LED Display Module",
       "smd-in-p2": "P 2 indoor LED Display Module",
       "smd-in-p2_5": "P 2.5 indoor LED Display Module",
@@ -654,357 +671,91 @@ export const componentModelAndPrice = {
       "gob-in-p1_86": "P 1.86 indoor LED Display Module",
       "gob-in-p2": "P 2 indoor LED Display Module",
       "gob-in-p2.5": "P 2.5 indoor LED Display Module",
-      "gob-in-p3": "P 3 indoor LED Display Module",
-      "cob-in-p1_25": "P 1.25 indoor LED Display Module",
-      "cob-in-p1_86": "P 1.86 indoor LED Display Module",
-      "cob-in-p1_53": "P 1.53 indoor LED Display Module"
-    },
-    "Leyard": {
-      "smd-in-p1_25": "P 1.25 indoor LED Display Module",
-      "smd-in-p1_53": "P 1.53 indoor LED Display Module",
-      "smd-in-p1_86": "P 1.86 indoor LED Display Module",
-      "smd-in-p2": "P 2 indoor LED Display Module",
-      "smd-in-p2_5": "P 2.5 indoor LED Display Module",
-      "smd-in-p3": "P 3 indoor LED Display Module",
-      "smd-out-p2_5": "P 2.5 outdoor LED Display Module",
-      "smd-out-p3": "P 3 outdoor LED Display Module",
-      "smd-out-p3.91": "P 3.91 outdoor LED Display Module",
-      "smd-out-p5": "P 5 outdoor LED Display Module",
-      "smd-out-p4": "P 4 outdoor LED Display Module",
-      "smd-out-p6": "P 6 outdoor LED Display Module",
-      "smd-out-p8": "P 8 outdoor LED Display Module",
-      "smd-out-p6_67": "P 6.67 outdoor LED Display Module",
-      "smd-out-p10": "P 10 outdoor LED Display Module",
-      "gob-in-p1_53": "P 1.53 indoor LED Display Module",
-      "gob-in-p1_25": "P 1.25 indoor LED Display Module",
-      "gob-in-p1_86": "P 1.86 indoor LED Display Module",
-      "gob-in-p2.5": "P 2.5 indoor LED Display Module",
-      "gob-in-p2": "P 2 indoor LED Display Module",
       "gob-in-p3": "P 3 indoor LED Display Module",
       "cob-in-p1_25": "P 1.25 indoor LED Display Module",
       "cob-in-p1_53": "P 1.53 indoor LED Display Module",
       "cob-in-p1_86": "P 1.86 indoor LED Display Module"
     },
-    "Lampro": {
+    "Absen": {
       "smd-in-p1_25": "P 1.25 indoor LED Display Module",
       "smd-in-p1_53": "P 1.53 indoor LED Display Module",
       "smd-in-p1_86": "P 1.86 indoor LED Display Module",
-      "smd-in-p3": "P 3 indoor LED Display Module",
       "smd-in-p2": "P 2 indoor LED Display Module",
       "smd-in-p2_5": "P 2.5 indoor LED Display Module",
+      "smd-in-p3": "P 3 indoor LED Display Module",
       "smd-out-p2_5": "P 2.5 outdoor LED Display Module",
       "smd-out-p3": "P 3 outdoor LED Display Module",
       "smd-out-p3.91": "P 3.91 outdoor LED Display Module",
       "smd-out-p4": "P 4 outdoor LED Display Module",
       "smd-out-p5": "P 5 outdoor LED Display Module",
+      "smd-out-p6": "P 6 outdoor LED Display Module",
       "smd-out-p6_67": "P 6.67 outdoor LED Display Module",
       "smd-out-p8": "P 8 outdoor LED Display Module",
       "smd-out-p10": "P 10 outdoor LED Display Module",
       "gob-in-p1_25": "P 1.25 indoor LED Display Module",
       "gob-in-p1_53": "P 1.53 indoor LED Display Module",
+      "gob-in-p1_86": "P 1.86 indoor LED Display Module",
       "gob-in-p2": "P 2 indoor LED Display Module",
       "gob-in-p2.5": "P 2.5 indoor LED Display Module",
       "gob-in-p3": "P 3 indoor LED Display Module",
       "cob-in-p1_25": "P 1.25 indoor LED Display Module",
       "cob-in-p1_53": "P 1.53 indoor LED Display Module",
-      "cob-in-p1_86": "P 1.86 indoor LED Display Module",
+      "cob-in-p1_86": "P 1.86 indoor LED Display Module"
+    },
+    "Leyard": {
+      "smd-in-p1_25": "P 1.25 indoor LED Display Module",
+      "smd-in-p1_53": "P 1.53 indoor LED Display Module",
+      "smd-in-p1_86": "P 1.86 indoor LED Display Module",
+      "smd-in-p2": "P 2 indoor LED Display Module",
+      "smd-in-p2_5": "P 2.5 indoor LED Display Module",
+      "smd-in-p3": "P 3 indoor LED Display Module",
+      "smd-out-p2_5": "P 2.5 outdoor LED Display Module",
+      "smd-out-p3": "P 3 outdoor LED Display Module",
+      "smd-out-p3.91": "P 3.91 outdoor LED Display Module",
+      "smd-out-p4": "P 4 outdoor LED Display Module",
+      "smd-out-p5": "P 5 outdoor LED Display Module",
+      "smd-out-p6": "P 6 outdoor LED Display Module",
+      "smd-out-p6_67": "P 6.67 outdoor LED Display Module",
+      "smd-out-p8": "P 8 outdoor LED Display Module",
+      "smd-out-p10": "P 10 outdoor LED Display Module",
+      "gob-in-p1_25": "P 1.25 indoor LED Display Module",
+      "gob-in-p1_53": "P 1.53 indoor LED Display Module",
       "gob-in-p1_86": "P 1.86 indoor LED Display Module",
-      "smd-out-p6": "P 6 outdoor LED Display Module"
+      "gob-in-p2": "P 2 indoor LED Display Module",
+      "gob-in-p2.5": "P 2.5 indoor LED Display Module",
+      "gob-in-p3": "P 3 indoor LED Display Module",
+      "cob-in-p1_25": "P 1.25 indoor LED Display Module",
+      "cob-in-p1_53": "P 1.53 indoor LED Display Module",
+      "cob-in-p1_86": "P 1.86 indoor LED Display Module"
+    },
+    "Synoveta": {
+      "smd-in-p1_25": "P 1.25 indoor LED Display Module",
+      "smd-in-p1_53": "P 1.53 indoor LED Display Module",
+      "smd-in-p1_86": "P 1.86 indoor LED Display Module",
+      "smd-in-p2": "P 2 indoor LED Display Module",
+      "smd-in-p2_5": "P 2.5 indoor LED Display Module",
+      "smd-in-p3": "P 3 indoor LED Display Module",
+      "smd-out-p2_5": "P 2.5 outdoor LED Display Module",
+      "smd-out-p3": "P 3 outdoor LED Display Module",
+      "smd-out-p3.91": "P 3.91 outdoor LED Display Module",
+      "smd-out-p4": "P 4 outdoor LED Display Module",
+      "smd-out-p5": "P 5 outdoor LED Display Module",
+      "smd-out-p6": "P 6 outdoor LED Display Module",
+      "smd-out-p6_67": "P 6.67 outdoor LED Display Module",
+      "smd-out-p8": "P 8 outdoor LED Display Module",
+      "smd-out-p10": "P 10 outdoor LED Display Module",
+      "gob-in-p1_25": "P 1.25 indoor LED Display Module",
+      "gob-in-p1_53": "P 1.53 indoor LED Display Module",
+      "gob-in-p1_86": "P 1.86 indoor LED Display Module",
+      "gob-in-p2": "P 2 indoor LED Display Module",
+      "gob-in-p2.5": "P 2.5 indoor LED Display Module",
+      "gob-in-p3": "P 3 indoor LED Display Module",
+      "cob-in-p1_25": "P 1.25 indoor LED Display Module",
+      "cob-in-p1_53": "P 1.53 indoor LED Display Module",
+      "cob-in-p1_86": "P 1.86 indoor LED Display Module"
     }
   },
   "moduleBrandDetails": {
-    "Absen": {
-      "smd-in-p1_53": {
-        "itemName": "P 1.53 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P1.53",
-        "unit": "Pcs"
-      },
-      "smd-in-p1_25": {
-        "itemName": "P 1.25 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P1.25",
-        "unit": "Pcs"
-      },
-      "smd-in-p1_86": {
-        "itemName": "P 1.86 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P1.86",
-        "unit": "Pcs"
-      },
-      "smd-in-p2": {
-        "itemName": "P 2 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P2",
-        "unit": "Pcs"
-      },
-      "smd-in-p2_5": {
-        "itemName": "P 2.5 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P2.5",
-        "unit": "Pcs"
-      },
-      "smd-in-p3": {
-        "itemName": "P 3 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P3",
-        "unit": "Pcs"
-      },
-      "smd-out-p2_5": {
-        "itemName": "P 2.5 outdoor LED Display Module",
-        "brand": "Absen",
-        "model": "P2.5",
-        "unit": "Pcs"
-      },
-      "smd-out-p3": {
-        "itemName": "P 3 outdoor LED Display Module",
-        "brand": "Absen",
-        "model": "P3",
-        "unit": "Pcs"
-      },
-      "smd-out-p3.91": {
-        "itemName": "P 3.91 outdoor LED Display Module",
-        "brand": "Absen",
-        "model": "P3.91",
-        "unit": "Pcs"
-      },
-      "smd-out-p4": {
-        "itemName": "P 4 outdoor LED Display Module",
-        "brand": "Absen",
-        "model": "P4",
-        "unit": "Pcs"
-      },
-      "smd-out-p5": {
-        "itemName": "P 5 outdoor LED Display Module",
-        "brand": "Absen",
-        "model": "P5",
-        "unit": "Pcs"
-      },
-      "smd-out-p6": {
-        "itemName": "P 6 outdoor LED Display Module",
-        "brand": "Absen",
-        "model": "P6",
-        "unit": "Pcs"
-      },
-      "smd-out-p6_67": {
-        "itemName": "P 6.67 outdoor LED Display Module",
-        "brand": "Absen",
-        "model": "P6.67",
-        "unit": "Pcs"
-      },
-      "smd-out-p8": {
-        "itemName": "P 8 outdoor LED Display Module",
-        "brand": "Absen",
-        "model": "P8",
-        "unit": "Pcs"
-      },
-      "smd-out-p10": {
-        "itemName": "P 10 outdoor LED Display Module",
-        "brand": "Absen",
-        "model": "P10",
-        "unit": "Pcs"
-      },
-      "gob-in-p1_25": {
-        "itemName": "P 1.25 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P1.25",
-        "unit": "Pcs"
-      },
-      "gob-in-p1_53": {
-        "itemName": "P 1.53 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P1.53",
-        "unit": "Pcs"
-      },
-      "gob-in-p1_86": {
-        "itemName": "P 1.86 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P1.86",
-        "unit": "Pcs"
-      },
-      "gob-in-p2": {
-        "itemName": "P 2 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P2",
-        "unit": "Pcs"
-      },
-      "gob-in-p2.5": {
-        "itemName": "P 2.5 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P2.5",
-        "unit": "Pcs"
-      },
-      "gob-in-p3": {
-        "itemName": "P 3 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P3",
-        "unit": "Pcs"
-      },
-      "cob-in-p1_25": {
-        "itemName": "P 1.25 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P1.25",
-        "unit": "Pcs"
-      },
-      "cob-in-p1_86": {
-        "itemName": "P 1.86 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P1.86",
-        "unit": "Pcs"
-      },
-      "cob-in-p1_53": {
-        "itemName": "P 1.53 indoor LED Display Module",
-        "brand": "Absen",
-        "model": "P1.53",
-        "unit": "Pcs"
-      }
-    },
-    "Leyard": {
-      "smd-in-p1_25": {
-        "itemName": "P 1.25 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P1.25",
-        "unit": "Pcs"
-      },
-      "smd-in-p1_53": {
-        "itemName": "P 1.53 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P1.53",
-        "unit": "Pcs"
-      },
-      "smd-in-p1_86": {
-        "itemName": "P 1.86 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P1.86",
-        "unit": "Pcs"
-      },
-      "smd-in-p2": {
-        "itemName": "P 2 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P2",
-        "unit": "Pcs"
-      },
-      "smd-in-p2_5": {
-        "itemName": "P 2.5 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P2.5",
-        "unit": "Pcs"
-      },
-      "smd-in-p3": {
-        "itemName": "P 3 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P3",
-        "unit": "Pcs"
-      },
-      "smd-out-p2_5": {
-        "itemName": "P 2.5 outdoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P2.5",
-        "unit": "Pcs"
-      },
-      "smd-out-p3": {
-        "itemName": "P 3 outdoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P3",
-        "unit": "Pcs"
-      },
-      "smd-out-p3.91": {
-        "itemName": "P 3.91 outdoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P3.91",
-        "unit": "Pcs"
-      },
-      "smd-out-p5": {
-        "itemName": "P 5 outdoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P5",
-        "unit": "Pcs"
-      },
-      "smd-out-p4": {
-        "itemName": "P 4 outdoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P4",
-        "unit": "Pcs"
-      },
-      "smd-out-p6": {
-        "itemName": "P 6 outdoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P6",
-        "unit": "Pcs"
-      },
-      "smd-out-p8": {
-        "itemName": "P 8 outdoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P8",
-        "unit": "Pcs"
-      },
-      "smd-out-p6_67": {
-        "itemName": "P 6.67 outdoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P6.67",
-        "unit": "Pcs"
-      },
-      "smd-out-p10": {
-        "itemName": "P 10 outdoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P10",
-        "unit": "Pcs"
-      },
-      "gob-in-p1_53": {
-        "itemName": "P 1.53 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P1.53",
-        "unit": "Pcs"
-      },
-      "gob-in-p1_25": {
-        "itemName": "P 1.25 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P1.25",
-        "unit": "Pcs"
-      },
-      "gob-in-p1_86": {
-        "itemName": "P 1.86 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P1.86",
-        "unit": "Pcs"
-      },
-      "gob-in-p2.5": {
-        "itemName": "P 2.5 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P2.5",
-        "unit": "Pcs"
-      },
-      "gob-in-p2": {
-        "itemName": "P 2 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P2",
-        "unit": "Pcs"
-      },
-      "gob-in-p3": {
-        "itemName": "P 3 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P3",
-        "unit": "Pcs"
-      },
-      "cob-in-p1_25": {
-        "itemName": "P 1.25 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P1.25",
-        "unit": "Pcs"
-      },
-      "cob-in-p1_53": {
-        "itemName": "P 1.53 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P1.53",
-        "unit": "Pcs"
-      },
-      "cob-in-p1_86": {
-        "itemName": "P 1.86 indoor LED Display Module",
-        "brand": "Leyard",
-        "model": "P1.86",
-        "unit": "Pcs"
-      }
-    },
     "Lampro": {
       "smd-in-p1_25": {
         "itemName": "P 1.25 indoor LED Display Module",
@@ -1024,12 +775,6 @@ export const componentModelAndPrice = {
         "model": "LC1.86P",
         "unit": "Pcs"
       },
-      "smd-in-p3": {
-        "itemName": "P 3 indoor LED Display Module",
-        "brand": "Lampro",
-        "model": "LC3P",
-        "unit": "Pcs"
-      },
       "smd-in-p2": {
         "itemName": "P 2 indoor LED Display Module",
         "brand": "Lampro",
@@ -1040,6 +785,12 @@ export const componentModelAndPrice = {
         "itemName": "P 2.5 indoor LED Display Module",
         "brand": "Lampro",
         "model": "LC2.5P",
+        "unit": "Pcs"
+      },
+      "smd-in-p3": {
+        "itemName": "P 3 indoor LED Display Module",
+        "brand": "Lampro",
+        "model": "LC3P",
         "unit": "Pcs"
       },
       "smd-out-p2_5": {
@@ -1072,6 +823,12 @@ export const componentModelAndPrice = {
         "model": "LC5PO",
         "unit": "Pcs"
       },
+      "smd-out-p6": {
+        "itemName": "P 6 outdoor LED Display Module",
+        "brand": "Lampro",
+        "model": "LC6PO",
+        "unit": "Pcs"
+      },
       "smd-out-p6_67": {
         "itemName": "P 6.67 outdoor LED Display Module",
         "brand": "Lampro",
@@ -1100,6 +857,12 @@ export const componentModelAndPrice = {
         "itemName": "P 1.53 indoor LED Display Module",
         "brand": "Lampro",
         "model": "LC1.53P GOB",
+        "unit": "Pcs"
+      },
+      "gob-in-p1_86": {
+        "itemName": "P 1.86 indoor LED Display Module",
+        "brand": "Lampro",
+        "model": "LC1.86P GOB",
         "unit": "Pcs"
       },
       "gob-in-p2": {
@@ -1137,24 +900,448 @@ export const componentModelAndPrice = {
         "brand": "Lampro",
         "model": "LC COB 1.86",
         "unit": "Pcs"
+      }
+    },
+    "Absen": {
+      "smd-in-p1_25": {
+        "itemName": "P 1.25 indoor LED Display Module",
+        "brand": "Absen",
+        "model": "P1.25",
+        "unit": "Pcs"
       },
-      "gob-in-p1_86": {
+      "smd-in-p1_53": {
+        "itemName": "P 1.53 indoor LED Display Module",
+        "brand": "Absen",
+        "model": "P1.53",
+        "unit": "Pcs"
+      },
+      "smd-in-p1_86": {
         "itemName": "P 1.86 indoor LED Display Module",
-        "brand": "Lampro",
-        "model": "LC1.86P GOB",
+        "brand": "Absen",
+        "model": "P1.86",
+        "unit": "Pcs"
+      },
+      "smd-in-p2": {
+        "itemName": "P 2 indoor LED Display Module",
+        "brand": "Absen",
+        "model": "P2",
+        "unit": "Pcs"
+      },
+      "smd-in-p2_5": {
+        "itemName": "P 2.5 indoor LED Display Module",
+        "brand": "Absen",
+        "model": "P2.5",
+        "unit": "Pcs"
+      },
+      "smd-in-p3": {
+        "itemName": "P 3 indoor LED Display Module",
+        "brand": "Absen",
+        "model": "P3",
+        "unit": "Pcs"
+      },
+      "smd-out-p2_5": {
+        "itemName": "P 2.5 outdoor LED Display Module",
+        "brand": "Absen",
+        "model": "P2.5",
+        "unit": "Pcs"
+      },
+      "smd-out-p3": {
+        "itemName": "P 3 outdoor LED Display Module",
+        "brand": "Absen",
+        "model": "P3",
+        "unit": "Pcs"
+      },
+      "smd-out-p3.91": {
+        "itemName": "P 3.91 outdoor LED Display Module",
+        "brand": "Absen",
+        "model": "P3.91",
+        "unit": "Pcs"
+      },
+      "smd-out-p4": {
+        "itemName": "P 4 outdoor LED Display Module",
+        "brand": "Absen",
+        "model": "P4",
+        "unit": "Pcs"
+      },
+      "smd-out-p5": {
+        "itemName": "P 5 outdoor LED Display Module",
+        "brand": "Absen",
+        "model": "P5",
         "unit": "Pcs"
       },
       "smd-out-p6": {
         "itemName": "P 6 outdoor LED Display Module",
-        "brand": "Lampro",
-        "model": "LC6PO",
+        "brand": "Absen",
+        "model": "P6",
+        "unit": "Pcs"
+      },
+      "smd-out-p6_67": {
+        "itemName": "P 6.67 outdoor LED Display Module",
+        "brand": "Absen",
+        "model": "P6.67",
+        "unit": "Pcs"
+      },
+      "smd-out-p8": {
+        "itemName": "P 8 outdoor LED Display Module",
+        "brand": "Absen",
+        "model": "P8",
+        "unit": "Pcs"
+      },
+      "smd-out-p10": {
+        "itemName": "P 10 outdoor LED Display Module",
+        "brand": "Absen",
+        "model": "P10",
+        "unit": "Pcs"
+      },
+      "gob-in-p1_25": {
+        "itemName": "P 1.25 indoor LED Display Module",
+        "brand": "Absen",
+        "model": "P1.25",
+        "unit": "Pcs"
+      },
+      "gob-in-p1_53": {
+        "itemName": "P 1.53 indoor LED Display Module",
+        "brand": "Absen",
+        "model": "P1.53",
+        "unit": "Pcs"
+      },
+      "gob-in-p1_86": {
+        "itemName": "P 1.86 indoor LED Display Module",
+        "brand": "Absen",
+        "model": "P1.86",
+        "unit": "Pcs"
+      },
+      "gob-in-p2": {
+        "itemName": "P 2 indoor LED Display Module",
+        "brand": "Absen",
+        "model": "P2",
+        "unit": "Pcs"
+      },
+      "gob-in-p2.5": {
+        "itemName": "P 2.5 indoor LED Display Module",
+        "brand": "Absen",
+        "model": "P2.5",
+        "unit": "Pcs"
+      },
+      "gob-in-p3": {
+        "itemName": "P 3 indoor LED Display Module",
+        "brand": "Absen",
+        "model": "P3",
+        "unit": "Pcs"
+      },
+      "cob-in-p1_25": {
+        "itemName": "P 1.25 indoor LED Display Module",
+        "brand": "Absen",
+        "model": "P1.25",
+        "unit": "Pcs"
+      },
+      "cob-in-p1_53": {
+        "itemName": "P 1.53 indoor LED Display Module",
+        "brand": "Absen",
+        "model": "P1.53",
+        "unit": "Pcs"
+      },
+      "cob-in-p1_86": {
+        "itemName": "P 1.86 indoor LED Display Module",
+        "brand": "Absen",
+        "model": "P1.86",
+        "unit": "Pcs"
+      }
+    },
+    "Leyard": {
+      "smd-in-p1_25": {
+        "itemName": "P 1.25 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P1.25",
+        "unit": "Pcs"
+      },
+      "smd-in-p1_53": {
+        "itemName": "P 1.53 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P1.53",
+        "unit": "Pcs"
+      },
+      "smd-in-p1_86": {
+        "itemName": "P 1.86 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P1.86",
+        "unit": "Pcs"
+      },
+      "smd-in-p2": {
+        "itemName": "P 2 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P2",
+        "unit": "Pcs"
+      },
+      "smd-in-p2_5": {
+        "itemName": "P 2.5 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P2.5",
+        "unit": "Pcs"
+      },
+      "smd-in-p3": {
+        "itemName": "P 3 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P3",
+        "unit": "Pcs"
+      },
+      "smd-out-p2_5": {
+        "itemName": "P 2.5 outdoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P2.5",
+        "unit": "Pcs"
+      },
+      "smd-out-p3": {
+        "itemName": "P 3 outdoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P3",
+        "unit": "Pcs"
+      },
+      "smd-out-p3.91": {
+        "itemName": "P 3.91 outdoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P3.91",
+        "unit": "Pcs"
+      },
+      "smd-out-p4": {
+        "itemName": "P 4 outdoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P4",
+        "unit": "Pcs"
+      },
+      "smd-out-p5": {
+        "itemName": "P 5 outdoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P5",
+        "unit": "Pcs"
+      },
+      "smd-out-p6": {
+        "itemName": "P 6 outdoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P6",
+        "unit": "Pcs"
+      },
+      "smd-out-p6_67": {
+        "itemName": "P 6.67 outdoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P6.67",
+        "unit": "Pcs"
+      },
+      "smd-out-p8": {
+        "itemName": "P 8 outdoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P8",
+        "unit": "Pcs"
+      },
+      "smd-out-p10": {
+        "itemName": "P 10 outdoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P10",
+        "unit": "Pcs"
+      },
+      "gob-in-p1_25": {
+        "itemName": "P 1.25 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P1.25",
+        "unit": "Pcs"
+      },
+      "gob-in-p1_53": {
+        "itemName": "P 1.53 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P1.53",
+        "unit": "Pcs"
+      },
+      "gob-in-p1_86": {
+        "itemName": "P 1.86 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P1.86",
+        "unit": "Pcs"
+      },
+      "gob-in-p2": {
+        "itemName": "P 2 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P2",
+        "unit": "Pcs"
+      },
+      "gob-in-p2.5": {
+        "itemName": "P 2.5 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P2.5",
+        "unit": "Pcs"
+      },
+      "gob-in-p3": {
+        "itemName": "P 3 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P3",
+        "unit": "Pcs"
+      },
+      "cob-in-p1_25": {
+        "itemName": "P 1.25 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P1.25",
+        "unit": "Pcs"
+      },
+      "cob-in-p1_53": {
+        "itemName": "P 1.53 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P1.53",
+        "unit": "Pcs"
+      },
+      "cob-in-p1_86": {
+        "itemName": "P 1.86 indoor LED Display Module",
+        "brand": "Leyard",
+        "model": "P1.86",
+        "unit": "Pcs"
+      }
+    },
+    "Synoveta": {
+      "smd-in-p1_25": {
+        "itemName": "P 1.25 indoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "SVC 1.25P",
+        "unit": "Pcs"
+      },
+      "smd-in-p1_53": {
+        "itemName": "P 1.53 indoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "SVC 1.53P",
+        "unit": "Pcs"
+      },
+      "smd-in-p1_86": {
+        "itemName": "P 1.86 indoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "SVC 1.86P",
+        "unit": "Pcs"
+      },
+      "smd-in-p2": {
+        "itemName": "P 2 indoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P2",
+        "unit": "Pcs"
+      },
+      "smd-in-p2_5": {
+        "itemName": "P 2.5 indoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P2.5",
+        "unit": "Pcs"
+      },
+      "smd-in-p3": {
+        "itemName": "P 3 indoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P3",
+        "unit": "Pcs"
+      },
+      "smd-out-p2_5": {
+        "itemName": "P 2.5 outdoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P2.5",
+        "unit": "Pcs"
+      },
+      "smd-out-p3": {
+        "itemName": "P 3 outdoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P3",
+        "unit": "Pcs"
+      },
+      "smd-out-p3.91": {
+        "itemName": "P 3.91 outdoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P3.91",
+        "unit": "Pcs"
+      },
+      "smd-out-p4": {
+        "itemName": "P 4 outdoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P4",
+        "unit": "Pcs"
+      },
+      "smd-out-p5": {
+        "itemName": "P 5 outdoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P5",
+        "unit": "Pcs"
+      },
+      "smd-out-p6": {
+        "itemName": "P 6 outdoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P6",
+        "unit": "Pcs"
+      },
+      "smd-out-p6_67": {
+        "itemName": "P 6.67 outdoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P6.67",
+        "unit": "Pcs"
+      },
+      "smd-out-p8": {
+        "itemName": "P 8 outdoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P8",
+        "unit": "Pcs"
+      },
+      "smd-out-p10": {
+        "itemName": "P 10 outdoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P10",
+        "unit": "Pcs"
+      },
+      "gob-in-p1_25": {
+        "itemName": "P 1.25 indoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P1.25",
+        "unit": "Pcs"
+      },
+      "gob-in-p1_53": {
+        "itemName": "P 1.53 indoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P1.53",
+        "unit": "Pcs"
+      },
+      "gob-in-p1_86": {
+        "itemName": "P 1.86 indoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P1.86",
+        "unit": "Pcs"
+      },
+      "gob-in-p2": {
+        "itemName": "P 2 indoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P2",
+        "unit": "Pcs"
+      },
+      "gob-in-p2.5": {
+        "itemName": "P 2.5 indoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P2.5",
+        "unit": "Pcs"
+      },
+      "gob-in-p3": {
+        "itemName": "P 3 indoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "P3",
+        "unit": "Pcs"
+      },
+      "cob-in-p1_25": {
+        "itemName": "P 1.25 indoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "SVC 1.25P",
+        "unit": "Pcs"
+      },
+      "cob-in-p1_53": {
+        "itemName": "P 1.53 indoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "SVC 1.53P",
+        "unit": "Pcs"
+      },
+      "cob-in-p1_86": {
+        "itemName": "P 1.86 indoor LED Display Module",
+        "brand": "Synoveta",
+        "model": "SVC 1.86P",
         "unit": "Pcs"
       }
     }
   },
-  "cabinetBrands": [
-    "ABC"
-  ]
+  "cabinetBrands": []
 };
 
 export function getCabinetFootprintFt(physical, cabinetSizeId = "cabinet_indoor_aluminium_640x480", cabinetOptions = []) {

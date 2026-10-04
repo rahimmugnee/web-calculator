@@ -49,7 +49,7 @@ try {
     },
     {
       code: "sasha", folder: "Sasha", invoicePad: "Sasha Pad.png",
-      signatory: ["Abdur Rahim", "Sub Assistant Engineer", "Sasha Corporation", "01717-079855", "rahim@sashabd.com"],
+      signatory: ["Md. Minhazul Islam", "Coordinator", "Sasha Corporation", "+8801717443355", "info.sashaco@gmail.com"],
     },
   ];
   for (const branding of companyBranding) {

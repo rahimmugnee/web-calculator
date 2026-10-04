@@ -82,7 +82,7 @@ test("renders multiple custom items as separate quotation rows", () => {
   const snapshot = buildSnapshot({ enabled: true, name: "Spare Module", price: 2500 });
   snapshot.items.customItems = [
     { name: "Spare Module", price: 2500 },
-    { name: "Signal Cable", price: 1500 },
+    { name: "Signal Cable", price: 1500, unit: "Meter", qty: 3 },
   ];
   const calc = calcAll({
     modulesQty: 1,
@@ -103,7 +103,10 @@ test("renders multiple custom items as separate quotation rows", () => {
 
   expect(screen.getByText("Spare Module")).toBeInTheDocument();
   expect(screen.getByText("Signal Cable")).toBeInTheDocument();
-  expect(calc.totals.totalCustomItem).toBe(4000);
+  expect(within(screen.getByText("Signal Cable").closest("tr")).getByText("Meter")).toBeInTheDocument();
+  expect(within(screen.getByText("Signal Cable").closest("tr")).getByText("3")).toBeInTheDocument();
+  expect(screen.getByText("Signal Cable").closest("tr")).toHaveTextContent(/4,500/);
+  expect(calc.totals.totalCustomItem).toBe(7000);
 });
 
 test("renders COB P1.25 with the regular module, receiving card and power supply rows", () => {

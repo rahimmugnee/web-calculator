@@ -1,5 +1,7 @@
 import { forwardRef } from "react";
 import RentalTermsPage from "./RentalTermsPage.jsx";
+import RenexTermsPage from "./company-terms/RenexTermsPage.jsx";
+import SashaTermsPage from "./company-terms/SashaTermsPage.jsx";
 import { useCatalog } from "../context/CatalogContext.jsx";
 
 function renderPaymentTerms(paymentTermId, subjectLabel = "LED display system") {
@@ -91,11 +93,7 @@ const TermsPage = forwardRef(function TermsPage({ snapshot, calc }, ref) {
       : "LED Display";
   const subjectDeliveryLabel = `${subjectLabel.charAt(0).toLowerCase()}${subjectLabel.slice(1)}`;
 
-  return (
-    <div ref={ref} className="terms-page">
-      <div className="invoice-panel terms-panel">
-        <div className="terms-title">Terms &amp; Conditions</div>
-
+  const sections = (
         <ol className="terms-list">
           <li className="terms-section">
             <div className="terms-h">Currency &amp; Validity</div>
@@ -157,6 +155,21 @@ const TermsPage = forwardRef(function TermsPage({ snapshot, calc }, ref) {
             </li>
           ) : null}
         </ol>
+  );
+
+  const companyCode = String(company?.code || "mugnee").trim().toLowerCase();
+  if (companyCode === "renex") {
+    return <RenexTermsPage ref={ref}>{sections.props.children}</RenexTermsPage>;
+  }
+  if (companyCode === "sasha") {
+    return <SashaTermsPage ref={ref}>{sections.props.children}</SashaTermsPage>;
+  }
+
+  return (
+    <div ref={ref} className="terms-page terms-format-mugnee">
+      <div className="invoice-panel terms-panel">
+        <div className="terms-title">Terms &amp; Conditions</div>
+        {sections}
       </div>
     </div>
   );

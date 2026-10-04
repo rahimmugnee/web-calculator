@@ -16,7 +16,11 @@ function fixedRows(snapshot, calc) {
   add(items.receivingPicked?.itemName || items.receivingPicked?.label || "Receiving Card", items.receivingPicked?.brand || items.brands?.receiving, componentModelName(items.receivingPicked?.model, items.receivingPicked?.label, items.receivingPicked?.id), "Pcs", items.rcQty, unit.unitRC, totals.totalRC);
   add(powerSupplyItemName(items.psuPicked?.itemName, items.psuPicked?.model || items.psuPicked?.label), items.psuPicked?.brand || items.brands?.psu, items.psuPicked?.model || items.psuPicked?.label, "Pcs", items.psQty, unit.unitPS, totals.totalPS);
   if (items.cabinetEnabled) add(items.cabinet?.itemName || "Cabinet", items.cabinet?.brand || "N/A", items.cabinet?.model || "N/A", "Pcs", items.cabinetQty, unit.unitCabinet, totals.totalCabinet);
-  (items.customItems || []).forEach((item, index) => add(item.name || "Custom Item", "", "", "Pcs", 1, unit.customItems?.[index] ?? item.price, unit.customItems?.[index] ?? item.price));
+  (items.customItems || []).forEach((item, index) => {
+    const qty = Math.max(0, Math.floor(Number(item.qty ?? 1) || 0));
+    const price = unit.customItems?.[index] ?? item.price;
+    add(item.name || "Custom Item", "", "", item.unit?.trim() || "Pcs", qty, price, price * qty);
+  });
   add("Structure & Accessories", "N/A", "N/A", "Lot", 1, totals.accessoriesUnit ?? totals.accessories ?? 0, totals.accessories ?? 0);
   add("Installation, Testing & Commissioning", "N/A", "N/A", "Make", 1, totals.installationUnit ?? totals.installation, totals.installation);
   if (totals.transport) add("Transport Cost", "", "", "Lot", 1, unit.transport, totals.transport);

@@ -1,0 +1,22 @@
+.terms-format-renex{font-family:Arial,Helvetica,sans-serif;color:#09213e;font-weight:400}
+.renex-terms-heading{display:flex;justify-content:space-between;align-items:center;gap:24px;margin:0 0 28px}
+.renex-terms-heading-main{flex:1;min-width:0}
+.renex-terms-eyebrow{display:flex;align-items:center;gap:12px;font-size:10px;letter-spacing:3px;line-height:1.4}
+.renex-terms-rule{flex:1;height:1px;background:#b8c5d4;max-width:330px}
+.renex-terms-heading h1{margin:7px 0 5px;font-size:35px;line-height:1.05;font-weight:900;letter-spacing:-.7px;color:#09213e;white-space:nowrap}
+.renex-terms-subtitle{font-size:9px;line-height:1.5;font-weight:700;letter-spacing:3px}
+.renex-terms-accent{height:3px;width:48px;background:#ffdc00;margin-top:7px}
+.renex-terms-tagline{border-left:1px solid #c5cfdc;padding-left:11px;font-size:8px;line-height:1.6;letter-spacing:1.5px;color:#7b8ca4;white-space:nowrap}
+.renex-terms-section{display:flex;align-items:flex-start;gap:26px;margin-bottom:22px;break-inside:avoid;padding:0}
+.renex-terms-number{position:relative;flex:0 0 80px;width:80px;height:58px}
+.renex-terms-number img{position:absolute;inset:0;width:80px;height:58px}
+.renex-terms-number span{position:relative;display:block;padding:9px 0 0 12px;font-size:34px;line-height:1.15;font-weight:800;color:#fff}
+.renex-terms-section-body{flex:1;min-width:0}
+.renex-terms-section-heading{display:flex;gap:17px;align-items:center;border-bottom:1px solid #b8c5d4;padding:4px 0 8px;margin-bottom:9px;min-height:38px}
+.renex-terms-section-heading img{width:32px;height:32px;flex:0 0 32px;object-fit:contain}
+.renex-terms-section-heading h2{margin:0;font-size:15px;line-height:1.35;font-weight:800;text-transform:uppercase;color:#09213e}
+.renex-terms-section-payment{background:#f2f5f7;border-radius:10px;padding:14px 14px 17px;margin-left:-14px;margin-right:-14px}
+.terms-format-renex .terms-sublist{padding-left:26px;margin:0}
+.terms-format-renex .terms-sublist li{font-size:12px;line-height:1.65;margin-bottom:4px;padding-left:10px;color:#152339;font-weight:400}
+.terms-format-renex .terms-p{font-size:12px;line-height:1.65;margin:0 0 7px;color:#152339;font-weight:400}
+.terms-format-renex b{font-weight:700}

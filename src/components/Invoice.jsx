@@ -200,13 +200,15 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
     : [];
   customItems.forEach((item, index) => {
     const price = unitPrices?.customItems?.[index] ?? (customItems.length === 1 ? unitCustomItem : Number(item.price) || 0);
+    const qty = Math.max(0, Math.floor(Number(item.qty ?? 1) || 0));
     rows.push({
       sl: sl++,
+      type: "custom",
       name: item.name || "Custom Item",
-      unit: "Pcs",
-      qty: 1,
+      unit: item.unit?.trim() || "Pcs",
+      qty,
       unitPrice: price,
-      total: price,
+      total: price * qty,
     });
   });
 

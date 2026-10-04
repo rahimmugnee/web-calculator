@@ -36,6 +36,18 @@ beforeEach(() => {
   remove.mockResolvedValue(null);
 });
 
+test("combines month filtering with search and status and allows all months", async () => {
+  get.mockImplementation((path) => Promise.resolve(path.startsWith("/admin/quotations/months?") ? [{ month: "2026-08" }] : [quotation]));
+  render(<QuotationHistoryPage />);
+  await screen.findByRole("option", { name: "August 2026" });
+  fireEvent.change(screen.getByLabelText("Filter quotations by month"), { target: { value: "2026-08" } });
+  fireEvent.change(screen.getByPlaceholderText("Ref no, client or organization..."), { target: { value: "ABC" } });
+  fireEvent.change(screen.getByLabelText("Status"), { target: { value: "final" } });
+  await waitFor(() => expect(get).toHaveBeenCalledWith("/admin/quotations?companyId=1&limit=100&search=ABC&status=final&month=2026-08"));
+  fireEvent.change(screen.getByLabelText("Filter quotations by month"), { target: { value: "" } });
+  await waitFor(() => expect(get).toHaveBeenCalledWith("/admin/quotations?companyId=1&limit=100&search=ABC&status=final"));
+});
+
 test("shows the serial number as the first quotation table column", async () => {
   render(<QuotationHistoryPage />);
   const serialHeader = await screen.findByRole("columnheader", { name: "SL No." });

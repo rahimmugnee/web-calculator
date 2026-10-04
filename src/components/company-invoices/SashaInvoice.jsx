@@ -5,8 +5,9 @@ import "./SashaInvoice.css";
 const SashaInvoice = forwardRef(function SashaInvoice({
   customer, dateStr, display, items, model, refNo, rows, totals, company, showDiscountBlock,
 }, ref) {
-  const detailRows = rows.filter((row) => !/Structure & Accessories|Installation, Testing & Commissioning|Transport Cost/i.test(row.name || ""));
-  const extraRows = rows.filter((row) => /Structure & Accessories|Installation, Testing & Commissioning|Transport Cost/i.test(row.name || ""));
+  const isExtraRow = (row) => row.type === "custom" || /Structure & Accessories|Installation, Testing & Commissioning|Transport Cost/i.test(row.name || "");
+  const detailRows = rows.filter((row) => !isExtraRow(row));
+  const extraRows = rows.filter(isExtraRow);
   const displayTotal = detailRows.reduce((sum, row) => sum + Number(row.total || 0), 0);
   const area = Number(display.sft) || 0;
   const displayUnitPrice = area > 0 ? Math.round(displayTotal / area) : displayTotal;
@@ -47,10 +48,10 @@ const SashaInvoice = forwardRef(function SashaInvoice({
               <td>1</td>
               <td>
                 <strong>{model.name} {items.dispType === "outdoor" ? "Outdoor" : "Indoor"} ({items.technology?.toUpperCase()}) LED Display</strong>
-                <span>Module Brand: {moduleRow?.brand || items.brands?.module || "—"}</span>
-                {controllerRow ? <><span>Controller Model: {String(controllerRow.name || "").replace(/^Controller:\s*/i, "")}</span><span>Controller Brand: {controllerRow.brand || items.brands?.controller || "—"}</span></> : null}
-                {receivingRow ? <><span>Receiving Card Model: {String(receivingRow.name || "").replace(/^Receiving Card:\s*/i, "")}</span><span>Brand: {receivingRow.brand || items.brands?.receiving || "—"}</span></> : null}
-                {powerRow ? <span>Power Supply Brand: {powerRow.brand || items.brands?.psu || "—"}</span> : null}
+                <span>Module Brand: {moduleRow?.brand || items.brands?.module || "—"} | Model: {moduleRow?.model || model.code || model.name || "—"}</span>
+                {controllerRow ? <span>Controller Brand: {controllerRow.brand || items.brands?.controller || "—"} | Model: {controllerRow.model || String(controllerRow.name || "").replace(/^Controller:\s*/i, "") || "—"}</span> : null}
+                {receivingRow ? <span>Receiving Card Brand: {receivingRow.brand || items.brands?.receiving || "—"} | Model: {receivingRow.model || String(receivingRow.name || "").replace(/^Receiving Card:\s*/i, "") || "—"}</span> : null}
+                {powerRow ? <span>Power Supply Brand: {powerRow.brand || items.brands?.psu || "—"} | Model: {powerRow.model || items.psuPicked?.model || "—"}</span> : null}
               </td>
               <td>{area ? "Sqft" : moduleRow?.unit || "Set"}</td>
               <td>{area || moduleRow?.qty || 1}</td>
@@ -73,11 +74,11 @@ const SashaInvoice = forwardRef(function SashaInvoice({
         <div className="sasha-signatory">
           <span className="sasha-sincerely">Sincerely</span>
           <div className="sasha-sign-images"><img src={company?.assets?.signature || "/Sasha/signature.png"} alt="Authorized Signature"/><img src={company?.assets?.seal || "/Sasha/seal.png"} alt="Company Seal"/></div>
-          <strong>{company?.signatory_name || "Abdur Rahim"}</strong>
-          <em>{company?.signatory_designation || "Sub Assistant Engineer"}</em>
+          <strong>{company?.signatory_name || "Md. Minhazul Islam"}</strong>
+          <em>{company?.signatory_designation || "Coordinator"}</em>
           <span>{company?.signatory_company_name || "Sasha Corporation"}</span>
-          <span>Cell: {company?.signatory_phone || "01717-079855"}</span>
-          <span>E-mail: {company?.signatory_email || "rahim@sashabd.com"}</span>
+          <span>Cell: {company?.signatory_phone || "+8801717443355"}</span>
+          <span>E-mail: {company?.signatory_email || "info.sashaco@gmail.com"}</span>
         </div>
       </div>
     </article>
