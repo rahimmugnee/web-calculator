@@ -2491,8 +2491,12 @@ section h3{
   color:#94a3b8;
   cursor:not-allowed;
 }
-@media(max-width:480px){
-  .calculator-context-row{gap:8px}
+@media(max-width:640px){
+  .calculator-context-row{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+  .calculator-context-field{font-size:12px}
 }
 
 /* keyboard focus */
