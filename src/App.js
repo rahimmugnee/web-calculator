@@ -32,7 +32,7 @@ function quotationConfigurationKey(snapshot) {
   const sizes = Array.isArray(snapshot.display.sizes)
     ? snapshot.display.sizes.map((size) => [size.widthFt || "", size.heightFt || "", size.pairs || 1])
     : [[snapshot.display.widthFt || "", snapshot.display.heightFt || ""]];
-  return JSON.stringify([snapshot.quotationType || "fixed", model, sizes]);
+  return JSON.stringify([snapshot.quotationType || "fixed", model, sizes, Boolean(snapshot.items?.cabinetEnabled)]);
 }
 
 function PasswordVisibilityIcon({ hidden = false }) {

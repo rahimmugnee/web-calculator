@@ -123,7 +123,7 @@ test('uses the database email login and never sends the legacy credentials', asy
   expect(screen.queryByRole('menuitem', { name: /logout/i })).not.toBeInTheDocument();
 });
 
-test('updates the quotation reference when pixel pitch or display size changes', async () => {
+test('updates the quotation reference when pixel pitch, size or cabinet structure changes', async () => {
   global.fetch.mockImplementation((url) => {
     const value = String(url);
     if (value.endsWith('/auth/me')) {
@@ -153,4 +153,12 @@ test('updates the quotation reference when pixel pitch or display size changes',
 
   fireEvent.change(screen.getByLabelText(/width \(ft\)/i), { target: { value: '16' } });
   await waitFor(() => expect(Number(window.localStorage.getItem(sequenceKey))).toBe(initialSequence + 2));
+
+  fireEvent.click(screen.getByRole('button', { name: 'Display Structure' }));
+  fireEvent.click(screen.getByRole('option', { name: 'With Cabinet' }));
+  await waitFor(() => expect(Number(window.localStorage.getItem(sequenceKey))).toBe(initialSequence + 3));
+
+  fireEvent.click(screen.getByRole('button', { name: 'Display Structure' }));
+  fireEvent.click(screen.getByRole('option', { name: 'Without Cabinet' }));
+  await waitFor(() => expect(Number(window.localStorage.getItem(sequenceKey))).toBe(initialSequence + 4));
 });
