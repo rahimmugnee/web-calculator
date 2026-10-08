@@ -128,6 +128,25 @@ test("uses dropdowns for display structure choices", () => {
   expect(screen.getByRole("button", { name: "Payment Terms" })).toHaveTextContent("75% Advance, 25% before Installation");
 });
 
+test("shows Huidu capacity when manually selecting controllers across display types", async () => {
+  renderPriceForm();
+  fireEvent.click(screen.getByRole("button", { name: "Controller and Receiving Card Brand" }));
+  fireEvent.click(screen.getByRole("option", { name: "Huidu" }));
+
+  fireEvent.click(screen.getByRole("button", { name: "Controller Model" }));
+  fireEvent.click(screen.getByRole("option", { name: "Crontoller: HD-A5L" }));
+  expect(screen.getByLabelText("Controller Pixel Capacity")).toHaveValue("1,150,000");
+
+  fireEvent.click(screen.getByRole("button", { name: "Controller Model" }));
+  fireEvent.click(screen.getByRole("option", { name: "HD VP410H" }));
+  expect(screen.getByLabelText("Controller Pixel Capacity")).toHaveValue("2,500,000");
+
+  fireEvent.click(screen.getByRole("button", { name: "set-display-outdoor" }));
+  fireEvent.click(screen.getByRole("button", { name: "Controller Model" }));
+  fireEvent.click(screen.getByRole("option", { name: "HD VP210H" }));
+  expect(screen.getByLabelText("Controller Pixel Capacity")).toHaveValue("1,200,000");
+});
+
 test("exports a custom controller and receiving brand without changing the selected model or price", async () => {
   const onChange = jest.fn();
   renderPriceForm({ onChange });

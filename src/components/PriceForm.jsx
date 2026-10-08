@@ -993,7 +993,8 @@ export default function PriceForm({
       return getNovastarControllerMax(controllerId, dispType, catalog.novastarCtrlCap) || 0;
     }
 
-    const match = (catalog.ctrlCap?.[dispType] || []).find((item) => item.id === controllerId);
+    const match = (catalog.ctrlCap?.[dispType] || []).find((item) => item.id === controllerId)
+      || Object.values(catalog.ctrlCap || {}).flat().find((item) => item.id === controllerId);
     return Number.isFinite(match?.max) ? match.max : 0;
   }, [ctrlSystemBrand, dispType, controllerId, catalog.novastarCtrlCap, catalog.ctrlCap]);
 
