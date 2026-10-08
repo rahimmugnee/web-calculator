@@ -572,7 +572,7 @@ app.get("/api/admin/quotations", asyncRoute(async(req,res)=>{
     params.push(`${month}-01`);
     where.push(`q.created_at >= $${params.length}::date AND q.created_at < $${params.length}::date + interval '1 month'`);
   }
-  if(req.query.search){params.push(`%${req.query.search}%`);where.push(`(q.quotation_number ILIKE $${params.length} OR q.client_name ILIKE $${params.length} OR q.client_information->>'company' ILIKE $${params.length})`);}
+  if(req.query.search){params.push(`%${req.query.search}%`);where.push(`(q.quotation_number ILIKE $${params.length} OR q.client_name ILIKE $${params.length} OR q.client_information->>'company' ILIKE $${params.length} OR q.client_information->>'organization' ILIKE $${params.length} OR q.client_information->>'mobile' ILIKE $${params.length} OR q.client_information->>'phone' ILIKE $${params.length})`);}
   params.push(limit,offset);
   const result=await pool.query(`SELECT q.*,c.name company_name,creator.display_name created_by_name,creator.email created_by_email,count(*) OVER() total_count FROM quotations q JOIN companies c ON c.id=q.company_id LEFT JOIN users creator ON creator.id=q.created_by_user_id WHERE ${where.join(" AND ")} ORDER BY q.created_at DESC LIMIT $${params.length-1} OFFSET $${params.length}`,params);
   res.json(result.rows);

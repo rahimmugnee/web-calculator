@@ -43,7 +43,7 @@ test("combines month filtering with search and status and allows all months", as
   expect(screen.getByRole("option", { name: "September 2026 · 59 quotations" })).toBeInTheDocument();
   expect(screen.getByRole("option", { name: "October 2026 · 6 quotations" })).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText("Filter quotations by month"), { target: { value: "2026-08" } });
-  fireEvent.change(screen.getByPlaceholderText("Ref no, client or organization..."), { target: { value: "ABC" } });
+  fireEvent.change(screen.getByPlaceholderText("Ref no, client, organization or phone number..."), { target: { value: "ABC" } });
   fireEvent.change(screen.getByLabelText("Status"), { target: { value: "final" } });
   await waitFor(() => expect(get).toHaveBeenCalledWith("/admin/quotations?companyId=1&limit=100&search=ABC&status=final&month=2026-08"));
   fireEvent.change(screen.getByLabelText("Filter quotations by month"), { target: { value: "" } });
@@ -59,6 +59,25 @@ test("shows the serial number as the first quotation table column", async () => 
 
   expect(within(table).getAllByRole("columnheader")[0]).toBe(serialHeader);
   expect(within(quotationRow).getAllByRole("cell")[0]).toHaveTextContent("1");
+});
+
+test("shows phone numbers after organization and submits phone searches", async () => {
+  get.mockResolvedValue([
+    quotation,
+    { ...quotation, id: 8, client_information: { organization: "Mobile Ltd", mobile: "01812345678" } },
+    { ...quotation, id: 9, client_information: {} },
+  ]);
+  render(<QuotationHistoryPage />);
+  const phoneCell = await screen.findByText("01700000000");
+  const table = phoneCell.closest("table");
+  const headers = within(table).getAllByRole("columnheader");
+  expect(headers[4]).toHaveTextContent("Organization");
+  expect(headers[5]).toHaveTextContent("Phone Number");
+  expect(within(phoneCell.closest("tr")).getAllByRole("cell")[5]).toBe(phoneCell);
+  expect(screen.getByText("01812345678")).toBeInTheDocument();
+  expect(within(table).getAllByRole("row")[3].children[5]).toHaveTextContent("—");
+  fireEvent.change(screen.getByLabelText("Search"), { target: { value: "017000" } });
+  await waitFor(() => expect(get).toHaveBeenCalledWith("/admin/quotations?companyId=1&limit=100&search=017000"));
 });
 
 test("shows the taka symbol in quotation price headers", () => {

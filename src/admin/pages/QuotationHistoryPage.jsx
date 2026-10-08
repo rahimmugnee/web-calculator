@@ -150,7 +150,7 @@ export default function QuotationHistoryPage() {
     <div className="quotation-history-layout">
       <section className="quotation-history-main">
         <div className="quotation-filters admin-panel">
-          <label>Search<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Ref no, client or organization..." /></label>
+          <label>Search<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Ref no, client, organization or phone number..." /></label>
           <div className="quotation-month-field"><span>Month</span><MonthFilter ariaLabel="Filter quotations by month" value={month} onChange={(event) => setMonth(event.target.value)}>
             <option value="">All Months</option>
             {monthKeys.map((key) => {
@@ -163,7 +163,7 @@ export default function QuotationHistoryPage() {
         </div>
         <div className="admin-table-wrap admin-panel quotation-list">
           <table className="admin-table">
-            <thead><tr><th>SL No.</th><th>Ref No.</th><th>Date</th><th>Client</th><th>Organization</th><th>Amount (BDT)</th><th>Created By</th><th>Status</th><th>Actions</th><th>Delete</th></tr></thead>
+            <thead><tr><th>SL No.</th><th>Ref No.</th><th>Date</th><th>Client</th><th>Organization</th><th>Phone Number</th><th>Amount (BDT)</th><th>Created By</th><th>Status</th><th>Actions</th><th>Delete</th></tr></thead>
             <tbody>{rows.map((row, index) => {
               const client = row.client_information || {};
               const isOpen = selected?.id === row.id;
@@ -176,6 +176,7 @@ export default function QuotationHistoryPage() {
                 <td>{date(row.created_at)}</td>
                 <td>{text(row.client_name)}</td>
                 <td>{text(client.company || client.organization)}</td>
+                <td>{text(client.mobile || client.phone)}</td>
                 <td><b>{money(row.grand_total)}</b></td>
                 <td className="quotation-created-by"><b>{text(row.created_by_name || row.created_by)}</b>{row.created_by_email ? <small>{row.created_by_email}</small> : null}</td>
                 <td><select value={row.status} onChange={(event) => changeStatus(row, event.target.value)}>{["draft", "final", "sent", "approved", "rejected", "expired"].map((item) => <option key={item}>{item}</option>)}</select></td>
