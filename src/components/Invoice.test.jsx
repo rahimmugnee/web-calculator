@@ -210,7 +210,7 @@ test.each([
     </CatalogProvider>
   );
 
-  const cells = within(screen.getByText("Aluminium 640mm x 480mm").closest("tr")).getAllByRole("cell");
+  const cells = within(screen.getByText("Aluminium Cabinet 640mm x 480mm").closest("tr")).getAllByRole("cell");
   expect(cells[2]).toHaveTextContent(expectedBrand);
   expect(cells[3]).toHaveTextContent(expectedModel);
 });

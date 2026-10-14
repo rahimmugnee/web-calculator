@@ -4,7 +4,7 @@
 import { forwardRef, useMemo } from "react";
 import { useCatalog } from "../context/CatalogContext.jsx";
 import { bdtToWords, generateRef } from "../lib/calc.js";
-import { componentModelName, powerSupplyItemName, withoutLedTechnology } from "../lib/itemNames.js";
+import { cabinetItemName, componentModelName, powerSupplyItemName, withoutLedTechnology } from "../lib/itemNames.js";
 import RentalInvoice from "./RentalInvoice.jsx";
 import PAInvoice from "./PAInvoice.jsx";
 import ConferenceInvoice from "./ConferenceInvoice.jsx";
@@ -47,8 +47,17 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
 
   // ✅ Cabinet unit price (from calc.js)
   const unitCabinet = unitPrices?.unitCabinet ?? 0;
+  const configuredTemplate = String(invoiceSettings?.template_key || "").split("-")[0].toLowerCase();
+  const invoiceCompanyCode = ["mugnee", "renex", "sasha"].includes(configuredTemplate)
+    ? configuredTemplate
+    : String(company?.code || "").toLowerCase();
   const isIrregular = snapshot?.quotationMode === "irregular";
   const irregularQty = Math.max(1, Math.ceil(Number(snapshot?.irregular?.qty) || 1));
+  const usePackageRow = isIrregular && !["renex", "sasha"].includes(invoiceCompanyCode);
+  const componentQtyMultiplier = isIrregular && ["renex", "sasha"].includes(invoiceCompanyCode) ? irregularQty : 1;
+  const titleArea = isIrregular && Number(display.sft) > 0
+    ? Number((Number(display.sft) * irregularQty).toFixed(2))
+    : display.sft;
   const moduleModelName = model.code || model.name;
   const sizeStr = `${display.widthFt || "—"}ft × ${display.heightFt || "—"}ft`;
 
@@ -72,7 +81,7 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
   // ✅ Module (NO Technology here)
   const rcLabel = items.receivingPicked?.label || "Receiving Card";
 
-  if (isIrregular) {
+  if (usePackageRow) {
     rows.push({
       sl: sl++,
       type: "package",
@@ -84,7 +93,7 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
         { name: withoutLedTechnology(model.itemName || "LED Display Module"), brand: items.brands?.module || model.invoiceBrand, model: moduleModelName },
         { name: psuItemName, brand: psuPicked.brand || items.brands?.psu, model: psuPicked.model || psuPicked.label || "" },
         { name: receivingItemName, brand: receivingPicked.brand || items.brands?.receiving, model: componentModelName(receivingPicked.model, rcLabel, receivingPicked.id) },
-        ...(items?.cabinetEnabled ? [{ name: "Cabinet", brand: items.cabinet?.brand || "N/A", model: items.cabinet?.model || "N/A" }] : []),
+        ...(items?.cabinetEnabled ? [{ name: cabinetItemName(items.cabinet?.itemName), brand: items.cabinet?.brand || "N/A", model: items.cabinet?.model || "N/A" }] : []),
       ],
     });
   } else {
@@ -93,7 +102,7 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
       name: withoutLedTechnology(model.itemName || "LED Display Module"),
       model: moduleModelName,
       unit: "Pcs",
-      qty: items.modulesQty,
+      qty: componentQtyMultiplier > 1 ? items.modulesQty * componentQtyMultiplier : items.modulesQty,
       unitPrice: unitModule,
       total: totals.totalModules,
       brand: items.brands?.module || model.invoiceBrand,
@@ -115,13 +124,13 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
   }
 
   // Receiving card
-  if (!isIrregular) {
+  if (!usePackageRow) {
     rows.push({
       sl: sl++,
       name: receivingItemName,
       model: componentModelName(receivingPicked.model, rcLabel, receivingPicked.id),
       unit: "Pcs",
-      qty: items.rcQty,
+      qty: componentQtyMultiplier > 1 ? items.rcQty * componentQtyMultiplier : items.rcQty,
       unitPrice: unitRC,
       total: totals.totalRC,
       brand: receivingPicked.brand || items.brands?.receiving,
@@ -133,7 +142,7 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
       name: psuItemName,
       model: psuPicked.model || psuPicked.label || "",
       unit: "Pcs",
-      qty: items.psQty,
+      qty: componentQtyMultiplier > 1 ? items.psQty * componentQtyMultiplier : items.psQty,
       unitPrice: unitPS,
       total: totals.totalPS,
       brand: psuPicked.brand || items.brands?.psu,
@@ -141,13 +150,13 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
   }
 
   // ✅ Cabinet Case (only when cabinet enabled) — must be under Power Supply
-  if (!isIrregular && items?.cabinetEnabled && (items?.cabinetQty || 0) > 0) {
+  if (!usePackageRow && items?.cabinetEnabled && (items?.cabinetQty || 0) > 0) {
     rows.push({
       sl: sl++,
-      name: items.cabinet?.itemName || "Cabinet",
+      name: cabinetItemName(items.cabinet?.itemName),
       model: items.cabinet?.model || "N/A",
       unit: "Pcs",
-      qty: items.cabinetQty,
+      qty: componentQtyMultiplier > 1 ? items.cabinetQty * componentQtyMultiplier : items.cabinetQty,
       unitPrice: unitCabinet,
       total: totals.totalCabinet || 0,
       brand: items.cabinet?.brand || "N/A",
@@ -216,15 +225,11 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
 
   const showDiscountBlock = !!snapshot?.discountEnabled; // only when enabled
 
-  const configuredTemplate = String(invoiceSettings?.template_key || "").split("-")[0].toLowerCase();
-  const invoiceCompanyCode = ["mugnee", "renex", "sasha"].includes(configuredTemplate)
-    ? configuredTemplate
-    : String(company?.code || "").toLowerCase();
   if (invoiceCompanyCode === "renex") {
-    return <RenexInvoice ref={ref} customer={customer} dateStr={dateStr} display={display} items={items} model={model} refNo={refNo} rows={rows} totals={totals} isIrregular={isIrregular} company={company} showDiscountBlock={showDiscountBlock} />;
+    return <RenexInvoice isIrregular={isIrregular} irregularQty={irregularQty} ref={ref} customer={customer} dateStr={dateStr} display={display} items={items} model={model} refNo={refNo} rows={rows} totals={totals} company={company} showDiscountBlock={showDiscountBlock} />;
   }
   if (invoiceCompanyCode === "sasha") {
-    return <SashaInvoice ref={ref} customer={customer} dateStr={dateStr} display={display} items={items} model={model} refNo={refNo} rows={rows} totals={totals} isIrregular={isIrregular} company={company} showDiscountBlock={showDiscountBlock} />;
+    return <SashaInvoice isIrregular={isIrregular} irregularQty={irregularQty} ref={ref} customer={customer} dateStr={dateStr} display={display} items={items} model={model} refNo={refNo} rows={rows} totals={totals} company={company} showDiscountBlock={showDiscountBlock} />;
   }
 
   return (
@@ -278,11 +283,11 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
         <div className="price-title">
           <div className="price-title-left">
             <strong>
-             Proposal for {model.name} <span className="tech-badge"> ({items.technology?.toUpperCase()})</span> LED Display. ({sizeStr}) |
+             Proposal for {model.name} <span className="tech-badge"> ({items.technology?.toUpperCase()})</span> LED Display. {isIrregular ? `${irregularQty} set ` : ""}({sizeStr}) |
             </strong>
 
             <span className="sft-cal"> Sft:</span>{" "}
-            <span className="sft-cal-">({display.sft || "—"}) </span>
+            <span className="sft-cal-">({titleArea || "—"}) </span>
           </div>
 
         </div>

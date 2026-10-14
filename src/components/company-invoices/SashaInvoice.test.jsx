@@ -68,3 +68,16 @@ test("keeps only the grand total row when Sasha discount is disabled", () => {
   expect(screen.queryByText("Special Discount =")).not.toBeInTheDocument();
   expect(screen.queryByText("Payable =")).not.toBeInTheDocument();
 });
+
+
+test.each([false, true])("Sasha shows separate VAT rows in irregular mode %s with discount preserved", (isIrregular) => {
+  render(<SashaInvoice {...baseProps} isIrregular={isIrregular} irregularQty={2} showDiscountBlock
+    totals={{ vatEnabled: true, vatRate: 0.1, totalBeforeVat: 100000, vatAmount: 10000,
+      grandTotal: 110000, discount: 5000, payable: 105000 }} />);
+  expect(screen.getByText("Subtotal =").closest("tr")).toHaveTextContent("100,000");
+  expect(screen.getByText("VAT (10%) =").closest("tr")).toHaveTextContent("10,000");
+  expect(screen.getByText("Grand Total =").closest("tr")).toHaveTextContent("110,000");
+  expect(screen.getByText("Special Discount =").closest("tr")).toHaveTextContent("5,000");
+  expect(screen.getByText("Payable =").closest("tr")).toHaveTextContent("105,000");
+  expect(document.querySelectorAll(".sasha-summary-label")).toHaveLength(5);
+});

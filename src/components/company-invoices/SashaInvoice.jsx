@@ -1,16 +1,19 @@
 import { forwardRef } from "react";
 import { bdtToWords, toBDT } from "../../lib/calc.js";
-import InvoiceTable from "../InvoiceTable.jsx";
+import { cabinetItemName } from "../../lib/itemNames.js";
 import "./SashaInvoice.css";
 
 const SashaInvoice = forwardRef(function SashaInvoice({
-  customer, dateStr, display, items, model, refNo, rows, totals, company, showDiscountBlock, isIrregular = false,
+  customer, dateStr, display, items, model, refNo, rows, totals, company, showDiscountBlock, isIrregular = false, irregularQty = 1,
 }, ref) {
   const isExtraRow = (row) => row.type === "custom" || /Structure & Accessories|Installation, Testing & Commissioning|Transport Cost/i.test(row.name || "");
   const detailRows = rows.filter((row) => !isExtraRow(row));
   const extraRows = rows.filter(isExtraRow);
   const displayTotal = detailRows.reduce((sum, row) => sum + Number(row.total || 0), 0);
-  const area = Number(display.sft) || 0;
+  const singleDisplayArea = Number(display.sft) || 0;
+  const area = isIrregular
+    ? Number((singleDisplayArea * irregularQty).toFixed(2))
+    : singleDisplayArea;
   const displayUnitPrice = area > 0 ? Math.round(displayTotal / area) : displayTotal;
   const payable = showDiscountBlock ? (totals.payable ?? totals.grandTotal) : totals.grandTotal;
   const controllerRow = detailRows.find((row) => /controller/i.test(row.name || ""));
@@ -38,43 +41,45 @@ const SashaInvoice = forwardRef(function SashaInvoice({
         </section>
 
         <div className="sasha-proposal-title">
-          Quotation for {model.name} {items.dispType === "outdoor" ? "Outdoor" : "Indoor"} ({items.technology?.toUpperCase()}) LED Display. ({display.widthFt || "—"}ft x {display.heightFt || "—"}ft)
+          Quotation for {model.name} {items.dispType === "outdoor" ? "Outdoor" : "Indoor"} LED Display. ({display.widthFt || "—"}ft x {display.heightFt || "—"}ft)
         </div>
 
-        {isIrregular ? (
-          <InvoiceTable rows={rows} totals={totals} showDiscountBlock={showDiscountBlock} />
-        ) : (
-          <>
-            <table className="sasha-invoice-table">
-              <colgroup><col className="sasha-col-sl"/><col/><col className="sasha-col-unit"/><col className="sasha-col-qty"/><col className="sasha-col-price"/><col className="sasha-col-total"/></colgroup>
-              <thead><tr><th>SL.</th><th>Item Name</th><th>Unit</th><th>Qty</th><th>Unit Price Tk</th><th>Total Price Tk</th></tr></thead>
-              <tbody>
-                <tr className="sasha-system-row">
-                  <td>1</td>
-                  <td>
-                    <strong>{model.name} {items.dispType === "outdoor" ? "Outdoor" : "Indoor"} ({items.technology?.toUpperCase()}) LED Display</strong>
-                    <span>Module Brand: {moduleRow?.brand || items.brands?.module || "—"} | Model: {moduleRow?.model || model.code || model.name || "—"}</span>
-                    {controllerRow ? <span>Controller Brand: {controllerRow.brand || items.brands?.controller || "—"} | Model: {controllerRow.model || String(controllerRow.name || "").replace(/^Controller:\s*/i, "") || "—"}</span> : null}
-                    {receivingRow ? <span>Receiving Card Brand: {receivingRow.brand || items.brands?.receiving || "—"} | Model: {receivingRow.model || String(receivingRow.name || "").replace(/^Receiving Card:\s*/i, "") || "—"}</span> : null}
-                    {powerRow ? <span>Power Supply Brand: {powerRow.brand || items.brands?.psu || "—"} | Model: {powerRow.model || items.psuPicked?.model || "—"}</span> : null}
-                  </td>
-                  <td>{area ? "Sqft" : moduleRow?.unit || "Set"}</td>
-                  <td>{area || moduleRow?.qty || 1}</td>
-                  <td>{toBDT(displayUnitPrice)}</td>
-                  <td>{toBDT(displayTotal)}</td>
-                </tr>
-                {extraRows.map((row, index) => <tr key={row.sl}><td>{index + 2}</td><td><strong>{row.name}</strong></td><td>{row.unit}</td><td>{row.qty}</td><td>{toBDT(row.unitPrice)}</td><td>{toBDT(row.total)}</td></tr>)}
-                <tr className="sasha-grand-row"><td className="sasha-summary-label" colSpan="5">Grand Total =</td><td className="sasha-summary-amount">{toBDT(totals.grandTotal)}</td></tr>
-                {showDiscountBlock ? (
-                  <>
-                    <tr className="sasha-grand-row"><td className="sasha-summary-label" colSpan="5">Special Discount =</td><td className="sasha-summary-amount">{toBDT(totals.discount || 0)}</td></tr>
-                    <tr className="sasha-grand-row"><td className="sasha-summary-label" colSpan="5">Payable =</td><td className="sasha-summary-amount">{toBDT(payable)}</td></tr>
-                  </>
-                ) : null}
-              </tbody>
-            </table>
-          </>
-        )}
+        <table className="sasha-invoice-table">
+          <colgroup><col className="sasha-col-sl"/><col/><col className="sasha-col-unit"/><col className="sasha-col-qty"/><col className="sasha-col-price"/><col className="sasha-col-total"/></colgroup>
+          <thead><tr><th>SL.</th><th>Item Name</th><th>Unit</th><th>Qty</th><th>Unit Price Tk</th><th>Total Price Tk</th></tr></thead>
+          <tbody>
+            <tr className="sasha-system-row">
+              <td>1</td>
+              <td>
+                <strong>{model.name} {items.dispType === "outdoor" ? "Outdoor" : "Indoor"} ({items.technology?.toUpperCase()}) LED Display{isIrregular ? ` | ${irregularQty} set` : ""}</strong>
+                <span>Module Brand: {moduleRow?.brand || items.brands?.module || "—"} | Model: {moduleRow?.model || model.code || model.name || "—"}</span>
+                {controllerRow ? <span>Controller Brand: {controllerRow.brand || items.brands?.controller || "—"} | Model: {controllerRow.model || String(controllerRow.name || "").replace(/^Controller:\s*/i, "") || "—"}</span> : null}
+                {receivingRow ? <span>Receiving Card Brand: {receivingRow.brand || items.brands?.receiving || "—"} | Model: {receivingRow.model || String(receivingRow.name || "").replace(/^Receiving Card:\s*/i, "") || "—"}</span> : null}
+                {powerRow ? <span>Power Supply Brand: {powerRow.brand || items.brands?.psu || "—"} | Model: {powerRow.model || items.psuPicked?.model || "—"}</span> : null}
+                {items.cabinetEnabled ? <span>{cabinetItemName(items.cabinet?.itemName)} | Brand: {items.cabinet?.brand || "N/A"} | Model: {items.cabinet?.model || "N/A"}</span> : null}
+              </td>
+              <td>{area ? "Sqft" : moduleRow?.unit || "Set"}</td>
+              <td>{area || moduleRow?.qty || 1}</td>
+              <td>{toBDT(displayUnitPrice)}</td>
+              <td>{toBDT(displayTotal)}</td>
+            </tr>
+            {extraRows.map((row, index) => <tr key={row.sl}><td>{index + 2}</td><td><strong>{row.name}</strong></td><td>{row.unit}</td><td>{row.qty}</td><td>{toBDT(row.unitPrice)}</td><td>{toBDT(row.total)}</td></tr>)}
+            {totals?.vatEnabled ? (
+              <>
+                <tr className="sasha-grand-row"><td className="sasha-summary-label" colSpan="5">Subtotal =</td><td className="sasha-summary-amount">{toBDT(totals.totalBeforeVat)}</td></tr>
+                <tr className="sasha-grand-row"><td className="sasha-summary-label" colSpan="5">VAT ({Math.round((totals.vatRate || 0.1) * 100)}%) =</td><td className="sasha-summary-amount">{toBDT(totals.vatAmount)}</td></tr>
+              </>
+            ) : null}
+            <tr className="sasha-grand-row"><td className="sasha-summary-label" colSpan="5">Grand Total =</td><td className="sasha-summary-amount">{toBDT(totals.grandTotal)}</td></tr>
+            {showDiscountBlock ? (
+              <>
+                <tr className="sasha-grand-row"><td className="sasha-summary-label" colSpan="5">Special Discount =</td><td className="sasha-summary-amount">{toBDT(totals.discount || 0)}</td></tr>
+                <tr className="sasha-grand-row"><td className="sasha-summary-label" colSpan="5">Payable =</td><td className="sasha-summary-amount">{toBDT(payable)}</td></tr>
+              </>
+            ) : null}
+          </tbody>
+        </table>
+
 
         <div className="sasha-in-words"><b>In Words:</b> <i>{bdtToWords(payable)}</i></div>
 

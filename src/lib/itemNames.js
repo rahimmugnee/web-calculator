@@ -27,3 +27,14 @@ export function powerSupplyItemName(value = "", model = "") {
     .trim();
   return label ? `Power Supply: ${label}` : "Power Supply";
 }
+
+
+export function cabinetItemName(value = "") {
+  const name = String(value || "").trim();
+  if (!name) return "Cabinet";
+  if (/\bcabinet\b/i.test(name)) return name;
+  const sizeIndex = name.search(/\d+(?:\.\d+)?\s*mm\s*[x\u00d7]/i);
+  return sizeIndex >= 0
+    ? `${name.slice(0, sizeIndex).trim()} Cabinet ${name.slice(sizeIndex)}`.trim()
+    : `${name} Cabinet`;
+}
