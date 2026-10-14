@@ -564,3 +564,37 @@ test("manual component selections survive tab focus and live catalog refreshes",
     expect(screen.getByRole("button", { name: "Power Supply Model" })).toHaveTextContent("N200V5-A");
   });
 });
+
+
+test("irregular controller quantity overrides totals and survives size changes without affecting regular mode", async () => {
+  const onCalculated = jest.fn();
+  renderPriceForm({ onCalculated });
+  expect(screen.queryByLabelText("Controller Qty")).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Width (ft)"), { target: { value: "10.5" } });
+  fireEvent.click(screen.getByRole("button", { name: "Quotation Mode" }));
+  fireEvent.click(screen.getByRole("option", { name: "Irregular" }));
+  const qty = screen.getByLabelText("Controller Qty");
+  const latest = () => onCalculated.mock.calls[onCalculated.mock.calls.length - 1];
+  await waitFor(() => expect(latest()[1].items.controllerQty).toBe(1));
+  const originalTotal = latest()[0].totals.grandTotal;
+  const originalControllerTotal = latest()[0].totals.controllerTotal;
+  fireEvent.change(qty, { target: { value: "3" } });
+  fireEvent.blur(qty);
+  await waitFor(() => expect(latest()[1].items.controllerQty).toBe(3));
+  expect(latest()[0].totals.controllerTotal).toBe(originalControllerTotal * 3);
+  expect(latest()[0].totals.grandTotal).toBeGreaterThan(originalTotal);
+  fireEvent.change(screen.getByLabelText("Width (ft)"), { target: { value: "12.6" } });
+  await waitFor(() => expect(latest()[1].display.widthFt).toBe("12.6"));
+  expect(latest()[1].items.controllerQty).toBe(3);
+  expect(qty).toHaveValue(3);
+  fireEvent.change(qty, { target: { value: "0" } });
+  await waitFor(() => expect(latest()[0].totals.controllerTotal).toBe(0));
+  fireEvent.change(qty, { target: { value: "" } });
+  fireEvent.blur(qty);
+  await waitFor(() => expect(latest()[1].items.controllerQty).toBe(1));
+  fireEvent.change(qty, { target: { value: "4" } });
+  fireEvent.click(screen.getByRole("button", { name: "Quotation Mode" }));
+  fireEvent.click(screen.getByRole("option", { name: "Regular" }));
+  expect(screen.queryByLabelText("Controller Qty")).not.toBeInTheDocument();
+  await waitFor(() => expect(latest()[1].items.controllerQty).toBe(1));
+});

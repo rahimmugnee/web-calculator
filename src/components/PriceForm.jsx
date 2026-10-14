@@ -549,6 +549,12 @@ export default function PriceForm({
   const [customControllerModel, setCustomControllerModel] = useState("");
   const controllerSelectionManualRef = useRef(false);
   const [controllerQty, setControllerQty] = useState(1);
+  const [controllerQtyOverrideStr, setControllerQtyOverrideStr] = useState("");
+  const controllerQtyOverride = Number(controllerQtyOverrideStr);
+  const effectiveControllerQty = quotationMode === "irregular" && controllerQtyOverrideStr.trim() !== "" &&
+    Number.isFinite(controllerQtyOverride) && controllerQtyOverride >= 0
+    ? Math.ceil(controllerQtyOverride)
+    : controllerQty;
 
   const [customer, setCustomer] = useState({ name: "", company: "", address: "", mobile: "", position: "" });
 
@@ -1049,7 +1055,7 @@ export default function PriceForm({
         cabinetUnitPrice,
 
         controllerId,
-        controllerQty,
+        controllerQty: effectiveControllerQty,
         controllerPrice,
         controllerLabel,
         controllerPicked,
@@ -1145,7 +1151,7 @@ export default function PriceForm({
       cabinetQty,
       cabinetUnitPrice,
       controllerId,
-      controllerQty,
+      effectiveControllerQty,
       controllerPrice,
       controllerLabel,
       controllerPicked,
@@ -1748,6 +1754,27 @@ export default function PriceForm({
             />
             {controllerId === "__custom__" ? <input className="input" aria-label="Custom Controller Model" placeholder="Enter controller model" value={customControllerModel} onChange={(e) => setCustomControllerModel(e.target.value)} /> : null}
           </label>
+
+          {quotationMode === "irregular" ? (
+            <label>
+              Controller Qty
+              <input
+                className="input"
+                type="number"
+                min="0"
+                step="1"
+                value={controllerQtyOverrideStr === "" ? controllerQty : controllerQtyOverrideStr}
+                onFocus={() => setControllerQtyOverrideStr((value) => value === "" ? String(controllerQty) : value)}
+                onChange={(e) => setControllerQtyOverrideStr(e.target.value)}
+                onBlur={() => {
+                  const value = Number(controllerQtyOverrideStr);
+                  setControllerQtyOverrideStr(controllerQtyOverrideStr.trim() === "" || !Number.isFinite(value) || value < 0
+                    ? ""
+                    : String(Math.ceil(value)));
+                }}
+              />
+            </label>
+          ) : null}
 
           <label>
             Receiving Card Model

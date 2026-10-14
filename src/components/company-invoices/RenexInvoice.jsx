@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import { toBDT } from "../../lib/calc.js";
+import InvoiceTable from "../InvoiceTable.jsx";
 import "./RenexInvoice.css";
 
 const RenexInvoice = forwardRef(function RenexInvoice({
@@ -13,6 +14,7 @@ const RenexInvoice = forwardRef(function RenexInvoice({
   totals,
   company,
   showDiscountBlock,
+  isIrregular = false,
 }, ref) {
   const sizeStr = `${display.widthFt || "—"}ft × ${display.heightFt || "—"}ft`;
   const payable = showDiscountBlock ? (totals.payable ?? totals.grandTotal) : totals.grandTotal;
@@ -43,48 +45,54 @@ const RenexInvoice = forwardRef(function RenexInvoice({
           Quotation for: {model.name} {items.dispType === "outdoor" ? "Outdoor" : "Indoor"} ({items.technology?.toUpperCase()}) LED Display. ({sizeStr}) | Sft: ({display.sft || "—"})
         </div>
 
-        <div className="renex-line-items">
-          {rows.map((row) => (
-            <div className="renex-line-item" key={row.sl}>
-              <div className="renex-item-sl">{row.sl}</div>
-              <div className="renex-item-copy">
-                {row.type === "package" ? row.packageLines.map((line, index) => (
-                  <div key={`${row.sl}-${index}`}>
-                    <strong>{line.text}</strong>
-                    {line.brand ? <small>Brand: {line.brand}</small> : null}
-                  </div>
-                )) : (
-                  <>
-                    <strong>{row.name}</strong>
-                    <small>
-                      {row.qty} {row.unit} &nbsp;•&nbsp; Unit: {toBDT(row.unitPrice)}
-                      {row.brand ? <> &nbsp;•&nbsp; Brand: {row.brand}</> : null}
-                    </small>
-                  </>
-                )}
-              </div>
-              <div className="renex-item-total">{toBDT(row.total)}</div>
-            </div>
-          ))}
-        </div>
-
-        {totals?.vatEnabled ? (
-          <div className="renex-totals renex-totals-multi">
-            <div><b>Subtotal =</b><strong>{toBDT(totals.totalBeforeVat)}</strong></div>
-            <div><b>VAT ({Math.round((totals.vatRate || 0.1) * 100)}%) =</b><strong>{toBDT(totals.vatAmount)}</strong></div>
-            <div><b>Grand Total =</b><strong>{toBDT(totals.grandTotal)}</strong></div>
-            {showDiscountBlock ? <><div><b>Special Discount =</b><strong>{toBDT(totals.discount || 0)}</strong></div><div><b>Payable =</b><strong>{toBDT(payable)}</strong></div></> : null}
-          </div>
-        ) : showDiscountBlock ? (
-          <div className="renex-totals renex-totals-multi">
-            <div><b>Grand Total =</b><strong>{toBDT(totals.grandTotal)}</strong></div>
-            <div><b>Special Discount =</b><strong>{toBDT(totals.discount || 0)}</strong></div>
-            <div><b>Payable =</b><strong>{toBDT(payable)}</strong></div>
-          </div>
+        {isIrregular ? (
+          <InvoiceTable rows={rows} totals={totals} showDiscountBlock={showDiscountBlock} />
         ) : (
-          <div className="renex-totals">
-            <b>Grand Total =</b><strong>{toBDT(totals.grandTotal)}</strong>
-          </div>
+          <>
+            <div className="renex-line-items">
+              {rows.map((row) => (
+                <div className="renex-line-item" key={row.sl}>
+                  <div className="renex-item-sl">{row.sl}</div>
+                  <div className="renex-item-copy">
+                    {row.type === "package" ? row.packageLines.map((line, index) => (
+                      <div key={`${row.sl}-${index}`}>
+                        <strong>{line.text}</strong>
+                        {line.brand ? <small>Brand: {line.brand}</small> : null}
+                      </div>
+                    )) : (
+                      <>
+                        <strong>{row.name}</strong>
+                        <small>
+                          {row.qty} {row.unit} &nbsp;•&nbsp; Unit: {toBDT(row.unitPrice)}
+                          {row.brand ? <> &nbsp;•&nbsp; Brand: {row.brand}</> : null}
+                        </small>
+                      </>
+                    )}
+                  </div>
+                  <div className="renex-item-total">{toBDT(row.total)}</div>
+                </div>
+              ))}
+            </div>
+
+            {totals?.vatEnabled ? (
+              <div className="renex-totals renex-totals-multi">
+                <div><b>Subtotal =</b><strong>{toBDT(totals.totalBeforeVat)}</strong></div>
+                <div><b>VAT ({Math.round((totals.vatRate || 0.1) * 100)}%) =</b><strong>{toBDT(totals.vatAmount)}</strong></div>
+                <div><b>Grand Total =</b><strong>{toBDT(totals.grandTotal)}</strong></div>
+                {showDiscountBlock ? <><div><b>Special Discount =</b><strong>{toBDT(totals.discount || 0)}</strong></div><div><b>Payable =</b><strong>{toBDT(payable)}</strong></div></> : null}
+              </div>
+            ) : showDiscountBlock ? (
+              <div className="renex-totals renex-totals-multi">
+                <div><b>Grand Total =</b><strong>{toBDT(totals.grandTotal)}</strong></div>
+                <div><b>Special Discount =</b><strong>{toBDT(totals.discount || 0)}</strong></div>
+                <div><b>Payable =</b><strong>{toBDT(payable)}</strong></div>
+              </div>
+            ) : (
+              <div className="renex-totals">
+                <b>Grand Total =</b><strong>{toBDT(totals.grandTotal)}</strong>
+              </div>
+            )}
+          </>
         )}
 
         <div className="renex-signatory">

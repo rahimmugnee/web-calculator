@@ -272,7 +272,7 @@ export const componentModelAndPrice = {
     { "id": "VP830", "unit": "Pcs", "brand": "Huidu", "label": "Video Processor: HD VP830", "model": "HD VP830", "price": 109000, "itemName": "Video Processor: HD VP830" },
     { "id": "VP1240A", "unit": "Pcs", "brand": "Huidu", "label": "HD VP1240A", "model": "HD VP1240A", "price": 138000, "itemName": "HD VP1240A" },
     { "id": "VP1220S", "unit": "Pcs", "brand": "Huidu", "label": "HD VP1220S", "model": "HD VP1220S", "price": 85025, "itemName": "HD VP1220S" },
-    { "id": "A6L", "unit": "Pcs", "brand": "Huidu", "label": "Crontoller: HD-A6L", "model": "HD-A6L", "price": 4300, "itemName": "Crontoller: HD-A6L" },
+    { "id": "A6L", "unit": "Pcs", "brand": "Huidu", "label": "Crontoller: HD-A6L", "model": "HD-A6L", "price": 43000, "itemName": "Crontoller: HD-A6L" },
     { "id": "VP1620S", "unit": "Pcs", "brand": "Huidu", "label": "HD VP1620S", "model": "HD VP1620S", "price": 150000, "itemName": "HD VP1620S" },
     { "id": "VP1640A", "unit": "Pcs", "brand": "Huidu", "label": "HD VP1640A", "model": "HD VP1640A", "price": 166800, "itemName": "HD VP1640A" }
   ],
