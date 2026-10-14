@@ -38,3 +38,9 @@ export function cabinetItemName(value = "") {
     ? `${name.slice(0, sizeIndex).trim()} Cabinet ${name.slice(sizeIndex)}`.trim()
     : `${name} Cabinet`;
 }
+
+
+export function displayModelName(value = "", displayType = "indoor") {
+  const name = String(value || "").replace(/\b(?:indoor|outdoor)\b/gi, " ").replace(/\s+/g, " ").trim();
+  return `${name} ${displayType === "outdoor" ? "Outdoor" : "Indoor"}`.trim();
+}

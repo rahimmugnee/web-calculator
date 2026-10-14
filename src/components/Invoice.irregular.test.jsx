@@ -132,3 +132,24 @@ test("Sasha irregular mode shows total area and the same component details as re
     view.unmount();
   }
 });
+
+
+test.each(["renex", "sasha"])("%s displays Indoor and Outdoor once in regular and irregular headings", (code) => {
+  useCatalog.mockReturnValue({ catalog: { controllers: [] }, company: { code }, invoiceSettings: {} });
+  for (const quotationMode of ["regular", "irregular"]) {
+    for (const dispType of ["indoor", "outdoor"]) {
+      const label = dispType === "indoor" ? "Indoor" : "Outdoor";
+      const data = { ...snapshot, quotationMode,
+        model: { ...snapshot.model, name: "P1.25 " + label },
+        items: { ...snapshot.items, dispType } };
+      const view = render(<Invoice snapshot={data} calc={calc} quotationRef="TEST" />);
+      const title = view.container.querySelector("." + code + "-proposal-title");
+      expect(title.textContent.match(/\b(?:Indoor|Outdoor)\b/g)).toEqual([label]);
+      if (code === "sasha") {
+        const heading = view.container.querySelector(".sasha-system-row strong");
+        expect(heading.textContent.match(/\b(?:Indoor|Outdoor)\b/g)).toEqual([label]);
+      }
+      view.unmount();
+    }
+  }
+});

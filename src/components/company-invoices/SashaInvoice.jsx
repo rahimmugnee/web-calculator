@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 import { bdtToWords, toBDT } from "../../lib/calc.js";
-import { cabinetItemName } from "../../lib/itemNames.js";
+import { cabinetItemName, displayModelName } from "../../lib/itemNames.js";
 import "./SashaInvoice.css";
 
 const SashaInvoice = forwardRef(function SashaInvoice({
@@ -41,7 +41,7 @@ const SashaInvoice = forwardRef(function SashaInvoice({
         </section>
 
         <div className="sasha-proposal-title">
-          Quotation for {model.name} {items.dispType === "outdoor" ? "Outdoor" : "Indoor"} LED Display. ({display.widthFt || "—"}ft x {display.heightFt || "—"}ft)
+          Quotation for {displayModelName(model.name, items.dispType)} LED Display. ({display.widthFt || "—"}ft x {display.heightFt || "—"}ft)
         </div>
 
         <table className="sasha-invoice-table">
@@ -51,7 +51,7 @@ const SashaInvoice = forwardRef(function SashaInvoice({
             <tr className="sasha-system-row">
               <td>1</td>
               <td>
-                <strong>{model.name} {items.dispType === "outdoor" ? "Outdoor" : "Indoor"} ({items.technology?.toUpperCase()}) LED Display{isIrregular ? ` | ${irregularQty} set` : ""}</strong>
+                <strong>{displayModelName(model.name, items.dispType)} ({items.technology?.toUpperCase()}) LED Display{isIrregular ? ` | ${irregularQty} set` : ""}</strong>
                 <span>Module Brand: {moduleRow?.brand || items.brands?.module || "—"} | Model: {moduleRow?.model || model.code || model.name || "—"}</span>
                 {controllerRow ? <span>Controller Brand: {controllerRow.brand || items.brands?.controller || "—"} | Model: {controllerRow.model || String(controllerRow.name || "").replace(/^Controller:\s*/i, "") || "—"}</span> : null}
                 {receivingRow ? <span>Receiving Card Brand: {receivingRow.brand || items.brands?.receiving || "—"} | Model: {receivingRow.model || String(receivingRow.name || "").replace(/^Receiving Card:\s*/i, "") || "—"}</span> : null}

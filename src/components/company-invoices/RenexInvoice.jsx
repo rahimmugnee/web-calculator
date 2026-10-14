@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import { toBDT } from "../../lib/calc.js";
+import { displayModelName } from "../../lib/itemNames.js";
 import "./RenexInvoice.css";
 
 const RenexInvoice = forwardRef(function RenexInvoice({
@@ -42,7 +43,7 @@ const RenexInvoice = forwardRef(function RenexInvoice({
         </section>
 
         <div className="renex-proposal-title">
-          Quotation for: {model.name} {items.dispType === "outdoor" ? "Outdoor" : "Indoor"} LED Display. ({sizeStr}) | Sft: ({display.sft || "—"}){isIrregular ? ` | Display: ${irregularQty} set` : ""} | Technology: {items.technology?.toUpperCase()}
+          Quotation for: {displayModelName(model.name, items.dispType)} LED Display. ({sizeStr}) | Sft: ({display.sft || "—"}){isIrregular ? ` | Display: ${irregularQty} set` : ""} | Technology: {items.technology?.toUpperCase()}
         </div>
 
         <div className="renex-line-items">
