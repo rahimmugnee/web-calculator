@@ -171,7 +171,8 @@ export function buildQuotationFilenameTitle(snapshot = {}, companyCode = "mugnee
   const sizePart = widthFt || heightFt ? ` (${widthFt || "-"}ft x ${heightFt || "-"}ft)` : "";
 
   if (normalizedCompanyCode === "renex") {
-    return `Quotation for: ${modelName}${displayType ? ` ${displayType}` : ""} LED Display.${sizePart} Renex`
+    const displayTypePart = displayType && !/\b(indoor|outdoor)\b/i.test(modelName) ? ` ${displayType}` : "";
+    return `Quotation for: ${modelName}${displayTypePart} LED Display.${sizePart} Renex`
       .replace(/\s+/g, " ")
       .trim();
   }
@@ -182,14 +183,21 @@ export function buildQuotationFilenameTitle(snapshot = {}, companyCode = "mugnee
       .trim();
   }
 
-  return `Proposal for ${modelName}${techPart} LED Display.${sizePart}`
+  const cabinetPart = ["mugnee", "mugnee-multiple"].includes(normalizedCompanyCode) && snapshot?.items?.cabinetEnabled ? " With Cabinet" : "";
+  return `Proposal for ${modelName}${techPart} LED Display${cabinetPart}.${sizePart}`
     .replace(/\s+/g, " ")
     .trim();
 }
 
-export function quotationTitlePdfFilename(snapshot, companyCode = "mugnee") {
+export function quotationTitlePdfFilename(snapshot, companyCode = "mugnee", quotationRef = snapshot?.quotationRef) {
   const title = buildQuotationFilenameTitle(snapshot, companyCode);
   const safeTitle = sanitizeRefForFilename(title);
+  const referenceDigits = String(quotationRef || "").trim().match(/(\d{4})$/)?.[1];
+  if (String(companyCode).trim().toLowerCase() === "renex" && referenceDigits) {
+    const suffix = `_Renex-${referenceDigits}`;
+    const stem = safeTitle.replace(/_Renex$/, "").slice(0, 160 - suffix.length).replace(/^[._-]+|[._-]+$/g, "");
+    return `${stem}${suffix}.pdf`;
+  }
   const titleStem = safeTitle.slice(0, 160).replace(/^[._-]+|[._-]+$/g, "") || "Mugnee_Quotation";
   return `${titleStem}.pdf`;
 }

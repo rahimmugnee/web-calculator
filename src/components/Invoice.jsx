@@ -283,7 +283,7 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
         <div className="price-title">
           <div className="price-title-left">
             <strong>
-             Proposal for {model.name} <span className="tech-badge"> ({items.technology?.toUpperCase()})</span> LED Display. {isIrregular ? `${irregularQty} set ` : ""}({sizeStr}) |
+             Proposal for {model.name} <span className="tech-badge"> ({items.technology?.toUpperCase()})</span> LED Display{items.cabinetEnabled ? " With Cabinet" : ""}. {isIrregular ? `${irregularQty} set ` : ""}({sizeStr}) |
             </strong>
 
             <span className="sft-cal"> Sft:</span>{" "}

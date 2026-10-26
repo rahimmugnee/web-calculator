@@ -57,7 +57,7 @@ test.each([
   useCatalog.mockReturnValue({ catalog: { controllers: [] }, company: { code: "mugnee" }, invoiceSettings: {} });
   const { container } = render(<Invoice snapshot={{ ...snapshot, quotationMode, irregular: { unit: "Set", qty } }} calc={calc} quotationRef="TEST" />);
   const title = container.querySelector(".price-title");
-  expect(title).toHaveTextContent(`LED Display. ${setLabel ? setLabel + " " : ""}(10.5ft \u00d7 5.78ft) | Sft: (${area})`);
+  expect(title).toHaveTextContent(`LED Display With Cabinet. ${setLabel ? setLabel + " " : ""}(10.5ft \u00d7 5.78ft) | Sft: (${area})`);
   if (quotationMode === "regular") expect(title).not.toHaveTextContent("set");
 });
 

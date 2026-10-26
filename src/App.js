@@ -468,7 +468,7 @@ export default function App() {
               <PDFButton
                 label="Download Quotation (PDF)"
                 targetIds={["pdf-page-1", "pdf-page-2"]}
-                filename={snapshot ? quotationTitlePdfFilename(snapshot, company?.code) : "Mugnee_Quotation.pdf"}
+                filename={snapshot ? quotationTitlePdfFilename(snapshot, company?.code, quotationRef) : "Mugnee_Quotation.pdf"}
                 exportData={snapshot ? {
                   ...snapshot,
                   ...(quotationRef ? { quotationRef } : {}),
