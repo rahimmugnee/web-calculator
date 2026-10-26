@@ -177,13 +177,13 @@ export function buildQuotationFilenameTitle(snapshot = {}, companyCode = "mugnee
       .trim();
   }
 
+  const cabinetPart = ["mugnee", "mugnee-multiple", "sasha"].includes(normalizedCompanyCode) && snapshot?.items?.cabinetEnabled ? " With Cabinet" : "";
   if (normalizedCompanyCode === "sasha") {
-    return `Quotation for ${modelName}${displayType ? ` ${displayType}` : ""} LED Display.${sizePart}`
+    return `Quotation for ${modelName}${displayType ? ` ${displayType}` : ""} LED Display${cabinetPart}.${sizePart}`
       .replace(/\s+/g, " ")
       .trim();
   }
 
-  const cabinetPart = ["mugnee", "mugnee-multiple"].includes(normalizedCompanyCode) && snapshot?.items?.cabinetEnabled ? " With Cabinet" : "";
   return `Proposal for ${modelName}${techPart} LED Display${cabinetPart}.${sizePart}`
     .replace(/\s+/g, " ")
     .trim();

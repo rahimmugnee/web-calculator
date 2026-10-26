@@ -41,7 +41,7 @@ const SashaInvoice = forwardRef(function SashaInvoice({
         </section>
 
         <div className="sasha-proposal-title">
-          Quotation for {displayModelName(model.name, items.dispType)} LED Display. ({display.widthFt || "—"}ft x {display.heightFt || "—"}ft)
+          Quotation for {displayModelName(model.name, items.dispType)} LED Display{items.cabinetEnabled ? " With Cabinet" : ""}. ({display.widthFt || "—"}ft x {display.heightFt || "—"}ft)
         </div>
 
         <table className="sasha-invoice-table">
