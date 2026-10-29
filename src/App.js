@@ -29,10 +29,11 @@ function cookie(name) {
 function quotationConfigurationKey(snapshot) {
   if (!snapshot?.display) return null;
   const model = snapshot.model?.id || snapshot.model?.name || "";
+  const moduleBrand = snapshot.items?.brands?.module || "";
   const sizes = Array.isArray(snapshot.display.sizes)
     ? snapshot.display.sizes.map((size) => [size.widthFt || "", size.heightFt || "", size.pairs || 1])
     : [[snapshot.display.widthFt || "", snapshot.display.heightFt || ""]];
-  return JSON.stringify([snapshot.quotationType || "fixed", model, sizes, Boolean(snapshot.items?.cabinetEnabled)]);
+  return JSON.stringify([snapshot.quotationType || "fixed", model, moduleBrand, sizes, Boolean(snapshot.items?.cabinetEnabled)]);
 }
 
 function PasswordVisibilityIcon({ hidden = false }) {

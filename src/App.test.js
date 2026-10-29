@@ -123,7 +123,7 @@ test('uses the database email login and never sends the legacy credentials', asy
   expect(screen.queryByRole('menuitem', { name: /logout/i })).not.toBeInTheDocument();
 });
 
-test('updates the quotation reference when pixel pitch, size or cabinet structure changes', async () => {
+test('updates the quotation reference when pixel pitch, size, cabinet structure or module brand changes', async () => {
   global.fetch.mockImplementation((url) => {
     const value = String(url);
     if (value.endsWith('/auth/me')) {
@@ -161,4 +161,10 @@ test('updates the quotation reference when pixel pitch, size or cabinet structur
   fireEvent.click(screen.getByRole('button', { name: 'Display Structure' }));
   fireEvent.click(screen.getByRole('option', { name: 'Without Cabinet' }));
   await waitFor(() => expect(Number(window.localStorage.getItem(sequenceKey))).toBe(initialSequence + 4));
+
+  const pixelPitch = screen.getByRole('button', { name: 'Pixel Pitch' }).textContent;
+  fireEvent.click(screen.getByRole('button', { name: 'Module Brand' }));
+  fireEvent.click(screen.getByRole('option', { name: 'Absen' }));
+  await waitFor(() => expect(Number(window.localStorage.getItem(sequenceKey))).toBe(initialSequence + 5));
+  expect(screen.getByRole('button', { name: 'Pixel Pitch' })).toHaveTextContent(pixelPitch);
 });
