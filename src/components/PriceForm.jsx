@@ -568,9 +568,9 @@ export default function PriceForm({
   const [customPsuModel, setCustomPsuModel] = useState("");
   const receivingCardSelectionManualRef = useRef(false);
   const [psQty, setPsQty] = useState(17);
-  const [psuBrand, setPsuBrand] = useState("Lampro");
+  const [psuBrand, setPsuBrand] = useState("Mean well");
   const [powerSupplyId, setPowerSupplyId] = useState(
-    catalog.powerSupplies?.find((supply) => supply.brand === "Lampro")?.id || catalog.powerSupplies?.[0]?.id || ""
+    catalog.powerSupplies?.find((supply) => supply.brand === "Mean well")?.id || catalog.powerSupplies?.[0]?.id || ""
   );
 
   const [accessoriesMode, setAccessoriesMode] = useState("auto");

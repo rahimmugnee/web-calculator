@@ -100,7 +100,8 @@ test("uses dropdowns for display structure choices", () => {
   expect(screen.queryByRole("heading", { name: "Controller and Receiving Card Brand" })).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Controller Model" }).closest("section")).toBe(productModelSection);
   expect(screen.getByRole("button", { name: "Power Supply Brand" }).closest("section")).toBe(productModelSection);
-  expect(screen.getByRole("button", { name: "Power Supply Model" })).toHaveTextContent("LD-200");
+  expect(screen.getByRole("button", { name: "Power Supply Brand" })).toHaveTextContent("Mean well");
+  expect(screen.getByRole("button", { name: "Power Supply Model" })).toHaveTextContent("LRS-200");
 
   const controllerRow = screen.getByRole("button", { name: "Controller Model" }).closest(".form-row");
   expect(screen.getByRole("button", { name: "Receiving Card Model" }).closest(".form-row")).toBe(controllerRow);
