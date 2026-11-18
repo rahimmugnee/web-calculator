@@ -499,7 +499,7 @@ export default function PriceForm({
   const [discountTk, setDiscountTk] = useState(0);
 
   // âœ… Technology (default SMD)
-  const [moduleBrand, setModuleBrand] = useState("Lampro");
+  const [moduleBrand, setModuleBrand] = useState("Leyard");
   const [customModuleBrandName, setCustomModuleBrandName] = useState("");
 
   // âœ… Payment Term (default 100%)
@@ -765,7 +765,10 @@ export default function PriceForm({
           : catalog.controllers.some((item) => item.kind !== "receiving" && item.id === controllerId)
       )
     );
-    if (validManualSelection) return;
+    if (validManualSelection) {
+      setControllerQty(controllerId ? 1 : 0);
+      return;
+    }
 
     if (!autoLocal) {
       controllerSelectionManualRef.current = false;
@@ -1749,7 +1752,7 @@ export default function PriceForm({
               onChange={(value) => {
                 controllerSelectionManualRef.current = true;
                 setControllerId(value);
-                if (value === "__custom__") setControllerQty(1);
+                setControllerQty(value ? 1 : 0);
               }}
             />
             {controllerId === "__custom__" ? <input className="input" aria-label="Custom Controller Model" placeholder="Enter controller model" value={customControllerModel} onChange={(e) => setCustomControllerModel(e.target.value)} /> : null}

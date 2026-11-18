@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import PriceForm from "./PriceForm";
+import Invoice from "./Invoice";
 import { CatalogProvider } from "../context/CatalogContext";
 
 function renderPriceForm({ onChange = jest.fn(), onCalculated = jest.fn() } = {}) {
@@ -164,6 +165,32 @@ test("exports a custom controller and receiving brand without changing the selec
     expect(items.controllerId).toBe(previous.controllerId);
     expect(items.controllerPrice).toBe(previous.controllerPrice);
   });
+});
+
+test.each(["manual exclusion", "pixel overflow"])("restores controller quantity and invoice row after %s", async (scenario) => {
+  const onCalculated = jest.fn();
+  renderPriceForm({ onCalculated });
+  const latest = () => onCalculated.mock.calls.at(-1);
+
+  if (scenario === "pixel overflow") {
+    fireEvent.change(screen.getByLabelText("Width (ft)"), { target: { value: "1000" } });
+    fireEvent.change(screen.getByLabelText("Height (ft)"), { target: { value: "1000" } });
+  } else {
+    fireEvent.click(screen.getByRole("button", { name: "Controller Model" }));
+    fireEvent.click(screen.getByRole("option", { name: "-- No controller (pixel over) --" }));
+  }
+  await waitFor(() => expect(latest()[1].items.controllerQty).toBe(0));
+  expect(latest()[0].totals.controllerTotal).toBe(0);
+
+  fireEvent.click(screen.getByRole("button", { name: "Controller Model" }));
+  fireEvent.click(screen.getByRole("option", { name: "TU-20 Pro" }));
+  await waitFor(() => expect(latest()[1].items.controllerQty).toBe(1));
+  expect(latest()[1].items.controllerId).toBe("NS_TU20PRO");
+  expect(latest()[0].totals.controllerTotal).toBeGreaterThan(0);
+
+  const [calc, snapshot] = latest();
+  const invoice = render(<CatalogProvider><Invoice calc={calc} snapshot={snapshot} /></CatalogProvider>);
+  expect(invoice.container.querySelector("table")).toHaveTextContent("TU-20 Pro");
 });
 
 test("exports a manually priced custom controller model", async () => {
@@ -451,9 +478,8 @@ test("keeps a selected database-only cabinet and updates its price after an admi
 test("Leyard COB P1.25 keeps the regular module quotation format", async () => {
   renderPriceForm();
 
+  expect(screen.getByRole("button", { name: "Module Brand" })).toHaveTextContent("Leyard");
   fireEvent.click(screen.getByRole("button", { name: "set-technology-cob" }));
-  fireEvent.click(screen.getByRole("button", { name: "Module Brand" }));
-  fireEvent.click(await screen.findByRole("option", { name: "Leyard" }));
 
   expect(screen.getByRole("button", { name: "Module Brand" })).toHaveTextContent("Leyard");
   expect(screen.getByLabelText("LED Module (pcs)")).toBeInTheDocument();
@@ -466,6 +492,8 @@ test("Lampro COB P1.25 keeps the regular module quotation format", async () => {
   renderPriceForm();
 
   fireEvent.click(screen.getByRole("button", { name: "set-technology-cob" }));
+  fireEvent.click(screen.getByRole("button", { name: "Module Brand" }));
+  fireEvent.click(await screen.findByRole("option", { name: "Lampro" }));
 
   expect(screen.getByRole("button", { name: "Module Brand" })).toHaveTextContent("Lampro");
   expect(screen.getByLabelText("LED Module (pcs)")).toBeInTheDocument();
