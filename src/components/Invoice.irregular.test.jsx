@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import Invoice from "./Invoice";
 import { calcAll, toBDT } from "../lib/calc";
 import { useCatalog } from "../context/CatalogContext.jsx";
+import { componentModelAndPrice } from "../data/component-model-and-price.js";
 
 jest.mock("../context/CatalogContext.jsx", () => ({ useCatalog: jest.fn() }));
 
@@ -96,18 +97,22 @@ test.each(["regular", "irregular"])("Renex %s uses separate rows with set-scaled
 });
 
 
-test.each(["Video Processor: HD-VP630", "Crontoller: HD-A5L", "Custom Control Unit"])("Sasha includes Huidu controller details for %s in regular and irregular modes", (itemName) => {
+test.each([
+  ...componentModelAndPrice.controllers,
+  ...componentModelAndPrice.novastarControllers,
+  { id: "__custom__", itemName: "Custom Control Unit", model: "Custom Model", brand: "Custom Brand" },
+])("Sasha includes $brand controller $id in regular and irregular modes", (controller) => {
   useCatalog.mockReturnValue({ catalog: { controllers: [] }, company: { code: "sasha" }, invoiceSettings: {} });
   for (const quotationMode of ["regular", "irregular"]) {
     const data = { ...snapshot, quotationMode, items: { ...snapshot.items,
-      controllerId: "VP630", controllerPicked: { itemName, model: "HD-VP630", brand: "Huidu" },
+      controllerId: controller.id, controllerPicked: controller,
       modulesQty: 110, rcQty: 37, psQty: 28, customItems: [], cabinetEnabled: false } };
     const result = calcAll({ companyCode: "sasha", quotationMode, irregularQty: 2,
       modulesQty: 110, rcQty: 37, psQty: 28, controllerQty: 1, controllerPrice: 85320,
       unitModule: 10, unitRC: 20, unitPS: 30 });
     const view = render(<Invoice snapshot={data} calc={result} quotationRef="TEST" />);
     const row = view.container.querySelector(".sasha-system-row");
-    expect(row).toHaveTextContent("Controller Brand: Huidu | Model: HD-VP630");
+    expect(row).toHaveTextContent(`Controller Brand: ${controller.brand} | Model: ${controller.model}`);
     const count = quotationMode === "irregular" ? 2 : 1;
     expect(within(row).getAllByRole("cell")[5]).toHaveTextContent(toBDT((1100 + 740 + 840) * count + 85320));
     view.unmount();
