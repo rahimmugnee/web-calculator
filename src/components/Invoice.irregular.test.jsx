@@ -96,6 +96,24 @@ test.each(["regular", "irregular"])("Renex %s uses separate rows with set-scaled
 });
 
 
+test.each(["Video Processor: HD-VP630", "Crontoller: HD-A5L", "Custom Control Unit"])("Sasha includes Huidu controller details for %s in regular and irregular modes", (itemName) => {
+  useCatalog.mockReturnValue({ catalog: { controllers: [] }, company: { code: "sasha" }, invoiceSettings: {} });
+  for (const quotationMode of ["regular", "irregular"]) {
+    const data = { ...snapshot, quotationMode, items: { ...snapshot.items,
+      controllerId: "VP630", controllerPicked: { itemName, model: "HD-VP630", brand: "Huidu" },
+      modulesQty: 110, rcQty: 37, psQty: 28, customItems: [], cabinetEnabled: false } };
+    const result = calcAll({ companyCode: "sasha", quotationMode, irregularQty: 2,
+      modulesQty: 110, rcQty: 37, psQty: 28, controllerQty: 1, controllerPrice: 85320,
+      unitModule: 10, unitRC: 20, unitPS: 30 });
+    const view = render(<Invoice snapshot={data} calc={result} quotationRef="TEST" />);
+    const row = view.container.querySelector(".sasha-system-row");
+    expect(row).toHaveTextContent("Controller Brand: Huidu | Model: HD-VP630");
+    const count = quotationMode === "irregular" ? 2 : 1;
+    expect(within(row).getAllByRole("cell")[5]).toHaveTextContent(toBDT((1100 + 740 + 840) * count + 85320));
+    view.unmount();
+  }
+});
+
 test("Sasha irregular mode shows total area and the same component details as regular", () => {
   useCatalog.mockReturnValue({ catalog: { controllers: [] }, company: { code: "sasha" }, invoiceSettings: {} });
   let regularDetails;

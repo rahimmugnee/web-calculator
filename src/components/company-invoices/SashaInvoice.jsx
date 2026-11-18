@@ -16,7 +16,7 @@ const SashaInvoice = forwardRef(function SashaInvoice({
     : singleDisplayArea;
   const displayUnitPrice = area > 0 ? Math.round(displayTotal / area) : displayTotal;
   const payable = showDiscountBlock ? (totals.payable ?? totals.grandTotal) : totals.grandTotal;
-  const controllerRow = detailRows.find((row) => /controller/i.test(row.name || ""));
+  const controllerRow = detailRows.find((row) => row.type === "controller" || (!row.type && /controller/i.test(row.name || "")));
   const receivingRow = detailRows.find((row) => /receiving/i.test(row.name || ""));
   const powerRow = detailRows.find((row) => /power supply/i.test(row.name || ""));
   const moduleRow = detailRows[0];

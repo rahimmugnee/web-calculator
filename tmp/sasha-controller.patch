@@ -1,0 +1,54 @@
+diff --git a/src/components/Invoice.irregular.test.jsx b/src/components/Invoice.irregular.test.jsx
+index dbfee3e..1161889 100644
+--- a/src/components/Invoice.irregular.test.jsx
++++ b/src/components/Invoice.irregular.test.jsx
+@@ -96,6 +96,24 @@ test.each(["regular", "irregular"])("Renex %s uses separate rows with set-scaled
+ });
+ 
+ 
++test.each(["Video Processor: HD-VP630", "Crontoller: HD-A5L", "Custom Control Unit"])("Sasha includes Huidu controller details for %s in regular and irregular modes", (itemName) => {
++  useCatalog.mockReturnValue({ catalog: { controllers: [] }, company: { code: "sasha" }, invoiceSettings: {} });
++  for (const quotationMode of ["regular", "irregular"]) {
++    const data = { ...snapshot, quotationMode, items: { ...snapshot.items,
++      controllerId: "VP630", controllerPicked: { itemName, model: "HD-VP630", brand: "Huidu" },
++      modulesQty: 110, rcQty: 37, psQty: 28, customItems: [], cabinetEnabled: false } };
++    const result = calcAll({ companyCode: "sasha", quotationMode, irregularQty: 2,
++      modulesQty: 110, rcQty: 37, psQty: 28, controllerQty: 1, controllerPrice: 85320,
++      unitModule: 10, unitRC: 20, unitPS: 30 });
++    const view = render(<Invoice snapshot={data} calc={result} quotationRef="TEST" />);
++    const row = view.container.querySelector(".sasha-system-row");
++    expect(row).toHaveTextContent("Controller Brand: Huidu | Model: HD-VP630");
++    const count = quotationMode === "irregular" ? 2 : 1;
++    expect(within(row).getAllByRole("cell")[5]).toHaveTextContent(toBDT((1100 + 740 + 840) * count + 85320));
++    view.unmount();
++  }
++});
++
+ test("Sasha irregular mode shows total area and the same component details as regular", () => {
+   useCatalog.mockReturnValue({ catalog: { controllers: [] }, company: { code: "sasha" }, invoiceSettings: {} });
+   let regularDetails;
+diff --git a/src/components/Invoice.jsx b/src/components/Invoice.jsx
+index 1ba60ea..04f8b27 100644
+--- a/src/components/Invoice.jsx
++++ b/src/components/Invoice.jsx
+@@ -113,6 +113,7 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
+   if (items.controllerQty > 0 && items.controllerId) {
+     rows.push({
+       sl: sl++,
++      type: "controller",
+       name: controllerItemName,
+       model: componentModelName(controllerPicked.model, controllerLabel, items.controllerId),
+       unit: "Pcs",
+diff --git a/src/components/company-invoices/SashaInvoice.jsx b/src/components/company-invoices/SashaInvoice.jsx
+index d410133..c42e9ba 100644
+--- a/src/components/company-invoices/SashaInvoice.jsx
++++ b/src/components/company-invoices/SashaInvoice.jsx
+@@ -16,7 +16,7 @@ const SashaInvoice = forwardRef(function SashaInvoice({
+     : singleDisplayArea;
+   const displayUnitPrice = area > 0 ? Math.round(displayTotal / area) : displayTotal;
+   const payable = showDiscountBlock ? (totals.payable ?? totals.grandTotal) : totals.grandTotal;
+-  const controllerRow = detailRows.find((row) => /controller/i.test(row.name || ""));
++  const controllerRow = detailRows.find((row) => row.type === "controller" || (!row.type && /controller/i.test(row.name || "")));
+   const receivingRow = detailRows.find((row) => /receiving/i.test(row.name || ""));
+   const powerRow = detailRows.find((row) => /power supply/i.test(row.name || ""));
+   const moduleRow = detailRows[0];

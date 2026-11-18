@@ -113,6 +113,7 @@ const Invoice = forwardRef(function Invoice({ calc, snapshot, orderDate = new Da
   if (items.controllerQty > 0 && items.controllerId) {
     rows.push({
       sl: sl++,
+      type: "controller",
       name: controllerItemName,
       model: componentModelName(controllerPicked.model, controllerLabel, items.controllerId),
       unit: "Pcs",
